@@ -6,22 +6,21 @@ import data from "./data-structure";
 
 console.log(data);
 
-const bpm = data.projects[0].tempo;
+const bpm = 58;
 const duration = 120.0; // 120.000
-const barWidth = 10; // 一個bar長10px
+const barWidth = 9.5; // 一個bar長9.5px 9.5:58
 const barQuantity = duration * (bpm / 60); // 產生的小節數量
 const totalWidth = barWidth * barQuantity; // 總長度
 
 const Track = styled.div`
   /* width: 100%; */
-  width: ${totalWidth}px;
   position: relative;
 `;
 
 const TimelineBlock = styled.div`
-  width: ${totalWidth}px;
+  /* width: ${totalWidth}px; */
   /* width: 500px; */
-  height: 100px;
+  /* height: 100px; */
 `;
 
 const Bars = styled.div`
@@ -40,7 +39,6 @@ const Bar = styled.div`
   width: 1px;
   height: 150px;
   border-left: 0.1px solid gray;
-  padding: 0 ${barWidth}px;
   cursor: pointer;
   &:hover {
     border-left: 0.1px solid white;
@@ -48,11 +46,19 @@ const Bar = styled.div`
 `;
 
 const BarLight = styled(Bar)`
+  padding: 0 ${(props) => props.width}px;
   background-color: #2d2d2d;
 `;
 
 const BarDark = styled(Bar)`
+  padding: 0 ${(props) => props.width}px;
   background-color: #141414;
+`;
+
+const Controls = styled.div`
+  margin-top: 50px;
+  display: flex;
+  column-gap: 15px;
 `;
 
 const formWaveSurferOptions = (waveformRef) => ({
@@ -74,25 +80,63 @@ function WaveSurferNext() {
   const wavesurfer = useRef(null);
   const [playing, setPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [audioInfo, setAudioInfo] = useState({ duration: 0 });
+  const [zoom, setZoom] = useState(1);
+
+  console.log(zoom);
 
   const url =
     "https://www.mfiles.co.uk/mp3-downloads/brahms-st-anthony-chorale-theme-two-pianos.mp3";
 
-  const create = async () => {
-    const WaveSurfer = (await import("wavesurfer.js")).default;
-
-    const options = formWaveSurferOptions(waveformRef.current);
-    wavesurfer.current = WaveSurfer.create(options);
-
-    wavesurfer.current.load(url);
-  };
-
   useEffect(() => {
+    const create = async () => {
+      const WaveSurfer = (await import("wavesurfer.js")).default;
+      const TimelinePlugin = (await import("wavesurfer.js/src/plugin/timeline"))
+        .default;
+
+      const options = formWaveSurferOptions(waveformRef.current);
+      options.plugins.push(
+        TimelinePlugin.create({
+          container: "#wave-timeline",
+          timeInterval: 1,
+          primaryColor: "blue",
+          primaryFontColor: "blue",
+          secondaryColor: "red",
+          secondaryFontColor: "red",
+          offset: 0,
+        })
+      );
+
+      wavesurfer.current = WaveSurfer.create(options);
+      wavesurfer.current.load(url);
+
+      wavesurfer.current.on("ready", function () {
+        const audioDuration = wavesurfer.current.getDuration();
+        console.log("audioDuration", audioDuration);
+        setAudioInfo((prev) => ({
+          ...prev,
+          duration: audioDuration,
+        }));
+      });
+
+      wavesurfer.current.on("audioprocess", function () {
+        const currentTime = wavesurfer.current.getCurrentTime();
+        setProgress(currentTime * (bpm / 60));
+      });
+
+      wavesurfer.current.on("seek", function () {
+        const currentTime = wavesurfer.current.getCurrentTime();
+        setProgress(currentTime * (bpm / 60));
+        console.log(currentTime);
+      });
+    };
+
     create();
+    console.log("round");
 
     return () => {
-      console.log(wavesurfer.current);
       if (wavesurfer.current) {
+        console.log("destroy");
         wavesurfer.current.destroy();
       }
     };
@@ -103,13 +147,13 @@ function WaveSurferNext() {
     wavesurfer.current.playPause();
   };
 
-  // const back30 = () => {
-  //   wavesurfer.current.skipBackward(30);
-  // };
+  const handleZoomIn = () => {
+    setZoom((prev) => prev * 2);
+  };
 
-  // const forward30 = () => {
-  //   wavesurfer.current.skipForward(30);
-  // };
+  const handleZoomOut = () => {
+    setZoom((prev) => prev / 2);
+  };
 
   return (
     <div>
@@ -121,14 +165,14 @@ function WaveSurferNext() {
                 {new Array(4).fill(0).map((_, index) => {
                   return (
                     <div key={index}>
-                      <BarLight />
+                      <BarLight width={zoom * barWidth} />
                     </div>
                   );
                 })}
                 {new Array(4).fill(0).map((_, index) => {
                   return (
                     <div key={index}>
-                      <BarDark />
+                      <BarDark width={zoom * barWidth} />
                     </div>
                   );
                 })}
@@ -138,10 +182,12 @@ function WaveSurferNext() {
         </Bars>
       </Track>
       <TimelineBlock id="wave-timeline" ref={timelineRef} />
-      <div className="controls">
+      <Controls>
         <button onClick={handlePlayPause}>{!playing ? "Play" : "Pause"}</button>
-      </div>
-      <div className="progress">{Math.floor(progress)}</div>
+        <button onClick={handleZoomIn}>zoom in</button>
+        <button onClick={handleZoomOut}>zoom out</button>
+      </Controls>
+      <div className="progress">{`${Math.floor(progress)} 小節`}</div>
     </div>
   );
 }
