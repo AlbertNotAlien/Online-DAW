@@ -15,6 +15,11 @@
     "jsx": "preserve",
     "incremental": true
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "include": [, "pages/components/Track/Wavesurfer-test.jsx"
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "pages/components/Track/Waveform.js"
+  ],
   "exclude": ["node_modules"]
 }

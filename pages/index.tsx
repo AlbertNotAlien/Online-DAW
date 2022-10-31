@@ -1,7 +1,9 @@
 import Head from "next/head";
 import Image from "next/image";
 import styles from "../styles/Home.module.css";
-import Track from "./components/Track";
+// import Track from "./components/Track";
+
+import WaveSurferNext from "./components/Track/WaveSurferNext.jsx";
 
 export default function Home() {
   return (
@@ -13,10 +15,11 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        <Track />
+        {/* <Waveform /> */}
+        <WaveSurferNext />
       </main>
 
-      <footer className={styles.footer}></footer>
+      {/* <footer className={styles.footer}></footer> */}
     </div>
   );
 }
