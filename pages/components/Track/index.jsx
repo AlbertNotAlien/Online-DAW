@@ -1,6 +1,8 @@
 // npm install wavesurfer.js
 import React, { useState, useEffect, useRef } from "react";
+// import WaveSurfer from "wavesurfer.js";
 import styled from "styled-components";
+
 import data from "../data-structure";
 
 const Track = styled.div`
@@ -41,12 +43,6 @@ const BarDark = styled(Bar)`
   background-color: #141414;
 `;
 
-const Controls = styled.div`
-  margin-top: 50px;
-  display: flex;
-  column-gap: 15px;
-`;
-
 const Timeline = styled.div`
   width: 10px;
   height: 150px;
@@ -64,26 +60,19 @@ const formWaveSurferOptions = (waveformRef) => ({
   partialRender: true,
   fillParent: false,
   plugins: [],
-  cursorWidth: 0,
+  // cursorWidth: 0,
 });
 
 // const WaveSurferNext = (forwardRef = (props, playRef) => {
 const WaveSurferNext = (props) => {
-  const bpm = data.projects[0].tempo;
-  // const durationRef = useRef(0);
-  const [duration, setDuration] = useState(0);
-  // console.log("duration", duration);
-  const barWidth = 9.5; // 一個bar長9.5px 9.5:58
-  const barQuantity = parseInt(duration * (bpm / 60)); // 產生的小節數量
-  const totalWidth = barWidth * barQuantity; // 總長度
-
   const waveformRef = useRef(null);
   const timelineRef = useRef(null);
   const wavesurfer = useRef(null);
-  // const [playing, setPlaying] = useState(false);
-  // const [progress, setProgress] = useState(0);
-  const [zoom, setZoom] = useState(1);
-  const [tempo, setTempo] = useState(bpm);
+
+  const [duration, setDuration] = useState(0);
+  const barWidth = 9.5; // 一個bar長9.5px 9.5:58
+  const barQuantity = parseInt(duration * (props.projectInfo.tempo / 60)); // 產生的小節數量
+  const totalWidth = barWidth * barQuantity; // 總長度
 
   useEffect(() => {
     const create = async () => {
@@ -120,14 +109,14 @@ const WaveSurferNext = (props) => {
 
       wavesurfer.current.on("audioprocess", function () {
         const currentTime = wavesurfer.current.getCurrentTime();
-        props.setProgress(currentTime * (bpm / 60));
+        props.setProgress(currentTime * (props.projectInfo.tempo / 60));
       });
 
       wavesurfer.current.on("seek", function () {
         const currentTime = wavesurfer.current.getCurrentTime();
         // const seekTo = wavesurfer.current.seekTo(0.5);
         // const seekTo = wavesurfer.current.seekTo(currentTime / duration);
-        props.setProgress(currentTime * (bpm / 60));
+        props.setProgress(currentTime * (props.projectInfo.tempo / 60));
         console.log(currentTime);
       });
     };
@@ -143,53 +132,43 @@ const WaveSurferNext = (props) => {
   }, []);
 
   useEffect(() => {
+    console.log("!");
+    console.log(wavesurfer.current);
     wavesurfer.current?.playPause();
-  }, [props.playing, wavesurfer.current]);
-
-  const handleZoomIn = () => {
-    setZoom((prev) => prev * 2);
-  };
-
-  const handleZoomOut = () => {
-    setZoom((prev) => prev / 2);
-  };
+  }, [props.isPlaying, wavesurfer.current]);
 
   return (
     <div>
       <Track id="waveform" ref={waveformRef}>
         <Bars>
-          {/* {new Array(parseInt(barQuantity / 8)).fill(0).map((_, index) => {
+          {new Array(parseInt(barQuantity / 8)).fill(0).map((_, index) => {
             return (
               <FlexBars key={index}>
                 {new Array(4).fill(0).map((_, index) => {
                   return (
                     <div key={index}>
-                      <BarLight width={(60 / tempo) * barWidth} />
+                      <BarLight
+                        width={(60 / props.projectInfo.tempo) * barWidth}
+                      />
                     </div>
                   );
                 })}
                 {new Array(4).fill(0).map((_, index) => {
                   return (
                     <div key={index}>
-                      <BarDark width={(60 / tempo) * barWidth} />
+                      <BarDark
+                        width={(60 / props.projectInfo.tempo) * barWidth}
+                      />
                     </div>
                   );
                 })}
               </FlexBars>
             );
-          })} */}
+          })}
         </Bars>
       </Track>
       <TimelineBlock id="wave-timeline" ref={timelineRef} />
-      <Controls>
-        <span>bpm:</span>
-        <input
-          type="number"
-          value={tempo}
-          onChange={(event) => setTempo(event.target.value)}
-        ></input>
-      </Controls>
-      <div className="progress">{`${Math.floor(props.progress)} 小節`}</div>
+      {/* <div className="progress">{`${Math.floor(props.progress)} 小節`}</div> */}
     </div>
   );
 };

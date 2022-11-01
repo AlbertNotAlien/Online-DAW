@@ -15,12 +15,18 @@ const Progressline = styled.div`
   top: 0;
 `;
 
-const Timeline = () => {
-  const playRef = useRef<HTMLAudioElement>(null);
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
+const Controls = styled.div`
+  margin-top: 50px;
+  display: flex;
+  column-gap: 15px;
+`;
 
-  const projectInfo = useState(data);
+const Timeline = () => {
+  const [projectInfo, setProjectInfo] = useState(data.projects[0]);
+  // console.log(projectInfo);
+
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   return (
     <>
@@ -32,16 +38,32 @@ const Timeline = () => {
             <Track
               key={index}
               url={track.clips[0].url}
-              playing={playing}
+              projectInfo={projectInfo}
+              setProjectInfo={setProjectInfo}
+              isPlaying={isPlaying}
               progress={progress}
               setProgress={setProgress}
             />
           );
         })}
       </div>
-      <button onClick={() => setPlaying(!playing)}>
-        {!playing ? "Play" : "Pause"}
-      </button>
+      <Controls>
+        <button onClick={() => setIsPlaying(!isPlaying)}>
+          {!isPlaying ? "Play" : "Pause"}
+        </button>
+        <span>bpm:</span>
+        <input
+          type="number"
+          value={projectInfo.tempo}
+          onChange={(event) => {
+            setProjectInfo((prev) => ({
+              ...prev,
+              tempo: parseInt(event.target.value),
+            }));
+          }}
+        ></input>
+        <div className="progress">{`${Math.floor(progress)} 小節`}</div>
+      </Controls>
     </>
   );
 };
