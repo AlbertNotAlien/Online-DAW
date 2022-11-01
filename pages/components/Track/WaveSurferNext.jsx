@@ -61,6 +61,12 @@ const Controls = styled.div`
   column-gap: 15px;
 `;
 
+const Timeline = styled.div`
+  width: 1px;
+  height: 150px;
+  background-color: red;
+`;
+
 const formWaveSurferOptions = (waveformRef) => ({
   container: waveformRef,
   waveColor: "#eee",
@@ -74,7 +80,8 @@ const formWaveSurferOptions = (waveformRef) => ({
   plugins: [],
 });
 
-function WaveSurferNext() {
+// const WaveSurferNext = (forwardRef = (props, playRef) => {
+const WaveSurferNext = (props, playRef) => {
   const waveformRef = useRef(null);
   const timelineRef = useRef(null);
   const wavesurfer = useRef(null);
@@ -82,11 +89,8 @@ function WaveSurferNext() {
   const [progress, setProgress] = useState(0);
   const [audioInfo, setAudioInfo] = useState({ duration: 0 });
   const [zoom, setZoom] = useState(1);
-
-  console.log(zoom);
-
-  const url =
-    "https://www.mfiles.co.uk/mp3-downloads/brahms-st-anthony-chorale-theme-two-pianos.mp3";
+  // const tempoRef = useRef(bpm);
+  const [tempo, setTempo] = useState(bpm);
 
   useEffect(() => {
     const create = async () => {
@@ -108,7 +112,8 @@ function WaveSurferNext() {
       );
 
       wavesurfer.current = WaveSurfer.create(options);
-      wavesurfer.current.load(url);
+      wavesurfer.current.load(props.url);
+      console.log(props.url);
 
       wavesurfer.current.on("ready", function () {
         const audioDuration = wavesurfer.current.getDuration();
@@ -142,6 +147,13 @@ function WaveSurferNext() {
     };
   }, []);
 
+  // useImperativeHandle(ref, () => ({
+  //   handlePlayPause = () => {
+  //     setPlaying(!playing);
+  //     wavesurfer.current.playPause();
+  //   },
+  // }));
+
   const handlePlayPause = () => {
     setPlaying(!playing);
     wavesurfer.current.playPause();
@@ -165,14 +177,14 @@ function WaveSurferNext() {
                 {new Array(4).fill(0).map((_, index) => {
                   return (
                     <div key={index}>
-                      <BarLight width={zoom * barWidth} />
+                      <BarLight width={(60 / tempo) * barWidth} />
                     </div>
                   );
                 })}
                 {new Array(4).fill(0).map((_, index) => {
                   return (
                     <div key={index}>
-                      <BarDark width={zoom * barWidth} />
+                      <BarDark width={(60 / tempo) * barWidth} />
                     </div>
                   );
                 })}
@@ -184,12 +196,17 @@ function WaveSurferNext() {
       <TimelineBlock id="wave-timeline" ref={timelineRef} />
       <Controls>
         <button onClick={handlePlayPause}>{!playing ? "Play" : "Pause"}</button>
-        <button onClick={handleZoomIn}>zoom in</button>
-        <button onClick={handleZoomOut}>zoom out</button>
+        <span>bpm:</span>
+        <input
+          type="number"
+          value={tempo}
+          onChange={(event) => setTempo(event.target.value)}
+        ></input>
       </Controls>
       <div className="progress">{`${Math.floor(progress)} 小節`}</div>
     </div>
   );
-}
+};
+// });
 
 export default WaveSurferNext;
