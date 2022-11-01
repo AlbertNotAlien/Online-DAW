@@ -21,7 +21,7 @@
     "**/*.ts",
     "**/*.tsx",
     "pages/components/Track/Waveform.js",
-    "pages/components/Track/WaveSurferNext.tsx"
+    "pages/components/Track/Track.jsx"
   ],
   "exclude": ["node_modules"]
 }

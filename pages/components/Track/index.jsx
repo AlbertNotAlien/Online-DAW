@@ -1,27 +1,13 @@
 // npm install wavesurfer.js
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-
-import data from "./data-structure";
-
-console.log(data);
-
-const bpm = 58;
-const duration = 120.0; // 120.000
-const barWidth = 9.5; // 一個bar長9.5px 9.5:58
-const barQuantity = duration * (bpm / 60); // 產生的小節數量
-const totalWidth = barWidth * barQuantity; // 總長度
+import data from "../data-structure";
 
 const Track = styled.div`
-  /* width: 100%; */
   position: relative;
 `;
 
-const TimelineBlock = styled.div`
-  /* width: ${totalWidth}px; */
-  /* width: 500px; */
-  /* height: 100px; */
-`;
+const TimelineBlock = styled.div``;
 
 const Bars = styled.div`
   display: flex;
@@ -62,9 +48,9 @@ const Controls = styled.div`
 `;
 
 const Timeline = styled.div`
-  width: 1px;
+  width: 10px;
   height: 150px;
-  background-color: red;
+  background-color: blue;
 `;
 
 const formWaveSurferOptions = (waveformRef) => ({
@@ -78,18 +64,25 @@ const formWaveSurferOptions = (waveformRef) => ({
   partialRender: true,
   fillParent: false,
   plugins: [],
+  cursorWidth: 0,
 });
 
 // const WaveSurferNext = (forwardRef = (props, playRef) => {
-const WaveSurferNext = (props, playRef) => {
+const WaveSurferNext = (props) => {
+  const bpm = data.projects[0].tempo;
+  // const durationRef = useRef(0);
+  const [duration, setDuration] = useState(0);
+  // console.log("duration", duration);
+  const barWidth = 9.5; // 一個bar長9.5px 9.5:58
+  const barQuantity = parseInt(duration * (bpm / 60)); // 產生的小節數量
+  const totalWidth = barWidth * barQuantity; // 總長度
+
   const waveformRef = useRef(null);
   const timelineRef = useRef(null);
   const wavesurfer = useRef(null);
-  const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [audioInfo, setAudioInfo] = useState({ duration: 0 });
+  // const [playing, setPlaying] = useState(false);
+  // const [progress, setProgress] = useState(0);
   const [zoom, setZoom] = useState(1);
-  // const tempoRef = useRef(bpm);
   const [tempo, setTempo] = useState(bpm);
 
   useEffect(() => {
@@ -118,26 +111,28 @@ const WaveSurferNext = (props, playRef) => {
       wavesurfer.current.on("ready", function () {
         const audioDuration = wavesurfer.current.getDuration();
         console.log("audioDuration", audioDuration);
-        setAudioInfo((prev) => ({
-          ...prev,
-          duration: audioDuration,
-        }));
+        setDuration(audioDuration);
+        // setAudioInfo((prev) => ({
+        //   ...prev,
+        //   duration: audioDuration,
+        // }));
       });
 
       wavesurfer.current.on("audioprocess", function () {
         const currentTime = wavesurfer.current.getCurrentTime();
-        setProgress(currentTime * (bpm / 60));
+        props.setProgress(currentTime * (bpm / 60));
       });
 
       wavesurfer.current.on("seek", function () {
         const currentTime = wavesurfer.current.getCurrentTime();
-        setProgress(currentTime * (bpm / 60));
+        // const seekTo = wavesurfer.current.seekTo(0.5);
+        // const seekTo = wavesurfer.current.seekTo(currentTime / duration);
+        props.setProgress(currentTime * (bpm / 60));
         console.log(currentTime);
       });
     };
 
     create();
-    console.log("round");
 
     return () => {
       if (wavesurfer.current) {
@@ -147,17 +142,9 @@ const WaveSurferNext = (props, playRef) => {
     };
   }, []);
 
-  // useImperativeHandle(ref, () => ({
-  //   handlePlayPause = () => {
-  //     setPlaying(!playing);
-  //     wavesurfer.current.playPause();
-  //   },
-  // }));
-
-  const handlePlayPause = () => {
-    setPlaying(!playing);
-    wavesurfer.current.playPause();
-  };
+  useEffect(() => {
+    wavesurfer.current?.playPause();
+  }, [props.playing, wavesurfer.current]);
 
   const handleZoomIn = () => {
     setZoom((prev) => prev * 2);
@@ -171,7 +158,7 @@ const WaveSurferNext = (props, playRef) => {
     <div>
       <Track id="waveform" ref={waveformRef}>
         <Bars>
-          {new Array(parseInt(barQuantity / 8)).fill(0).map((_, index) => {
+          {/* {new Array(parseInt(barQuantity / 8)).fill(0).map((_, index) => {
             return (
               <FlexBars key={index}>
                 {new Array(4).fill(0).map((_, index) => {
@@ -190,12 +177,11 @@ const WaveSurferNext = (props, playRef) => {
                 })}
               </FlexBars>
             );
-          })}
+          })} */}
         </Bars>
       </Track>
       <TimelineBlock id="wave-timeline" ref={timelineRef} />
       <Controls>
-        <button onClick={handlePlayPause}>{!playing ? "Play" : "Pause"}</button>
         <span>bpm:</span>
         <input
           type="number"
@@ -203,7 +189,7 @@ const WaveSurferNext = (props, playRef) => {
           onChange={(event) => setTempo(event.target.value)}
         ></input>
       </Controls>
-      <div className="progress">{`${Math.floor(progress)} 小節`}</div>
+      <div className="progress">{`${Math.floor(props.progress)} 小節`}</div>
     </div>
   );
 };

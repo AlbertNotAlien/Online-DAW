@@ -78,6 +78,45 @@ const data = {
             },
           ],
         },
+        {
+          name: "Track 2",
+          // measures: 100, //
+          volume: 100,
+          pan: 0,
+          isSolo: false,
+          isMute: false,
+          isSelected: false,
+          isRecording: false,
+          clips: [
+            //
+            {
+              id: "92SsfjamLRVdlaAtkhGnIcAsgqC3",
+              url: "https://www.mfiles.co.uk/mp3-downloads/pachelbel-canon-in-d.mp3",
+              fileId: "WsnLr4RpTqX9Ut8cDje3lDmSGD73",
+              name: "Clip 1",
+              duration: 0, /////////////// 總長的時間長度
+              startTime: 0, /////////////// 剪輯後的時間長度
+              endTime: 0, /////////////// 剪輯後的時間長度
+              length: {
+                // 剪輯後的實際長度
+                bars: 1,
+                beats: 1, //1~4
+                sixteenths: 1,
+              },
+              startPoint: {
+                bars: 1,
+                beats: 1, //1~4
+                sixteenths: 1,
+              },
+              endPoint: {
+                /////////////// 從startPoint跟length calc出來
+                bars: 1,
+                beats: 1,
+                sixteenths: 1,
+              },
+            },
+          ],
+        },
       ],
     },
   ],
