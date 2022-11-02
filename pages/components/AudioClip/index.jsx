@@ -50,7 +50,7 @@ const AudioClip = (props) => {
 
       wavesurfer.current = WaveSurfer.create(options);
       wavesurfer.current.load(props.url);
-      console.log(props.url);
+      // console.log(props.url);
 
       wavesurfer.current.on("ready", function () {
         const audioDuration = wavesurfer.current.getDuration();
@@ -87,8 +87,8 @@ const AudioClip = (props) => {
   }, []);
 
   useEffect(() => {
-    console.log("wavesurfer.current", wavesurfer.current);
-    wavesurfer.current?.playPause();
+    // console.log("wavesurfer.current", wavesurfer.current);
+    // wavesurfer.current?.playPause();    /////////////////////////////////////////////
   }, [props.isPlaying, wavesurfer.current]);
 
   return (

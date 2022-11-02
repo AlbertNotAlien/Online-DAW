@@ -45,23 +45,20 @@ const Bars = (props: {
     tempo: number;
   };
 }) => {
-  const barWidth = 9.5; // 一個bar長9.5px 9.5:58
-  // const barQuantity =
-  //   (parseInt(props.projectInfo.tracks[0].clips[0].duration) *
-  //     props.projectInfo.tempo) /
-  //   60; // 產生的小節數量
-  const barQuantity = 500;
-  const totalWidth = barWidth * barQuantity; // 總長度
+  const barWidthCoefficient = 9.5; // 一個bar長9.5px 9.5:58
+  const barQuantities = 500;
   return (
     <Container>
-      {new Array(Math.floor(barQuantity / 8)).fill(0).map((_, index) => {
+      {new Array(Math.floor(barQuantities / 8)).fill(0).map((_, index) => {
         return (
           <FlexBars key={index}>
             {new Array(4).fill(0).map((_, index) => {
               return (
                 <div key={index}>
                   <BarLight
-                    width={(120 / props.projectInfo.tempo) * barWidth}
+                    width={
+                      (120 / props.projectInfo.tempo) * barWidthCoefficient
+                    }
                   />
                 </div>
               );
@@ -69,7 +66,11 @@ const Bars = (props: {
             {new Array(4).fill(0).map((_, index) => {
               return (
                 <div key={index}>
-                  <BarDark width={(120 / props.projectInfo.tempo) * barWidth} />
+                  <BarDark
+                    width={
+                      (120 / props.projectInfo.tempo) * barWidthCoefficient
+                    }
+                  />
                 </div>
               );
             })}

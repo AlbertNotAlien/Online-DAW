@@ -56,25 +56,25 @@ const data = {
               fileId: "WsnLr4RpTqX9Ut8cDje3lDmSGD73",
               name: "Clip 1",
               duration: 0, /////////////// 總長的時間長度
-              startTime: 0, /////////////// 剪輯後的時間長度
-              endTime: 0, /////////////// 剪輯後的時間長度
-              length: {
-                // 剪輯後的實際長度
-                bars: 1,
-                beats: 1, //1~4
-                sixteenths: 1,
-              },
+              // startTime: 0, /////////////// 剪輯後的時間長度
+              // endTime: 0, /////////////// 剪輯後的時間長度
+              // length: {
+              //   // 剪輯後的實際長度
+              //   bars: 1,
+              //   beats: 1, //1~4
+              //   sixteenths: 1,
+              // },
               startPoint: {
-                bars: 1,
-                beats: 1, //1~4
-                sixteenths: 1,
+                bars: 5,
+                // beats: 1, //1~4
+                // sixteenths: 1,
               },
-              endPoint: {
-                /////////////// 從startPoint跟length calc出來
-                bars: 1,
-                beats: 1,
-                sixteenths: 1,
-              },
+              // endPoint: {
+              //   /////////////// 從startPoint跟length calc出來
+              //   bars: 1,
+              //   beats: 1,
+              //   sixteenths: 1,
+              // },
             },
           ],
         },
@@ -95,25 +95,25 @@ const data = {
               fileId: "WsnLr4RpTqX9Ut8cDje3lDmSGD73",
               name: "Clip 1",
               duration: 0, /////////////// 總長的時間長度
-              startTime: 0, /////////////// 剪輯後的時間長度
-              endTime: 0, /////////////// 剪輯後的時間長度
-              length: {
-                // 剪輯後的實際長度
-                bars: 1,
-                beats: 1, //1~4
-                sixteenths: 1,
-              },
+              // startTime: 0, /////////////// 剪輯後的時間長度
+              // endTime: 0, /////////////// 剪輯後的時間長度
+              // length: {
+              //   // 剪輯後的實際長度
+              //   bars: 1,
+              //   beats: 1, //1~4
+              //   sixteenths: 1,
+              // },
               startPoint: {
                 bars: 1,
-                beats: 1, //1~4
-                sixteenths: 1,
+                // beats: 1, //1~4
+                // sixteenths: 1,
               },
-              endPoint: {
-                /////////////// 從startPoint跟length calc出來
-                bars: 1,
-                beats: 1,
-                sixteenths: 1,
-              },
+              // endPoint: {
+              //   /////////////// 從startPoint跟length calc出來
+              //   bars: 1,
+              //   beats: 1,
+              //   sixteenths: 1,
+              // },
             },
           ],
         },
