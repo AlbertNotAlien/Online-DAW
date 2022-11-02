@@ -16,12 +16,13 @@
     "incremental": true
   },
   "include": [
-    "pages/components/Track/Wavesurfer-test.jsx",
+    "pages/components/AudioClip/Wavesurfer-test.jsx",
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "pages/components/Track/Waveform.js",
-    "pages/components/Track/Track.jsx"
+    "pages/components/AudioClip/Waveform.js",
+    "pages/components/AudioClip/WaveSurferNext.jsx
+    "pages/components/DragMove/index.jsx"
   ],
   "exclude": ["node_modules"]
 }
