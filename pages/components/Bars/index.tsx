@@ -39,10 +39,10 @@ const BarDark = styled(Bar)<StyleProps>`
 `;
 
 const Bars = (props: {
-  projectInfo: {
-    // tracks: object[[]];
-    tracks: any;
+  projectData: {
+    name: string;
     tempo: number;
+    tracks: object[];
   };
 }) => {
   const barWidthCoefficient = 9.5; // 一個bar長9.5px 9.5:58
@@ -57,7 +57,7 @@ const Bars = (props: {
                 <div key={index}>
                   <BarLight
                     width={
-                      (120 / props.projectInfo.tempo) * barWidthCoefficient
+                      (120 / props.projectData.tempo) * barWidthCoefficient
                     }
                   />
                 </div>
@@ -68,7 +68,7 @@ const Bars = (props: {
                 <div key={index}>
                   <BarDark
                     width={
-                      (120 / props.projectInfo.tempo) * barWidthCoefficient
+                      (120 / props.projectData.tempo) * barWidthCoefficient
                     }
                   />
                 </div>

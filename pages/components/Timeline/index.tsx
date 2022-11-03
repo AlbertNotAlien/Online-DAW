@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, SetStateAction } from "react";
 import styled from "styled-components";
 import Draggable from "react-draggable";
 import {
@@ -7,12 +7,14 @@ import {
   getDoc,
   setDoc,
   onSnapshot,
+  DocumentData,
 } from "firebase/firestore";
 import { db } from "../../../config/firebase";
 import data from "../.data-structure";
 
 import Bars from "../Bars";
 import AudioClip from "../AudioClip";
+import { stringLength } from "@firebase/util";
 
 interface StyleProps {
   progressLinePosition: number;
@@ -49,14 +51,39 @@ const AudioClipTitle = styled.div`
 `;
 
 const Timeline = () => {
-  const [projectInfo, setProjectInfo] = useState(data.projects[0]);
+  const [projectData, setProjectData] = useState<{
+    name: string;
+    tempo: number;
+    tracks: object[];
+  }>({ name: "", tempo: 0, tracks: [] });
+  const [tracksData, setTracksdata] = useState<
+    {
+      id: string;
+      name: string;
+      type: string;
+      clips: [
+        {
+          filedId: string;
+          id: string;
+          name: string;
+          startPoint: number;
+          url: string;
+        }
+      ];
+    }[]
+  >([]);
+
+  // console.log(tracksData);
+
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0); // 秒數
+  const [progress, setProgress] = useState(1); // 小節數
   const [trackPosition, setTrackPosition] = useState({ x: 0, y: 0 });
-  const [progressLinePosition, setProgressLinePosition] = useState(0);
+  const progressIncrementRef = useRef<number | null>(null);
+
+  // console.log(progress);
 
   const barWidthCoefficient = 9.5; // 一個bar長9.5px 9.5:58
-  const barWidth = (120 / projectInfo.tempo) * barWidthCoefficient;
+  const barWidth = (120 / projectData.tempo) * barWidthCoefficient;
 
   // useEffect(() => {
   //   //project
@@ -72,11 +99,28 @@ const Timeline = () => {
 
   useEffect(() => {
     const projectId = "5BbhQTKKkFcM9nCjMG3I";
+    const docRef = doc(db, "projects", projectId);
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      const newData = snapshot.data() as { name: string; tempo: number };
+      setProjectData(newData);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    const projectId = "5BbhQTKKkFcM9nCjMG3I";
     const colRef = collection(db, "projects", projectId, "tracks");
     const unsubscribe = onSnapshot(colRef, (snapshot) => {
+      const newData: any = []; /////////////////////////////////////////////////////////////////type
       snapshot.forEach((doc) => {
-        console.log(doc.data());
+        // console.log(doc.data());
+        newData.push(doc.data());
       });
+      console.log("tracksData", newData);
+      setTracksdata(newData);
     });
 
     return () => {
@@ -86,44 +130,59 @@ const Timeline = () => {
 
   const handleDraggable = (
     event: any,
-    dragElement: { x: number; y: number }
+    dragElement: { x: number; y: number },
+    index: number
   ) => {
     const positionX = Math.abs(dragElement.x) < barWidth ? 0 : dragElement.x;
-    const currentBar = Math.floor(positionX / barWidth) + 1;
+    const currentBar = Math.floor(positionX / barWidth);
     setTrackPosition({ x: currentBar, y: 0 });
     console.log(trackPosition);
 
-    // 1. 設id
-    // 2. 用id來findIndex
-    // 3. immer / firebase
-
-    projectInfo.tracks[0].clips[0].startPoint = currentBar;
+    tracksData[index].clips[0].startPoint = currentBar;
   };
 
-  const setProgressLine = (e: { clientX: number }) => {
-    const remainder =
-      e.clientX % ((120 / projectInfo.tempo) * barWidthCoefficient);
+  const handleClickProgressLine = (e: { clientX: number }) => {
+    const positionRemainder =
+      e.clientX % ((120 / projectData.tempo) * barWidthCoefficient);
     const currentPosition =
-      Math.abs(e.clientX - remainder) < barWidth ? 0 : e.clientX - remainder;
+      Math.abs(e.clientX - positionRemainder) < barWidth
+        ? 0
+        : e.clientX - positionRemainder;
     const currentBar = currentPosition / barWidth + 1;
-    setProgressLinePosition(currentPosition);
     setProgress(currentBar);
+  };
+
+  const handlePlay = () => {
+    if (isPlaying) return;
+    console.log("handlePlay");
+    setIsPlaying(true);
+    progressIncrementRef.current = window.setInterval(() => {
+      setProgress((prev) => prev + 0.05);
+    }, 50);
+  };
+
+  const handlePause = () => {
+    if (progressIncrementRef.current && isPlaying) {
+      console.log("handlePause");
+      setIsPlaying(false);
+      clearInterval(progressIncrementRef.current);
+    }
   };
 
   return (
     <>
       <div>timeline</div>
-      <Progressline progressLinePosition={progressLinePosition} />
+      <Progressline progressLinePosition={(progress - 1) * barWidth} />
       <div>
-        {data.projects[0].tracks.map((track, index) => {
+        {tracksData.map((track, index) => {
           return (
-            <Track key={index} onClick={setProgressLine}>
+            <Track key={index} onClick={handleClickProgressLine}>
               <Draggable
                 axis="x"
-                onDrag={(event, dragElement) =>
-                  handleDraggable(event, dragElement)
+                onStop={(event, dragElement) =>
+                  handleDraggable(event, dragElement, index)
                 }
-                grid={[(120 / projectInfo.tempo) * barWidthCoefficient, 0]}
+                grid={[(120 / projectData.tempo) * barWidthCoefficient, 0]}
                 defaultPosition={{ x: 0, y: 0 }}
                 handle="#handle"
                 bounds={{ left: 0 }}
@@ -133,30 +192,30 @@ const Timeline = () => {
                   <AudioClip
                     key={index}
                     url={track.clips[0].url}
-                    projectInfo={projectInfo}
-                    setProjectInfo={setProjectInfo}
+                    projectData={projectData}
+                    // setProjectData={setProjectData}
                     isPlaying={isPlaying}
                     progress={progress}
-                    setProgress={setProgress}
+                    tracksData={tracksData[index]}
+                    // setProgress={setProgress}
                   />
                 </div>
               </Draggable>
-              <Bars projectInfo={projectInfo} />
+              <Bars projectData={projectData} />
             </Track>
           );
         })}
       </div>
       <Draggable>
         <Controls>
-          <button onClick={() => setIsPlaying(!isPlaying)}>
-            {!isPlaying ? "Play" : "Pause"}
-          </button>
+          <button onClick={() => handlePlay()}>Play</button>
+          <button onClick={() => handlePause()}>Pause</button>
           <span>bpm:</span>
           <input
             type="number"
-            value={projectInfo.tempo}
+            value={projectData.tempo}
             onChange={(event) => {
-              setProjectInfo((prev) => ({
+              setProjectData((prev) => ({
                 ...prev,
                 tempo: parseInt(event.target.value),
               }));
