@@ -50,37 +50,37 @@ const AudioClipTitle = styled.div`
   }
 `;
 
-const Timeline = () => {
-  const [projectData, setProjectData] = useState<{
-    name: string;
-    tempo: number;
-    tracks: object[];
-  }>({ name: "", tempo: 0, tracks: [] });
-  const [tracksData, setTracksdata] = useState<
+interface ProjectsData {
+  name: string;
+  tempo: number;
+}
+
+interface TracksData {
+  id: string;
+  name: string;
+  type: string;
+  clips: [
     {
+      filedId: string;
       id: string;
       name: string;
-      type: string;
-      clips: [
-        {
-          filedId: string;
-          id: string;
-          name: string;
-          startPoint: number;
-          url: string;
-        }
-      ];
-    }[]
-  >([]);
+      startPoint: number;
+      url: string;
+    }
+  ];
+}
 
-  // console.log(tracksData);
+const Timeline = () => {
+  const [projectData, setProjectData] = useState<ProjectsData>({
+    name: "",
+    tempo: 0,
+  });
+  const [tracksData, setTracksdata] = useState<TracksData[]>([]);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(1); // 小節數
   const [trackPosition, setTrackPosition] = useState({ x: 0, y: 0 });
   const progressIncrementRef = useRef<number | null>(null);
-
-  // console.log(progress);
 
   const barWidthCoefficient = 9.5; // 一個bar長9.5px 9.5:58
   const barWidth = (120 / projectData.tempo) * barWidthCoefficient;
@@ -101,7 +101,8 @@ const Timeline = () => {
     const projectId = "5BbhQTKKkFcM9nCjMG3I";
     const docRef = doc(db, "projects", projectId);
     const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      const newData = snapshot.data() as { name: string; tempo: number };
+      const newData = snapshot.data() as ProjectsData;
+      console.log("newData", newData);
       setProjectData(newData);
     });
 
@@ -114,10 +115,11 @@ const Timeline = () => {
     const projectId = "5BbhQTKKkFcM9nCjMG3I";
     const colRef = collection(db, "projects", projectId, "tracks");
     const unsubscribe = onSnapshot(colRef, (snapshot) => {
-      const newData: any = []; /////////////////////////////////////////////////////////////////type
+      const newData = [] as TracksData[];
       snapshot.forEach((doc) => {
-        // console.log(doc.data());
-        newData.push(doc.data());
+        const docData = doc.data() as TracksData;
+        newData.push(docData);
+        // newData.push(doc.data());
       });
       console.log("tracksData", newData);
       setTracksdata(newData);

@@ -88,9 +88,6 @@ const AudioClip = (props) => {
 
   useEffect(() => {
     console.log("duration", duration);
-    // console.log("props.isPlaying", props.isPlaying);
-    // console.log("props.progress", props.progress);
-    // console.log("props.tracksData", props.tracksData);
 
     if (!props.isPlaying && wavesurfer.current) {
       console.log("pause");

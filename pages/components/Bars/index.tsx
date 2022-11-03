@@ -42,7 +42,6 @@ const Bars = (props: {
   projectData: {
     name: string;
     tempo: number;
-    tracks: object[];
   };
 }) => {
   const barWidthCoefficient = 9.5; // 一個bar長9.5px 9.5:58
