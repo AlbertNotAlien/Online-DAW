@@ -55,7 +55,7 @@ const AudioClip = (props) => {
       wavesurfer.current.on("ready", function () {
         const audioDuration = wavesurfer.current.getDuration();
         console.log("audioDuration", audioDuration, "sec");
-        setDuration((audioDuration * props.projectData.tempo) / 60);
+        setDuration(audioDuration);
         // setProjectData((prev) => ({
         //   ...prev,
         //   duration: audioDuration, ///////////////////////////////////////////////////////////////////////////////////
@@ -87,8 +87,6 @@ const AudioClip = (props) => {
   }, []);
 
   useEffect(() => {
-    console.log("duration", duration);
-
     if (!props.isPlaying && wavesurfer.current) {
       console.log("pause");
       wavesurfer.current.pause();
@@ -103,11 +101,9 @@ const AudioClip = (props) => {
         props.progress - props.tracksData.clips[0].startPoint,
         props.tracksData.clips[0].startPoint + duration
       );
-      console.log(
-        "currentTime - startTime",
-        props.progress - props.tracksData.clips[0].startPoint
-      );
-      console.log("duration", props.tracksData.clips[0].startPoint + duration);
+      console.log("startTime", props.tracksData.clips[0].startPoint);
+      console.log("currentTime", props.progress);
+      console.log("duration", duration);
     }
   }, [props.isPlaying, props.tracksData.clips[0].startPoint < props.progress]);
 

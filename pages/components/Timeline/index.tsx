@@ -85,6 +85,16 @@ const Timeline = () => {
   const barWidthCoefficient = 9.5; // 一個bar長9.5px 9.5:58
   const barWidth = (120 / projectData.tempo) * barWidthCoefficient;
 
+  const transformTimeToBars = (sec: number) => {
+    const bars = (sec * projectData.tempo) / (60 * 2) + 1;
+    return bars;
+  };
+
+  const transformBarsToTime = (bars: number) => {
+    const sec = ((bars - 1) * (60 * 2)) / projectData.tempo;
+    return sec;
+  };
+
   // useEffect(() => {
   //   //project
   //   const docRef = doc(db, "projects", "5BbhQTKKkFcM9nCjMG3I");
@@ -136,31 +146,34 @@ const Timeline = () => {
     index: number
   ) => {
     const positionX = Math.abs(dragElement.x) < barWidth ? 0 : dragElement.x;
-    const currentBar = Math.floor(positionX / barWidth);
+    const currentBar = Math.floor(positionX / barWidth) + 1;
     setTrackPosition({ x: currentBar, y: 0 });
     console.log(trackPosition);
 
-    tracksData[index].clips[0].startPoint = currentBar;
+    tracksData[index].clips[0].startPoint = transformBarsToTime(currentBar);
+    console.log("currentBar", currentBar);
   };
 
   const handleClickProgressLine = (e: { clientX: number }) => {
-    const positionRemainder =
-      e.clientX % ((120 / projectData.tempo) * barWidthCoefficient);
+    const positionRemainder = e.clientX % barWidth;
     const currentPosition =
       Math.abs(e.clientX - positionRemainder) < barWidth
         ? 0
         : e.clientX - positionRemainder;
     const currentBar = currentPosition / barWidth + 1;
-    setProgress(currentBar);
+    setProgress(transformBarsToTime(currentBar));
   };
 
   const handlePlay = () => {
     if (isPlaying) return;
     console.log("handlePlay");
     setIsPlaying(true);
+    const incrementFrequency = 20;
     progressIncrementRef.current = window.setInterval(() => {
-      setProgress((prev) => prev + 0.05);
-    }, 50);
+      setProgress(
+        (prev) => prev + transformBarsToTime(1 / incrementFrequency + 1)
+      );
+    }, 1000 / incrementFrequency);
   };
 
   const handlePause = () => {
@@ -174,7 +187,9 @@ const Timeline = () => {
   return (
     <>
       <div>timeline</div>
-      <Progressline progressLinePosition={(progress - 1) * barWidth} />
+      <Progressline
+        progressLinePosition={(transformTimeToBars(progress) - 1) * barWidth}
+      />
       <div>
         {tracksData.map((track, index) => {
           return (
@@ -195,11 +210,11 @@ const Timeline = () => {
                     key={index}
                     url={track.clips[0].url}
                     projectData={projectData}
-                    // setProjectData={setProjectData}
                     isPlaying={isPlaying}
                     progress={progress}
                     tracksData={tracksData[index]}
-                    // setProgress={setProgress}
+                    transformTimeToBars={transformTimeToBars}
+                    transformBarsToTime={transformBarsToTime}
                   />
                 </div>
               </Draggable>
@@ -223,7 +238,9 @@ const Timeline = () => {
               }));
             }}
           ></input>
-          <div className="progress">{`${Math.floor(progress)} 小節`}</div>
+          <div className="progress">{`${Math.floor(
+            transformTimeToBars(progress)
+          )} 小節`}</div>
         </Controls>
       </Draggable>
     </>
