@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
+// import audio from "../../../public/audio/20220104_test.mp3";
+// import audio from "public/audio/20220927_快樂丸.mp3";
 
 const Clip = styled.div`
   position: relative;
@@ -22,7 +24,7 @@ const formWaveSurferOptions = (waveformRef) => ({
   interact: false,
 });
 
-const AudioClip = (props) => {
+const WaveSurfer = (props) => {
   const waveformRef = useRef(null);
   const timelineRef = useRef(null);
   const wavesurfer = useRef(null);
@@ -49,12 +51,13 @@ const AudioClip = (props) => {
       );
 
       wavesurfer.current = WaveSurfer.create(options);
+      console.log(props.url);
       wavesurfer.current.load(props.url);
-      // console.log(props.url);
+      // wavesurfer.current.load("audio/20220927_快樂丸.mp3");
 
       wavesurfer.current.on("ready", function () {
         const audioDuration = wavesurfer.current.getDuration();
-        console.log("audioDuration", audioDuration, "sec");
+        // console.log("audioDuration", audioDuration, "sec");
         setDuration(audioDuration);
         // setProjectData((prev) => ({
         //   ...prev,
@@ -109,11 +112,11 @@ const AudioClip = (props) => {
 
   return (
     <div>
-      <Clip id="waveform" ref={waveformRef}></Clip>
+      <Clip id="waveform" ref={waveformRef} />
       <TimelineBlock id="wave-timeline" ref={timelineRef} />
     </div>
   );
 };
 // });
 
-export default AudioClip;
+export default WaveSurfer;
