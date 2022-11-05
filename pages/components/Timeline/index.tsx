@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, SetStateAction } from "react";
+import { useState, useEffect, useRef, FC } from "react";
 import styled from "styled-components";
 import Draggable from "react-draggable";
 import {
@@ -17,6 +17,7 @@ import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import Bars from "../Bars";
 import WaveSurfer from "../AudioClip";
 import Record from "../Record";
+import useRecorder from "../Record/useRecorder";
 
 interface StyleProps {
   progressLinePosition: number;
@@ -46,6 +47,7 @@ const Progressline = styled.div<StyleProps>`
   height: 100%;
   position: absolute;
   left: ${(props) => props.progressLinePosition}px;
+  /* top: 0px; */
 `;
 
 const Track = styled.div`
@@ -82,7 +84,7 @@ const Timeline = () => {
   const barWidth = (120 / projectData.tempo) * barWidthCoefficient;
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(1); // 小節數
+  const [progress, setProgress] = useState(0); // 毫秒
   const [trackPosition, setTrackPosition] = useState({ x: 0, y: 0 });
   const progressIncrementRef = useRef<number | null>(null);
 
@@ -90,29 +92,21 @@ const Timeline = () => {
   const audioListRef = ref(storage, `projects/${projectId}/audios`);
   const [audioList, setAudioList] = useState<string[]>([]);
 
-  console.log("tracksData", tracksData);
+  const recordRef = useRef<HTMLDivElement>(null);
+  let [recordFile, recordURL, isRecording] = useRecorder();
+
+  // console.log("progress", progress);
+  // console.log("tracksData", tracksData);
 
   const convertTimeToBars = (sec: number) => {
-    const bars = (sec * projectData.tempo) / (60 * 2) + 1;
+    const bars = (sec * projectData.tempo) / 60 + 1;
     return bars;
   };
 
   const convertBarsToTime = (bars: number) => {
-    const sec = ((bars - 1) * (60 * 2)) / projectData.tempo;
+    const sec = ((bars - 1) * 60) / projectData.tempo;
     return sec;
   };
-
-  // useEffect(() => {
-  //   //project
-  //   const docRef = doc(db, "projects", "5BbhQTKKkFcM9nCjMG3I");
-  //   const unsubscribe = onSnapshot(docRef, (snapshot) => {
-  //     console.log(snapshot.data());
-  //   });
-
-  //   return () => {
-  //     unsubscribe();
-  //   };
-  // }, []);
 
   useEffect(() => {
     const docRef = doc(db, "projects", projectId);
@@ -142,27 +136,6 @@ const Timeline = () => {
     };
   }, []);
 
-  const handleDraggable = (
-    event: any,
-    dragElement: { x: number; y: number },
-    index: number
-  ) => {
-    const positionX = Math.abs(dragElement.x) < barWidth ? 0 : dragElement.x;
-    const currentBar = Math.floor(positionX / barWidth) + 1;
-    setTrackPosition({ x: currentBar, y: 0 });
-    tracksData[index].clips[0].startPoint = convertBarsToTime(currentBar);
-  };
-
-  const handleClickProgressLine = (e: { clientX: number }) => {
-    const positionRemainder = e.clientX % barWidth;
-    const currentPosition =
-      Math.abs(e.clientX - positionRemainder) < barWidth
-        ? 0
-        : e.clientX - positionRemainder;
-    const currentBar = currentPosition / barWidth + 1;
-    setProgress(convertBarsToTime(currentBar));
-  };
-
   useEffect(() => {
     listAll(audioListRef).then((response) => {
       response.items.forEach((item) => {
@@ -173,18 +146,30 @@ const Timeline = () => {
     });
   }, []);
 
+  const handleClipDraggable = (
+    event: any,
+    dragElement: { x: number; y: number },
+    index: number
+  ) => {
+    const positionX = Math.abs(dragElement.x) < barWidth ? 0 : dragElement.x;
+    const currentBar = Math.floor(positionX / barWidth) + 1;
+    setTrackPosition({ x: currentBar, y: 0 });
+    tracksData[index].clips[0].startPoint = convertBarsToTime(currentBar);
+  };
+
   // console.log(audioList);
 
   const handlePlay = () => {
-    if (isPlaying) return;
-
-    const incrementFrequency = 20;
-    progressIncrementRef.current = window.setInterval(() => {
-      setProgress(
-        (prev) => prev + convertBarsToTime(1 / incrementFrequency + 1)
-      );
-    }, 1000 / incrementFrequency);
-    setIsPlaying(true);
+    const incrementFrequency = 1;
+    // console.log(1000 / incrementFrequency);
+    if (!isPlaying) {
+      progressIncrementRef.current = window.setInterval(() => {
+        setProgress((prev) =>
+          Number((prev + 1 / incrementFrequency).toFixed(3))
+        );
+      }, 1000 / incrementFrequency);
+      setIsPlaying(true);
+    }
   };
 
   const handlePause = () => {
@@ -192,6 +177,16 @@ const Timeline = () => {
       clearInterval(progressIncrementRef.current);
       setIsPlaying(false);
     }
+  };
+
+  const handleClickProgressLine = (e: { clientX: number }) => {
+    const positionRemainder = e.clientX % barWidth;
+    const currentPosition =
+      Math.abs(e.clientX - positionRemainder) < barWidth // 第1小節
+        ? 0
+        : e.clientX - positionRemainder;
+    const currentBar = currentPosition / barWidth;
+    setProgress(convertBarsToTime(currentBar + 1));
   };
 
   const appendToFilename = (filename: string) => {
@@ -209,36 +204,6 @@ const Timeline = () => {
         fileDate +
         filename.substring(dotIndex)
       );
-    }
-  };
-
-  const handleUploadAudio = () => {
-    const files = uploadRef.current?.files;
-    console.log("files", files);
-    if (files && files?.length > 0) {
-      const newTrackName = `Audio ${tracksData.length + 1}`;
-      const newFileName = appendToFilename(files[0].name);
-      const newStartPoint = convertTimeToBars(progress);
-
-      const audioRef = ref(
-        storage,
-        `projects/${projectId}/audios/${newFileName}`
-      );
-      // const audioRef = ref(storage, `audios/${files[0].name + v4()}`);
-
-      uploadBytes(audioRef, files[0]).then((snapshot) => {
-        getDownloadURL(snapshot.ref).then((url) => {
-          setAudioList((prev) => [...prev, url]);
-
-          uploadFileInfo(
-            newTrackName,
-            "audio",
-            newFileName,
-            newStartPoint,
-            url
-          );
-        });
-      });
     }
   };
 
@@ -270,7 +235,33 @@ const Timeline = () => {
     }
   };
 
-  console.log(audioList);
+  const handleUploadAudio = (files: any) => {
+    if (files && files?.length > 0) {
+      const newTrackName = `Audio ${tracksData.length + 1}`;
+      const newFileName = appendToFilename(files[0].name);
+      const newStartPoint = convertTimeToBars(progress);
+
+      const audioRef = ref(
+        storage,
+        `projects/${projectId}/audios/${newFileName}`
+      );
+      // const audioRef = ref(storage, `audios/${files[0].name + v4()}`);
+
+      uploadBytes(audioRef, files[0]).then((snapshot) => {
+        getDownloadURL(snapshot.ref).then((url) => {
+          setAudioList((prev) => [...prev, url]);
+
+          uploadFileInfo(
+            newTrackName,
+            "audio",
+            newFileName,
+            newStartPoint,
+            url
+          );
+        });
+      });
+    }
+  };
 
   return (
     <>
@@ -278,8 +269,8 @@ const Timeline = () => {
         progressLinePosition={(convertTimeToBars(progress) - 1) * barWidth}
       />
       <Controls>
-        <button onClick={() => handlePlay()}>Play</button>
-        <button onClick={() => handlePause()}>Pause</button>
+        <button onClick={handlePlay}>Play</button>
+        <button onClick={handlePause}>Pause</button>
         <span>bpm:</span>
         <input
           type="number"
@@ -294,6 +285,7 @@ const Timeline = () => {
         <div className="progress">{`${Math.floor(
           convertTimeToBars(progress)
         )} 小節`}</div>
+        <div>{`${progress.toFixed(2)} 秒`}</div>
       </Controls>
       <Controls>
         <input
@@ -303,7 +295,13 @@ const Timeline = () => {
           ref={uploadRef}
           // onInput={handleUploadAudio}
         />
-        <button onClick={handleUploadAudio}>Upload Audio</button>
+        <button
+          onClick={() => {
+            handleUploadAudio(uploadRef.current?.files);
+          }}
+        >
+          Upload Audio
+        </button>
       </Controls>
       <Controls>
         <Record />
@@ -315,14 +313,13 @@ const Timeline = () => {
               <Draggable
                 axis="x"
                 onStop={(event, dragElement) =>
-                  handleDraggable(event, dragElement, index)
+                  handleClipDraggable(event, dragElement, index)
                 }
                 grid={[barWidth, 0]}
                 defaultPosition={{
                   x:
-                    convertBarsToTime(
-                      tracksData[index].clips[0].startPoint - 1
-                    ) * barWidth,
+                    convertBarsToTime(tracksData[index].clips[0].startPoint) *
+                    barWidth,
                   y: 0,
                 }}
                 handle="#handle"
@@ -332,6 +329,7 @@ const Timeline = () => {
                   <WaveSurferTitle id="handle">clip</WaveSurferTitle>
                   <WaveSurfer
                     key={index}
+                    index={index}
                     url={track.clips[0].url}
                     projectData={projectData}
                     isPlaying={isPlaying}

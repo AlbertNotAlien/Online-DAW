@@ -19,7 +19,9 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "pages/components/AudioClip/index.tsx"
+    "pages/components/AudioClip/index.tsx",
+    "pages/components/Record/useRecorder.jsx",
+    "pages/components/Record/useRecorder.js"
   ],
   "exclude": ["node_modules"]
 }

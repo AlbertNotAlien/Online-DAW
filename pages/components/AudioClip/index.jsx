@@ -28,8 +28,12 @@ const WaveSurfer = (props) => {
   const waveformRef = useRef(null);
   const timelineRef = useRef(null);
   const wavesurfer = useRef(null);
-
   const [duration, setDuration] = useState(0);
+  const startPoint = props.convertBarsToTime(
+    props.tracksData.clips[0].startPoint
+  );
+
+  console.log("startPoint", props.index, startPoint);
 
   useEffect(() => {
     const create = async () => {
@@ -51,7 +55,7 @@ const WaveSurfer = (props) => {
       );
 
       wavesurfer.current = WaveSurfer.create(options);
-      console.log(props.url);
+      // console.log(props.url);
       wavesurfer.current.load(props.url);
       // wavesurfer.current.load("audio/20220927_快樂丸.mp3");
 
@@ -90,25 +94,38 @@ const WaveSurfer = (props) => {
   }, []);
 
   useEffect(() => {
-    if (!props.isPlaying && wavesurfer.current) {
+    console.log(wavesurfer.current?.isPlaying());
+    if (
+      wavesurfer.current &&
+      wavesurfer.current.isPlaying() &&
+      !props.isPlaying
+    ) {
       console.log("pause");
       wavesurfer.current.pause();
-    }
-    if (
-      props.progress > props.tracksData.clips[0].startPoint &&
+    } else if (
+      wavesurfer.current &&
+      !wavesurfer.current.isPlaying() &&
       props.isPlaying &&
-      wavesurfer.current
+      props.progress < startPoint
+    ) {
+      console.log("play");
+      console.log("setTimeout", startPoint - props.progress);
+      setTimeout(() => {
+        wavesurfer.current.play(0, duration);
+      }, (startPoint - props.progress) * 1000);
+    } else if (
+      wavesurfer.current &&
+      !wavesurfer.current.isPlaying() &&
+      props.isPlaying &&
+      props.progress > startPoint
     ) {
       console.log("play");
       wavesurfer.current.play(
-        props.progress - props.tracksData.clips[0].startPoint,
-        props.tracksData.clips[0].startPoint + duration
+        props.progress - startPoint,
+        startPoint + duration
       );
-      console.log("startTime", props.tracksData.clips[0].startPoint);
-      console.log("currentTime", props.progress);
-      console.log("duration", duration);
     }
-  }, [props.isPlaying, props.tracksData.clips[0].startPoint < props.progress]);
+  }, [props.isPlaying, startPoint < props.progress]);
 
   return (
     <div>

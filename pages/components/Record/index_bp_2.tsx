@@ -1,17 +1,13 @@
-// import * as React from "react";
-// import { useState, useEffect, useRef, FC } from "react";
+import * as React from "react";
+import { render } from "react-dom";
 import useRecorder from "./useRecorder";
-import Timeline from "../Timeline";
 
 const Record = () => {
-  let [recordFile, recordURL, isRecording, startRecording, stopRecording] =
-    useRecorder();
-
-  // let [handleUploadAudio] = Timeline();
+  let [audioURL, isRecording, startRecording, stopRecording] = useRecorder();
 
   return (
     <div className="App">
-      <audio src={recordURL} controls />
+      <audio src={audioURL} controls />
       <button onClick={startRecording} disabled={isRecording}>
         start recording
       </button>
