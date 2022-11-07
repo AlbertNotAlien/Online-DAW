@@ -18,12 +18,19 @@ const Record = (props) => {
   return (
     <div className="App">
       {/* <audio src={recordURL} controls /> */}
-      <button onClick={startRecording} disabled={isRecording}>
+      <button
+        onClick={() => {
+          startRecording();
+          props.handlePlay();
+        }}
+        disabled={isRecording}
+      >
         start recording
       </button>
       <button
         onClick={() => {
           stopRecording();
+          props.handlePause();
         }}
         disabled={!isRecording}
       >

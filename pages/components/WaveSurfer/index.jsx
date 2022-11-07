@@ -7,7 +7,7 @@ const Clip = styled.div`
   position: relative;
 `;
 
-const TimelineBlock = styled.div``;
+// const TimelineBlock = styled.div``;
 
 const formWaveSurferOptions = (waveformRef) => ({
   container: waveformRef,
@@ -26,40 +26,41 @@ const formWaveSurferOptions = (waveformRef) => ({
 
 const WaveSurfer = (props) => {
   const waveformRef = useRef(null);
-  const timelineRef = useRef(null);
+  // const timelineRef = useRef(null);
   const wavesurfer = useRef(null);
   const [duration, setDuration] = useState(0);
   const startPoint = props.convertBarsToTime(
     props.tracksData.clips[0].startPoint
   );
 
+  const [isMute, setIsMute] = useState(false);
+  const [isSolo, setIsSolo] = useState(false);
+
   // console.log("startPoint", props.index, startPoint);
 
   useEffect(() => {
     const create = async () => {
       const WaveSurfer = (await import("wavesurfer.js")).default;
-      const TimelinePlugin = (await import("wavesurfer.js/src/plugin/timeline"))
-        .default;
+      // const TimelinePlugin = (await import("wavesurfer.js/src/plugin/timeline"))
+      //   .default;
 
       const options = formWaveSurferOptions(waveformRef.current);
-      options.plugins.push(
-        TimelinePlugin.create({
-          container: "#wave-timeline",
-          timeInterval: 1,
-          primaryColor: "blue",
-          primaryFontColor: "blue",
-          secondaryColor: "red",
-          secondaryFontColor: "red",
-          offset: 0,
-        })
-      );
+      // options.plugins.push(
+      //   TimelinePlugin.create({
+      //     container: "#wave-timeline",
+      //     timeInterval: 1,
+      //     primaryColor: "blue",
+      //     primaryFontColor: "blue",
+      //     secondaryColor: "red",
+      //     secondaryFontColor: "red",
+      //     offset: 0,
+      //   })
+      // );
 
       wavesurfer.current = WaveSurfer.create(options);
-      // console.log(props.url);
       if (props.url && props.tracksData.type === "audio") {
         wavesurfer.current.load(props.url);
       }
-      // wavesurfer.current.load("audio/20220927_快樂丸.mp3");
 
       wavesurfer.current.on("ready", function () {
         const audioDuration = wavesurfer.current.getDuration();
@@ -102,7 +103,7 @@ const WaveSurfer = (props) => {
       wavesurfer.current.isPlaying() &&
       !props.isPlaying
     ) {
-      console.log("pause");
+      // console.log("pause");
       wavesurfer.current.pause();
     } else if (
       wavesurfer.current &&
@@ -110,8 +111,8 @@ const WaveSurfer = (props) => {
       props.isPlaying &&
       props.progress < startPoint
     ) {
-      console.log("play");
-      console.log("setTimeout", startPoint - props.progress);
+      // console.log("play");
+      // console.log("setTimeout", startPoint - props.progress);
       setTimeout(() => {
         wavesurfer.current.play(0, duration);
       }, (startPoint - props.progress) * 1000);
@@ -129,10 +130,18 @@ const WaveSurfer = (props) => {
     }
   }, [props.isPlaying, startPoint < props.progress]);
 
+  useEffect(() => {
+    console.log(props.tracksData.isMuted);
+    if (wavesurfer.current) {
+      console.log(props.tracksData.isMuted);
+      wavesurfer.current.setMute(props.tracksData.isMuted ? true : false);
+    }
+  }, [props.tracksData.isMuted]);
+
   return (
     <div>
       <Clip id="waveform" ref={waveformRef} />
-      <TimelineBlock id="wave-timeline" ref={timelineRef} />
+      {/* <TimelineBlock id="wave-timeline" ref={timelineRef} /> */}
     </div>
   );
 };
