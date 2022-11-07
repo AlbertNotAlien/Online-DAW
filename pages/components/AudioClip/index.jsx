@@ -33,7 +33,7 @@ const WaveSurfer = (props) => {
     props.tracksData.clips[0].startPoint
   );
 
-  console.log("startPoint", props.index, startPoint);
+  // console.log("startPoint", props.index, startPoint);
 
   useEffect(() => {
     const create = async () => {
@@ -56,7 +56,9 @@ const WaveSurfer = (props) => {
 
       wavesurfer.current = WaveSurfer.create(options);
       // console.log(props.url);
-      wavesurfer.current.load(props.url);
+      if (props.url && props.tracksData.type === "audio") {
+        wavesurfer.current.load(props.url);
+      }
       // wavesurfer.current.load("audio/20220927_快樂丸.mp3");
 
       wavesurfer.current.on("ready", function () {
@@ -94,7 +96,7 @@ const WaveSurfer = (props) => {
   }, []);
 
   useEffect(() => {
-    console.log(wavesurfer.current?.isPlaying());
+    // console.log(wavesurfer.current?.isPlaying());
     if (
       wavesurfer.current &&
       wavesurfer.current.isPlaying() &&

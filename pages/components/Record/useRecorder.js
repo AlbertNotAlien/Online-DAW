@@ -5,6 +5,7 @@ const useRecorder = () => {
   const [recordFile, setRecordFile] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recorder, setRecorder] = useState(null);
+  let audioChunks = [];
 
   useEffect(() => {
     // Lazily obtain recorder first time we're recording.
@@ -25,8 +26,9 @@ const useRecorder = () => {
     // Obtain the audio when ready.
     const handleData = (e) => {
       setRecordURL(window.URL.createObjectURL(e.data));
-      setRecordFile(e.data);
-      console.log(e.data);
+      audioChunks.push(e.data);
+      let blob = new Blob(audioChunks, { type: "audio/mp3" });
+      setRecordFile(blob);
     };
 
     recorder.addEventListener("dataavailable", handleData);

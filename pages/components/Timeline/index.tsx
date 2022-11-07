@@ -9,6 +9,7 @@ import {
   updateDoc,
   onSnapshot,
   DocumentData,
+  orderBy,
 } from "firebase/firestore";
 import { db } from "../../../config/firebase";
 import { storage } from "../../../config/firebase";
@@ -18,9 +19,23 @@ import Bars from "../Bars";
 import WaveSurfer from "../AudioClip";
 import Record from "../Record";
 import useRecorder from "../Record/useRecorder";
+import Tone from "../ToneJs";
+import Scribbletune from "../Scribbletune";
+// import PianoRoll from "../PianoRoll";
 
-interface StyleProps {
+interface ProgresslineProps {
   progressLinePosition: number;
+}
+
+interface MidiRegionProps {
+  barWidth: number;
+  length: number;
+}
+
+interface MidiNoteProps {
+  barWidth: number;
+  startTime: number;
+  pitch: number;
 }
 
 interface ProjectsData {
@@ -34,14 +49,14 @@ interface TracksData {
   type: string;
   clips: [
     {
-      fileName: string;
+      clipName: string;
       startPoint: number;
       url: string;
     }
   ];
 }
 
-const Progressline = styled.div<StyleProps>`
+const Progressline = styled.div<ProgresslineProps>`
   width: 1px;
   background-color: darkcyan;
   height: 100%;
@@ -60,9 +75,10 @@ const Controls = styled.div`
   column-gap: 15px;
 `;
 
-const WaveSurferTitle = styled.div`
+const ClipTitle = styled.div`
   height: 20px;
   width: 100%;
+  padding-left: 10px;
   background-color: darkcyan;
 
   cursor: move; /* fallback if grab cursor is unsupported */
@@ -71,6 +87,25 @@ const WaveSurferTitle = styled.div`
   &:active {
     cursor: grabbing;
   }
+`;
+
+const MidiRegion = styled.div<MidiRegionProps>`
+  width: ${(props) => props.barWidth * props.length}px;
+  height: 130px;
+  background-color: #ffffff30;
+  border: 1px solid #ffffff;
+  margin-left: ${(props) => props.barWidth * 2}px;
+  position: relative;
+`;
+
+const MidiNote = styled.div<MidiNoteProps>`
+  width: ${(props) => props.barWidth * 0.25}px;
+  height: 5px;
+  background-color: #ffffff;
+  border: 1px solid #ffffff;
+  position: absolute;
+  bottom: ${(props) => props.pitch * 5}px;
+  left: ${(props) => props.barWidth * 0.25 * props.startTime}px;
 `;
 
 const Timeline = () => {
@@ -122,6 +157,7 @@ const Timeline = () => {
 
   useEffect(() => {
     const colRef = collection(db, "projects", projectId, "tracks");
+    // const q = (colRef, orderBy(""));
     const unsubscribe = onSnapshot(colRef, (snapshot) => {
       const newData = [] as TracksData[];
       snapshot.forEach((doc) => {
@@ -160,17 +196,35 @@ const Timeline = () => {
   // console.log(audioList);
 
   const handlePlay = () => {
-    const incrementFrequency = 1;
-    // console.log(1000 / incrementFrequency);
+    const incrementFrequency = 20;
     if (!isPlaying) {
       progressIncrementRef.current = window.setInterval(() => {
-        setProgress((prev) =>
-          Number((prev + 1 / incrementFrequency).toFixed(3))
-        );
+        setProgress((prev) => Number(prev + 1 / incrementFrequency));
       }, 1000 / incrementFrequency);
       setIsPlaying(true);
     }
   };
+
+  // const handlePlay = () => {
+  //   setIsPlaying(true);
+  // };
+
+  // useEffect(() => {
+  //   const incrementFrequency = 100;
+  //   if (isPlaying) {
+  //     progressIncrementRef.current = window.setInterval(() => {
+  //       setProgress((prev) =>
+  //         Number((prev + 1 / incrementFrequency).toFixed(3))
+  //       );
+  //       console.log("test");
+  //     }, 1000 / incrementFrequency);
+  //   }
+  //   return () => {
+  //     if (progressIncrementRef.current && isPlaying) {
+  //       clearInterval(progressIncrementRef.current);
+  //     }
+  //   };
+  // }, [isPlaying]);
 
   const handlePause = () => {
     if (progressIncrementRef.current && isPlaying) {
@@ -190,27 +244,32 @@ const Timeline = () => {
   };
 
   const appendToFilename = (filename: string) => {
-    const dotIndex = filename.lastIndexOf(".");
     const date = new Date();
     const fileDate = `${date.getFullYear()}-${
       date.getMonth() + 1
     }-${date.getDate()}_${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}-${date.getMilliseconds()}`;
-    if (dotIndex === -1) {
-      return filename + "_" + fileDate;
+
+    if (filename?.lastIndexOf(".")) {
+      const dotIndex = filename.lastIndexOf(".");
+      if (dotIndex === -1) {
+        return filename + "_" + fileDate;
+      } else {
+        return (
+          filename.substring(0, dotIndex) +
+          "_" +
+          fileDate +
+          filename.substring(dotIndex)
+        );
+      }
     } else {
-      return (
-        filename.substring(0, dotIndex) +
-        "_" +
-        fileDate +
-        filename.substring(dotIndex)
-      );
+      return filename + "_" + fileDate;
     }
   };
 
   const uploadFileInfo = async (
     trackName: string,
     type: string,
-    fileName: string,
+    clipName: string,
     startPoint: number,
     url: string
   ) => {
@@ -222,7 +281,7 @@ const Timeline = () => {
         type: type,
         clips: [
           {
-            fileName: fileName,
+            clipName: clipName,
             startPoint: startPoint,
             url: url,
           },
@@ -235,19 +294,26 @@ const Timeline = () => {
     }
   };
 
-  const handleUploadAudio = (files: any) => {
-    if (files && files?.length > 0) {
+  const handleUploadAudio = (file: any) => {
+    console.log("handleUploadAudio");
+    console.log("file", file);
+
+    if (file) {
       const newTrackName = `Audio ${tracksData.length + 1}`;
-      const newFileName = appendToFilename(files[0].name);
-      const newStartPoint = convertTimeToBars(progress);
+      const newFileName = appendToFilename(file.name || "sample");
+      const newStartPoint = 1;
+      // const newStartPoint = convertTimeToBars(progress);
 
       const audioRef = ref(
         storage,
         `projects/${projectId}/audios/${newFileName}`
       );
-      // const audioRef = ref(storage, `audios/${files[0].name + v4()}`);
 
-      uploadBytes(audioRef, files[0]).then((snapshot) => {
+      // const audioRef = ref(storage, `audios/${file.name + v4()}`);
+
+      console.log("file", file);
+
+      uploadBytes(audioRef, file).then((snapshot) => {
         getDownloadURL(snapshot.ref).then((url) => {
           setAudioList((prev) => [...prev, url]);
 
@@ -258,6 +324,7 @@ const Timeline = () => {
             newStartPoint,
             url
           );
+          console.log("uploadBytes");
         });
       });
     }
@@ -285,7 +352,7 @@ const Timeline = () => {
         <div className="progress">{`${Math.floor(
           convertTimeToBars(progress)
         )} 小節`}</div>
-        <div>{`${progress.toFixed(2)} 秒`}</div>
+        <div>{`${progress.toFixed(3)} 秒`}</div>
       </Controls>
       <Controls>
         <input
@@ -297,54 +364,106 @@ const Timeline = () => {
         />
         <button
           onClick={() => {
-            handleUploadAudio(uploadRef.current?.files);
+            if (uploadRef.current?.files) {
+              handleUploadAudio(uploadRef.current?.files[0]);
+            }
           }}
         >
           Upload Audio
         </button>
       </Controls>
       <Controls>
-        <Record />
+        <Record handleUploadAudio={handleUploadAudio} />
       </Controls>
       <div>
-        {tracksData.map((track, index) => {
-          return (
-            <Track key={index} onClick={handleClickProgressLine}>
-              <Draggable
-                axis="x"
-                onStop={(event, dragElement) =>
-                  handleClipDraggable(event, dragElement, index)
-                }
-                grid={[barWidth, 0]}
-                defaultPosition={{
-                  x:
-                    convertBarsToTime(tracksData[index].clips[0].startPoint) *
-                    barWidth,
-                  y: 0,
-                }}
-                handle="#handle"
-                bounds={{ left: 0 }}
+        {tracksData.length > 0 &&
+          tracksData.map((track, index) => {
+            return (
+              <Track
+                key={`${track.trackName}-${index}`}
+                onClick={handleClickProgressLine}
               >
-                <div>
-                  <WaveSurferTitle id="handle">clip</WaveSurferTitle>
-                  <WaveSurfer
-                    key={index}
-                    index={index}
-                    url={track.clips[0].url}
-                    projectData={projectData}
-                    isPlaying={isPlaying}
-                    progress={progress}
-                    tracksData={tracksData[index]}
-                    convertTimeToBars={convertTimeToBars}
-                    convertBarsToTime={convertBarsToTime}
-                  />
-                </div>
-              </Draggable>
-              <Bars projectData={projectData} />
-            </Track>
-          );
-        })}
+                <Draggable
+                  axis="x"
+                  onStop={(event, dragElement) =>
+                    handleClipDraggable(event, dragElement, index)
+                  }
+                  grid={[barWidth, 0]}
+                  defaultPosition={{
+                    x:
+                      convertBarsToTime(tracksData[index].clips[0].startPoint) *
+                      barWidth,
+                    y: 0,
+                  }}
+                  handle="#handle"
+                  bounds={{ left: 0 }}
+                >
+                  {track.type === "audio" ? (
+                    <div>
+                      <ClipTitle id="handle">
+                        {track.clips[0].clipName}
+                      </ClipTitle>
+                      <WaveSurfer
+                        key={index}
+                        index={index}
+                        url={track.clips[0].url}
+                        projectData={projectData}
+                        isPlaying={isPlaying}
+                        progress={progress}
+                        tracksData={tracksData[index]}
+                        convertTimeToBars={convertTimeToBars}
+                        convertBarsToTime={convertBarsToTime}
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <ClipTitle>{track.clips[0].clipName}</ClipTitle>
+                      <MidiRegion barWidth={barWidth} length={3}>
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={0}
+                          pitch={10}
+                        />
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={1}
+                          pitch={12}
+                        />
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={2}
+                          pitch={15}
+                        />
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={3}
+                          pitch={10}
+                        />
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={4}
+                          pitch={12}
+                        />
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={5}
+                          pitch={15}
+                        />
+                      </MidiRegion>
+                    </>
+                  )}
+                </Draggable>
+                <Bars projectData={projectData} />
+              </Track>
+            );
+          })}
       </div>
+      <Tone
+        isPlaying={isPlaying}
+        tracksData={tracksData}
+        projectData={projectData}
+      />
+      {/* <Scribbletune /> */}
     </>
   );
 };
