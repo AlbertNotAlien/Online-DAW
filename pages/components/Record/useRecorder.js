@@ -5,8 +5,8 @@ const useRecorder = () => {
   const [recordFile, setRecordFile] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recorder, setRecorder] = useState(null);
-  let audioChunks = [];
 
+  let audioChunks = [];
   useEffect(() => {
     // Lazily obtain recorder first time we're recording.
     if (recorder === null) {
@@ -60,4 +60,5 @@ async function requestRecorder() {
   };
   return new MediaRecorder(stream, options);
 }
+
 export default useRecorder;

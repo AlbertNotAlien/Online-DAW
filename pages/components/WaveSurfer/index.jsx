@@ -15,7 +15,7 @@ const formWaveSurferOptions = (waveformRef) => ({
   progressColor: "#0178FF",
   cursorColor: "OrangeRed",
   responsive: true,
-  height: 150,
+  height: 130,
   normalize: true,
   partialRender: true,
   fillParent: false,

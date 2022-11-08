@@ -19,8 +19,9 @@ import Bars from "../Bars";
 import WaveSurfer from "../WaveSurfer";
 import Record from "../Record";
 import useRecorder from "../Record/useRecorder";
+import useTimer from "../Timer/useTimer";
 import Tone from "../ToneJs";
-import Scribbletune from "../Scribbletune";
+// import Scribbletune from "../Scribbletune";
 // import PianoRoll from "../PianoRoll";
 
 interface ProgresslineProps {
@@ -84,6 +85,7 @@ const Controls = styled.div`
 const TrackLine = styled.div`
   display: flex;
   width: 100%;
+  margin-bottom: 10px;
 `;
 
 const TrackControls = styled.div`
@@ -168,7 +170,8 @@ const Timeline = () => {
   const [audioList, setAudioList] = useState<string[]>([]);
 
   const recordRef = useRef<HTMLDivElement>(null);
-  let [recordFile, recordURL, isRecording] = useRecorder();
+  // let [recordFile, recordURL, isRecording] = useRecorder();
+  const [startTimer, pauseTimer] = useTimer();
 
   // console.log("progress", progress);
   // console.log("tracksData", tracksData);
@@ -236,12 +239,13 @@ const Timeline = () => {
   // console.log(audioList);
 
   const handlePlay = () => {
-    const incrementFrequency = 20;
+    const incrementFrequency = 1;
     if (!isPlaying) {
       progressIncrementRef.current = window.setInterval(() => {
         setProgress((prev) => Number(prev + 1 / incrementFrequency));
       }, 1000 / incrementFrequency);
       setIsPlaying(true);
+      startTimer(0, 0, 0, 0);
     }
   };
 
@@ -270,6 +274,7 @@ const Timeline = () => {
     if (progressIncrementRef.current && isPlaying) {
       clearInterval(progressIncrementRef.current);
       setIsPlaying(false);
+      pauseTimer();
     }
   };
 
