@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, FC } from "react";
+import { useState, useEffect, useRef, MouseEvent } from "react";
 import styled from "styled-components";
 import Draggable from "react-draggable";
 import {
@@ -157,24 +157,21 @@ const Timeline = () => {
   });
   const [tracksData, setTracksdata] = useState<TracksData[]>([]);
   const projectId = "5BbhQTKKkFcM9nCjMG3I";
-  const barWidthCoefficient = 9.5; // 一個bar長9.5px 9.5:58
+  const barWidthCoefficient = 9.5; // 一個bar長 9.5px/58bpm
   const barWidth = (120 / projectData.tempo) * barWidthCoefficient;
 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0); // 毫秒
+  const [progress, setProgress] = useState<number>(0);
   const [trackPosition, setTrackPosition] = useState({ x: 0, y: 0 });
-  const progressIncrementRef = useRef<number | null>(null);
+  const progressIncrementRef = useRef<number>(0);
 
   const uploadRef = useRef<HTMLInputElement>(null);
   const audioListRef = ref(storage, `projects/${projectId}/audios`);
   const [audioList, setAudioList] = useState<string[]>([]);
 
   const recordRef = useRef<HTMLDivElement>(null);
-  // let [recordFile, recordURL, isRecording] = useRecorder();
-  const [startTimer, pauseTimer] = useTimer();
-
-  // console.log("progress", progress);
-  // console.log("tracksData", tracksData);
+  const secondsRef = useRef<number>(0);
+  const intervalRef = useRef<any>(null);
 
   const convertTimeToBars = (sec: number) => {
     const bars = (sec * projectData.tempo) / 60 + 1;
@@ -200,7 +197,6 @@ const Timeline = () => {
 
   useEffect(() => {
     const colRef = collection(db, "projects", projectId, "tracks");
-    // const q = (colRef, orderBy(""));
     const unsubscribe = onSnapshot(colRef, (snapshot) => {
       const newData = [] as TracksData[];
       snapshot.forEach((doc) => {
@@ -236,46 +232,34 @@ const Timeline = () => {
     tracksData[index].clips[0].startPoint = convertBarsToTime(currentBar);
   };
 
-  // console.log(audioList);
-
   const handlePlay = () => {
-    const incrementFrequency = 1;
     if (!isPlaying) {
-      progressIncrementRef.current = window.setInterval(() => {
-        setProgress((prev) => Number(prev + 1 / incrementFrequency));
-      }, 1000 / incrementFrequency);
       setIsPlaying(true);
-      startTimer(0, 0, 0, 0);
+      startTimer(progress);
     }
   };
 
-  // const handlePlay = () => {
-  //   setIsPlaying(true);
-  // };
-
-  // useEffect(() => {
-  //   const incrementFrequency = 100;
-  //   if (isPlaying) {
-  //     progressIncrementRef.current = window.setInterval(() => {
-  //       setProgress((prev) =>
-  //         Number((prev + 1 / incrementFrequency).toFixed(3))
-  //       );
-  //       console.log("test");
-  //     }, 1000 / incrementFrequency);
-  //   }
-  //   return () => {
-  //     if (progressIncrementRef.current && isPlaying) {
-  //       clearInterval(progressIncrementRef.current);
-  //     }
-  //   };
-  // }, [isPlaying]);
-
   const handlePause = () => {
-    if (progressIncrementRef.current && isPlaying) {
-      clearInterval(progressIncrementRef.current);
+    if (isPlaying) {
       setIsPlaying(false);
       pauseTimer();
     }
+  };
+
+  const startTimer = (prev_seconds: number) => {
+    const startTime = new Date();
+
+    intervalRef.current = setInterval(() => {
+      const timeElapsed = new Date().getTime() - startTime.getTime(); // milliseconds
+      const newMilliseconds = timeElapsed + prev_seconds * 1000;
+
+      secondsRef.current = newMilliseconds / 1000;
+      setProgress(secondsRef.current);
+    }, 25);
+  };
+
+  const pauseTimer = () => {
+    clearInterval(intervalRef.current);
   };
 
   const handleTrackMute = async (isMuted: boolean, trackId: string) => {
@@ -304,7 +288,8 @@ const Timeline = () => {
     }
   };
 
-  const handleClickProgressLine = (e: { clientX: number }) => {
+  const handleClickProgressLine = (e: MouseEvent<HTMLDivElement>) => {
+    console.log(e.clientX);
     const clickPosition = e.clientX - 200;
     const positionRemainder = clickPosition % barWidth;
     const currentPosition =
@@ -461,7 +446,10 @@ const Timeline = () => {
         {tracksData.length > 0 &&
           tracksData.map((track, index) => {
             return (
-              <TrackLine key={`${track.trackName}-${index}`}>
+              <TrackLine
+                onClick={handleClickProgressLine}
+                key={`${track.trackName}-${index}`}
+              >
                 <TrackControls>
                   <IsSoloButton
                     onClick={() => {
@@ -480,7 +468,7 @@ const Timeline = () => {
                     Mute
                   </IsMutedButton>
                 </TrackControls>
-                <Track onClick={handleClickProgressLine}>
+                <Track>
                   <Draggable
                     axis="x"
                     onStop={(event, dragElement) =>
@@ -496,6 +484,7 @@ const Timeline = () => {
                     }}
                     handle="#handle"
                     bounds={{ left: 0 }}
+                    // key={barWidth}
                   >
                     {track.type === "audio" ? (
                       <div>

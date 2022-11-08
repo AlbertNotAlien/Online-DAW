@@ -39,19 +39,19 @@ export default function App(props) {
         "8n",
         (startTime * props.projectData.tempo) / 120
       );
-      console.log((startTime * props.projectData.tempo) / 120);
+      // console.log((startTime * props.projectData.tempo) / 120);
     }
   };
 
   const handlePlayMelody = () => {
     // console.log("handlePlayMelody");
-    console.log(props.tracksData.map((clip) => clip));
+    // console.log(props.tracksData.map((clip) => clip));
     const melody = props.tracksData
       .map((clip) => clip)
       .filter((clip) => {
         return clip.type === "midi";
       });
-    console.log(melody[0].clips[0].melody);
+    // console.log(melody[0].clips[0].melody);
     melody[0].clips[0].melody.forEach((data) => {
       playMelody(data.note, data.octave, data.startTime);
     });
