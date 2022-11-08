@@ -22,7 +22,6 @@ export default function App(props) {
     const vol = new Tone.Volume(-50).toDestination();
     const newSynth = new Tone.Synth().connect(vol).toDestination();
     setInstrument(newSynth);
-    // console.log("newSynth");
   }, []);
 
   const playNote = (note, octave, startTime) => {
@@ -66,24 +65,12 @@ export default function App(props) {
   }, [instrument, props.isPlaying]);
 
   return (
-    <div className="App">
-      <div className="note-wrapper">
-        <button className="note" onClick={() => playNote("C", 4, 0)}>
-          C
-        </button>
-        <button className="note" onClick={() => playNote("D", 4, "4n")}>
-          D
-        </button>
-        <button className="note" onClick={() => playNote("E", 4, 0)}>
-          E
-        </button>
-        <button className="note" onClick={() => playNote("G", 4, 0)}>
-          G
-        </button>
+    <>
+      {/* <div className="note-wrapper">
         <button className="note" onClick={() => playNote("A", 4, 0)}>
           A
         </button>
-      </div>
-    </div>
+      </div> */}
+    </>
   );
 }

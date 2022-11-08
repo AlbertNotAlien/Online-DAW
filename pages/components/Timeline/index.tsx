@@ -20,9 +20,8 @@ import WaveSurfer from "../WaveSurfer";
 import Record from "../Record";
 import useRecorder from "../Record/useRecorder";
 import useTimer from "../Timer/useTimer";
-import Tone from "../ToneJs";
-// import Scribbletune from "../Scribbletune";
-// import PianoRoll from "../PianoRoll";
+import Tone from "../Tone";
+import PianoRoll from "../PianoRoll";
 
 interface ProgresslineProps {
   progressLinePosition: number;
@@ -288,16 +287,17 @@ const Timeline = () => {
     }
   };
 
-  const handleClickProgressLine = (e: MouseEvent<HTMLDivElement>) => {
-    console.log(e.clientX);
+  const handleProgressLine = (e: MouseEvent<HTMLDivElement>) => {
     const clickPosition = e.clientX - 200;
-    const positionRemainder = clickPosition % barWidth;
-    const currentPosition =
-      Math.abs(clickPosition - positionRemainder) < barWidth // 第1小節
-        ? 0
-        : clickPosition - positionRemainder;
-    const currentBar = currentPosition / barWidth;
-    setProgress(convertBarsToTime(currentBar + 1));
+    if (clickPosition > 0) {
+      const positionRemainder = clickPosition % barWidth;
+      const currentPosition =
+        Math.abs(clickPosition - positionRemainder) < barWidth // 第1小節
+          ? 0
+          : clickPosition - positionRemainder;
+      const currentBar = currentPosition / barWidth;
+      setProgress(convertBarsToTime(currentBar + 1));
+    }
   };
 
   const appendToFilename = (filename: string) => {
@@ -447,7 +447,7 @@ const Timeline = () => {
           tracksData.map((track, index) => {
             return (
               <TrackLine
-                onClick={handleClickProgressLine}
+                onClick={handleProgressLine}
                 key={`${track.trackName}-${index}`}
               >
                 <TrackControls>
@@ -554,7 +554,7 @@ const Timeline = () => {
         tracksData={tracksData}
         projectData={projectData}
       />
-      {/* <Scribbletune /> */}
+      <PianoRoll />
     </>
   );
 };

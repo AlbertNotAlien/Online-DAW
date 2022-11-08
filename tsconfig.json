@@ -21,8 +21,7 @@
     "**/*.tsx",
     "pages/components/WaveSurfer/index.tsx",
     "pages/components/Record/useRecorder.jsx",
-    "pages/components/Record/index_bp_3.jsx",
-    "pages/components/ToneJs/index.jsx",
+    "pages/components/Tone/index.jsx",
     "pages/components/Timer/useTimer.ts"
   ],
   "exclude": ["node_modules"]
