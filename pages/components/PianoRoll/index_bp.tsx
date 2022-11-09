@@ -14,9 +14,6 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../config/firebase";
 
-import Draggable from "react-draggable";
-import produce from "immer";
-
 const Container = styled.div`
   display: flex;
 `;
@@ -24,17 +21,11 @@ const Container = styled.div`
 const PianoRoll = styled.div`
   display: flex;
   flex-direction: column-reverse;
-  position: relative;
 `;
 
-const NoteRuler = styled.div`
-  /* margin: 0px; */
-`;
+const NoteRuler = styled.div``;
 
-const NoteRulerInfo = styled.p`
-  width: 100px;
-  margin: 0px;
-`;
+const NoteRulerInfo = styled.p``;
 
 const PianoKey = styled.button`
   width: 25px;
@@ -110,21 +101,10 @@ const MidiBlockBlackKeyDark = styled(MidiBlock)`
 const NoteBar = styled(MidiBlock)<NoteBarProps>`
   background-color: red;
   position: absolute;
-  cursor: grab;
-
-  left: ${(props) =>
-    ((props.startBars - 1) * 8 + (props.startBeats - 1) + 1) * 25}px;
-  bottom: ${(props) => ((props.octave - 1) * 12 + props.notationIndex) * 10}px;
 `;
-
-// startBars={note.start.bars}
-// startBeats={note.start.beats}
-// lengthBars={note.length.bars}
-// lengthBeats={note.length.beats}
 
 interface NoteBarProps {
   notation: string;
-  notationIndex: number;
   octave: number;
   startBars: number;
   startBeats: number;
@@ -134,7 +114,6 @@ interface NoteBarProps {
 
 interface NoteData {
   notation: string;
-  notationIndex: number;
   octave: number;
   start: {
     bars: number;
@@ -185,7 +164,6 @@ export default function App(props: any) {
 
   const handleDoubleMidiBlock = async (
     notation: string,
-    notationIndex: number,
     octave: number,
     startBars: number,
     startBeats: number
@@ -200,7 +178,6 @@ export default function App(props: any) {
       );
       const newData = {
         notation: notation,
-        notationIndex: notationIndex,
         octave: octave,
         start: {
           bars: startBars,
@@ -218,63 +195,34 @@ export default function App(props: any) {
     }
   };
 
-  const handleClipDraggable = (
-    event: any,
-    dragElement: { x: number; y: number }
-    // index: number
-  ) => {
-    const newPositionX = Math.abs(dragElement.x) < 25 ? 0 : dragElement.x;
-    console.log(newPositionX);
-    // const currentBar = Math.floor(newPositionX / 25) + 1;
-    // setTrackPosition({ x: currentBar, y: 0 });
-    // tracksData[index].clips[0].startPoint = convertBarsToTime(currentBar);
-  };
-
   return (
     <Container>
       <NoteRuler>
         <>
           <NoteRulerInfo>{hoverNote}</NoteRulerInfo>
-        </>
-      </NoteRuler>
-      <PianoRoll>
-        {midiTracks.map((track: TrackData, index: number) => {
-          return (
-            <Draggable
-              axis="x"
-              onStop={(event, dragElement) =>
-                handleClipDraggable(event, dragElement)
-              }
-              grid={[25, 10]}
-              defaultPosition={{
-                x: 25,
-                y: 0,
-              }}
-              handle="#handle"
-              bounds={{ left: 0 }}
-              key={track.id}
-            >
-              <>
+          {midiTracks.map((track: TrackData, index: number) => {
+            return (
+              <div key={track.id}>
                 {track.notes?.map((note) => {
-                  // console.log(note);
+                  console.log(note);
                   return (
                     <NoteBar
-                      key={`${note.notation}-${note.octave}-${note.start.bars}-${note.start.beats}-${note.length}`}
-                      id="handle"
                       notation={note.notation}
-                      notationIndex={note.notationIndex}
                       octave={note.octave}
                       startBars={note.start.bars}
                       startBeats={note.start.beats}
                       lengthBars={note.length.bars}
                       lengthBeats={note.length.beats}
+                      key={`${note.notation}-${note.octave}-${note.start.bars}-${note.start.beats}-${note.length}`}
                     />
                   );
                 })}
-              </>
-            </Draggable>
-          );
-        })}
+              </div>
+            );
+          })}
+        </>
+      </NoteRuler>
+      <PianoRoll>
         {new Array(OCTAVES).fill(0).map((_, octaveIndex) => (
           <MidiColumn key={octaveIndex}>
             {MUISCALSCALE.map((notation, notationIndex) => (
@@ -294,23 +242,21 @@ export default function App(props: any) {
                             onDoubleClick={() => {
                               handleDoubleMidiBlock(
                                 notation,
-                                notationIndex,
                                 octaveIndex + 1,
-                                barsIndex * 2 + 1,
+                                barsIndex + 1,
                                 beatsIndex + 1
                               );
                             }}
                             onMouseOver={() => {
                               setHoverNote(
-                                `notation${notation}
-                                  octave${octaveIndex + 1}
-                                  bars${barsIndex * 2 + 1}
-                                  beats${beatsIndex + 1}`
+                                `notation${notation} octave${
+                                  octaveIndex + 1
+                                } bars${barsIndex + 1} beats${beatsIndex + 1}`
                               );
                             }}
                             key={`
                                 ${notation}-${octaveIndex + 1}-${
-                              barsIndex * 2 + 1
+                              barsIndex + 1
                             }-${beatsIndex + 1}`}
                           />
                         ))}
@@ -319,9 +265,8 @@ export default function App(props: any) {
                             onDoubleClick={() => {
                               handleDoubleMidiBlock(
                                 notation,
-                                notationIndex,
                                 octaveIndex + 1,
-                                (barsIndex + 1) * 2,
+                                barsIndex + 1,
                                 beatsIndex + 1
                               );
                             }}
@@ -329,15 +274,13 @@ export default function App(props: any) {
                               setHoverNote(
                                 `notation${notation} octave${
                                   octaveIndex + 1
-                                } bars${(barsIndex + 1) * 2} beats${
-                                  beatsIndex + 1
-                                }`
+                                } bars${barsIndex + 1} beats${beatsIndex + 1}`
                               );
                             }}
                             key={`
-                              ${notation}-${octaveIndex + 1}-${
-                              (barsIndex + 1) * 2
-                            }-${beatsIndex + 1}`}
+                              ${notation}-${octaveIndex + 1}-${barsIndex + 1}-${
+                              beatsIndex + 1
+                            }`}
                           />
                         ))}
                       </>
@@ -353,9 +296,8 @@ export default function App(props: any) {
                             onDoubleClick={() => {
                               handleDoubleMidiBlock(
                                 notation,
-                                notationIndex,
                                 octaveIndex + 1,
-                                barsIndex * 2 + 1,
+                                barsIndex + 1,
                                 beatsIndex + 1
                               );
                             }}
@@ -363,14 +305,12 @@ export default function App(props: any) {
                               setHoverNote(
                                 `notation${notation} octave${
                                   octaveIndex + 1
-                                } bars${barsIndex * 2 + 1} beats${
-                                  beatsIndex + 1
-                                }`
+                                } bars${barsIndex + 1} beats${beatsIndex + 1}`
                               );
                             }}
                             key={`
                                 ${notation}-${octaveIndex + 1}-${
-                              barsIndex * 2 + 1
+                              barsIndex + 1
                             }-${beatsIndex + 1}`}
                           />
                         ))}
@@ -379,9 +319,8 @@ export default function App(props: any) {
                             onDoubleClick={() => {
                               handleDoubleMidiBlock(
                                 notation,
-                                notationIndex,
                                 octaveIndex + 1,
-                                (barsIndex + 1) * 2,
+                                barsIndex + 1,
                                 beatsIndex + 1
                               );
                             }}
@@ -389,15 +328,13 @@ export default function App(props: any) {
                               setHoverNote(
                                 `notation${notation} octave${
                                   octaveIndex + 1
-                                } bars${(barsIndex + 1) * 2} beats${
-                                  beatsIndex + 1
-                                }`
+                                } bars${barsIndex + 1} beats${beatsIndex + 1}`
                               );
                             }}
                             key={`
-                              ${notation}-${octaveIndex + 1}-${
-                              (barsIndex + 1) * 2
-                            }-${beatsIndex + 1}`}
+                              ${notation}-${octaveIndex + 1}-${barsIndex + 1}-${
+                              beatsIndex + 1
+                            }`}
                           />
                         ))}
                       </>

@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef, MouseEvent } from "react";
-import styled from "styled-components";
-import Draggable from "react-draggable";
 import {
   doc,
   collection,
@@ -14,6 +12,8 @@ import {
 import { db } from "../../../config/firebase";
 import { storage } from "../../../config/firebase";
 import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import styled from "styled-components";
+import Draggable from "react-draggable";
 
 import Bars from "../Bars";
 import WaveSurfer from "../WaveSurfer";
