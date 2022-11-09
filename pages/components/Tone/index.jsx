@@ -45,13 +45,13 @@ export default function App(props) {
   const handlePlayMelody = () => {
     // console.log("handlePlayMelody");
     // console.log(props.tracksData.map((clip) => clip));
-    const melody = props.tracksData
-      .map((clip) => clip)
-      .filter((clip) => {
-        return clip.type === "midi";
+    const midiTrack = props.tracksData
+      .map((track) => track)
+      .filter((track) => {
+        return track.type === "midi";
       });
-    // console.log(melody[0].clips[0].melody);
-    melody[0].clips[0].melody.forEach((data) => {
+    // console.log(notes[0].clips[0].notes);
+    midiTrack[0].clips[0].notes.forEach((data) => {
       playMelody(data.note, data.octave, data.startTime);
     });
   };

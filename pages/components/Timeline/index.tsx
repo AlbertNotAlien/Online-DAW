@@ -133,9 +133,9 @@ const ClipTitle = styled.div`
 const MidiRegion = styled.div<MidiRegionProps>`
   width: ${(props) => props.barWidth * props.length}px;
   height: 130px;
-  background-color: #ffffff30;
-  border: 1px solid #ffffff;
-  margin-left: ${(props) => props.barWidth * 2}px;
+  background-color: #ffffff20;
+  /* border: 1px solid #ffffff; */
+  /* margin-left: ${(props) => props.barWidth * 2}px; */
   position: relative;
 `;
 
@@ -171,6 +171,8 @@ const Timeline = () => {
   const recordRef = useRef<HTMLDivElement>(null);
   const secondsRef = useRef<number>(0);
   const intervalRef = useRef<any>(null);
+
+  const [selectedTrack, setSelectedTrack] = useState(null);
 
   const convertTimeToBars = (sec: number) => {
     const bars = (sec * projectData.tempo) / 60 + 1;
@@ -469,24 +471,23 @@ const Timeline = () => {
                   </IsMutedButton>
                 </TrackControls>
                 <Track>
-                  <Draggable
-                    axis="x"
-                    onStop={(event, dragElement) =>
-                      handleClipDraggable(event, dragElement, index)
-                    }
-                    grid={[barWidth, 0]}
-                    defaultPosition={{
-                      x:
-                        convertBarsToTime(
-                          tracksData[index].clips[0].startPoint
-                        ) * barWidth,
-                      y: 0,
-                    }}
-                    handle="#handle"
-                    bounds={{ left: 0 }}
-                    // key={barWidth}
-                  >
-                    {track.type === "audio" ? (
+                  {track.type === "audio" ? (
+                    <Draggable
+                      axis="x"
+                      onStop={(event, dragElement) =>
+                        handleClipDraggable(event, dragElement, index)
+                      }
+                      grid={[barWidth, 0]}
+                      defaultPosition={{
+                        x:
+                          convertBarsToTime(
+                            tracksData[index].clips[0]?.startPoint
+                          ) * barWidth,
+                        y: 0,
+                      }}
+                      handle="#handle"
+                      bounds={{ left: 0 }}
+                    >
                       <div>
                         <ClipTitle id="handle">
                           {track.clips[0].clipName}
@@ -505,44 +506,44 @@ const Timeline = () => {
                           convertBarsToTime={convertBarsToTime}
                         />
                       </div>
-                    ) : (
-                      <>
-                        <ClipTitle>{track.clips[0].clipName}</ClipTitle>
-                        <MidiRegion barWidth={barWidth} length={3}>
-                          <MidiNote
-                            barWidth={barWidth}
-                            startTime={0}
-                            pitch={10}
-                          />
-                          <MidiNote
-                            barWidth={barWidth}
-                            startTime={1}
-                            pitch={12}
-                          />
-                          <MidiNote
-                            barWidth={barWidth}
-                            startTime={2}
-                            pitch={15}
-                          />
-                          <MidiNote
-                            barWidth={barWidth}
-                            startTime={3}
-                            pitch={10}
-                          />
-                          <MidiNote
-                            barWidth={barWidth}
-                            startTime={4}
-                            pitch={12}
-                          />
-                          <MidiNote
-                            barWidth={barWidth}
-                            startTime={5}
-                            pitch={15}
-                          />
-                        </MidiRegion>
-                      </>
-                    )}
-                  </Draggable>
+                    </Draggable>
+                  ) : (
+                    <>
+                      <ClipTitle />
+                      <MidiRegion barWidth={barWidth} length={3}>
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={0}
+                          pitch={10}
+                        />
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={1}
+                          pitch={12}
+                        />
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={2}
+                          pitch={15}
+                        />
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={3}
+                          pitch={10}
+                        />
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={4}
+                          pitch={12}
+                        />
+                        <MidiNote
+                          barWidth={barWidth}
+                          startTime={5}
+                          pitch={15}
+                        />
+                      </MidiRegion>
+                    </>
+                  )}
                   <Bars projectData={projectData} />
                 </Track>
               </TrackLine>
@@ -551,10 +552,15 @@ const Timeline = () => {
       </div>
       <Tone
         isPlaying={isPlaying}
+        projectData={projectData}
+        tracksData={tracksData}
+      />
+      <PianoRoll
         tracksData={tracksData}
         projectData={projectData}
+        projectId={projectId}
+        trackId="xlYMCGoweMoNDeRabCjQ"
       />
-      <PianoRoll />
     </>
   );
 };
