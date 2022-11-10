@@ -12,7 +12,7 @@ import {
   arrayUnion,
   arrayRemove,
 } from "firebase/firestore";
-import { db } from "../../../config/firebase";
+import { db } from "../../../lib/firebase";
 
 const Container = styled.div`
   display: flex;

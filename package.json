@@ -20,6 +20,7 @@
     "react-draggable": "^4.4.5",
     "react-native-get-mp3-duration": "^1.0.3",
     "react-redux": "^8.0.4",
+    "recoil": "^0.7.6",
     "styled-components": "^5.3.6",
     "tone": "^14.7.77",
     "uuid": "^9.0.0",

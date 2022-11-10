@@ -24,43 +24,43 @@ export default function App(props) {
     setInstrument(newSynth);
   }, []);
 
-  const playNote = (note, octave, startTime) => {
-    if (instrument) {
-      instrument.triggerAttackRelease(`${note}${octave}`, "8n", startTime);
-      console.log(note);
-    }
-  };
+  // const playNote = (note, octave, start) => {
+  //   if (instrument) {
+  //     instrument.triggerAttackRelease(`${note}${octave}`, "8n", start);
+  //     console.log(note);
+  //   }
+  // };
 
-  const playMelody = (note, octave, startTime) => {
+  const playMelody = (note, octave, start) => {
     if (instrument) {
+      // console.log(start);
       instrument.triggerAttackRelease(
         `${note}${octave}`,
         "8n",
-        (startTime * props.projectData.tempo) / 120
+        ((start.bars * 8 + start.beats) * props.projectData.tempo) / 120
       );
-      // console.log((startTime * props.projectData.tempo) / 120);
+      console.log((start * props.projectData.tempo) / 120);
     }
   };
 
   const handlePlayMelody = () => {
     // console.log("handlePlayMelody");
     // console.log(props.tracksData.map((clip) => clip));
-    const midiTrack = props.tracksData
+    const midiTracks = props.tracksData
       .map((track) => track)
       .filter((track) => {
         return track.type === "midi";
       });
     // console.log(notes[0].clips[0].notes);
-    midiTrack[0].clips[0].notes.forEach((data) => {
-      playMelody(data.note, data.octave, data.startTime);
+    midiTracks[0].clips[0].notes.forEach((data) => {
+      playMelody(data.note, data.octave, data.start);
+      // console.log(data);
     });
   };
 
   useEffect(() => {
-    // console.log("props.isPlaying", props.isPlaying);
     if (instrument && props.isPlaying) {
       handlePlayMelody();
-      // console.log("useEffect2");
     }
   }, [instrument, props.isPlaying]);
 
