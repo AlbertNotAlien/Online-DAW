@@ -25,12 +25,17 @@ const WaveSurfer = (props) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef(null);
   const [duration, setDuration] = useState(0);
-  const startPoint = props.convertBarsToTime(
-    props.tracksData.clips[0].startPoint
+
+  const startPoint = props.trackData.clips[0].startPoint;
+  const startMillisecond = props.convertBeatsToMs(
+    startPoint.bars * 8 + startPoint.beats
   );
 
-  const [isMute, setIsMute] = useState(false);
-  const [isSolo, setIsSolo] = useState(false);
+  // console.log(props.trackData.clips[0].startPoint.bars);
+  // console.log(props.trackData.clips[0].startPoint.beats);
+
+  // const [isMute, setIsMute] = useState(false);
+  // const [isSolo, setIsSolo] = useState(false);
 
   // console.log("startPoint", props.index, startPoint);
 
@@ -40,9 +45,7 @@ const WaveSurfer = (props) => {
       const options = formWaveSurferOptions(waveformRef.current);
 
       wavesurfer.current = WaveSurfer.create(options);
-      if (props.url && props.tracksData.type === "audio") {
-        wavesurfer.current.load(props.url);
-      }
+      wavesurfer.current.load(props.url);
 
       wavesurfer.current.on("ready", function () {
         const audioDuration = wavesurfer.current.getDuration();
@@ -71,31 +74,33 @@ const WaveSurfer = (props) => {
       wavesurfer.current &&
       !wavesurfer.current.isPlaying() &&
       props.isPlaying &&
-      props.progress < startPoint
+      props.progress < startMillisecond
     ) {
       setTimeout(() => {
         wavesurfer.current.play(0, duration);
-      }, (startPoint - props.progress) * 1000);
+      }, (startMillisecond - props.progress) * 1000);
     } else if (
       wavesurfer.current &&
       !wavesurfer.current.isPlaying() &&
       props.isPlaying &&
-      props.progress > startPoint
+      props.progress > startMillisecond
     ) {
       console.log("play");
       wavesurfer.current.play(
-        props.progress - startPoint,
-        startPoint + duration
+        props.progress - startMillisecond,
+        startMillisecond + duration
       );
     }
-  }, [props.isPlaying, startPoint < props.progress]);
+    console.log("props.progress", props.progress);
+    console.log("startMillisecond", startMillisecond);
+  }, [props.isPlaying, startPoint, props.progress > startMillisecond]);
 
   useEffect(() => {
     if (wavesurfer.current) {
-      console.log(props.tracksData.isMuted);
-      wavesurfer.current.setMute(props.tracksData.isMuted ? true : false);
+      console.log(props.trackData.isMuted);
+      wavesurfer.current.setMute(props.trackData.isMuted ? true : false);
     }
-  }, [props.tracksData.isMuted]);
+  }, [props.trackData.isMuted]);
 
   return (
     <>
@@ -103,6 +108,5 @@ const WaveSurfer = (props) => {
     </>
   );
 };
-// });
 
 export default WaveSurfer;

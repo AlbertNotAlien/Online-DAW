@@ -1,24 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-// import {
-//   doc,
-//   collection,
-//   getDoc,
-//   setDoc,
-//   updateDoc,
-//   onSnapshot,
-//   DocumentData,
-//   orderBy,
-//   arrayUnion,
-//   arrayRemove,
-// } from "firebase/firestore";
-// import { db } from "../../../lib/firebase";
+import {
+  doc,
+  collection,
+  getDoc,
+  setDoc,
+  updateDoc,
+  onSnapshot,
+  DocumentData,
+  orderBy,
+  arrayUnion,
+  arrayRemove,
+} from "firebase/firestore";
+import { db } from "../../../lib/firebase";
 
 import Draggable, { DraggableEvent } from "react-draggable";
 import produce from "immer";
 import { useRecoilState } from "recoil";
 
-import { tracksDataState, TrackData } from "../../../lib/atoms";
+import { tracksDataState, playingNoteState } from "../../../lib/atoms";
 
 const Container = styled.div`
   display: flex;
@@ -103,25 +103,26 @@ const MidiBlockBlackKeyDark = styled(MidiBlock)`
 `;
 
 const NoteBar = styled(MidiBlock)<NoteBarProps>`
-  background-color: red;
+  width: ${(props) => (props.lengthBars * 8 + props.lengthBeats) * 25}px;
+  background: none;
   position: absolute;
   z-index: 1;
-  /* cursor: grab; */
-
-  /* left: ${(props) =>
-    ((props.startBars - 1) * 8 + (props.startBeats - 1) + 1) * 25}px; */
-  /* bottom: ${(props) =>
-    ((props.octave - 1) * 12 + props.notationIndex) * 10}px; */
-
-  width: ${(props) => (props.lengthBars * 8 + props.lengthBeats) * 25}px;
   display: flex;
   justify-content: space-between;
+`;
+
+const NoteBarCenter = styled.div`
+  background-color: red;
+  /* flex-wrap: 1; */
+  /* width: 23px; */
+  width: 100%;
   cursor: move;
 `;
 
 const NoteBarSide = styled.div`
-  width: 3px;
-  height: 100%;
+  width: 5px;
+  /* height: 100%; */
+  height: 10px;
   background-color: blue;
   cursor: col-resize;
   z-index: 2;
@@ -168,6 +169,9 @@ export default function App(props: any) {
 
   const [hoverNote, setHoverNote] = useState("G5");
   const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
+  const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
+  const notePrevLengthRef = useRef(0);
+  const notePrevStartRef = useRef(0);
 
   // console.log("tracksData", tracksData);
 
@@ -180,7 +184,7 @@ export default function App(props: any) {
   ) => {
     console.log("doubleClick");
     if (tracksData && props.selectedTrackIndex) {
-      const newData = {
+      const newNote = {
         notation: notation,
         notationIndex: notationIndex,
         octave: octave,
@@ -194,26 +198,20 @@ export default function App(props: any) {
         },
       };
 
-      // const existedNote = trackData.clips[0].notes.filter(
-      //   (note) =>
-      //     newData.notationIndex === note.notationIndex &&
-      //     newData.octave === note.octave &&
-      //     newData.start.bars * 8 + newData.start.beats >=
-      //       note.start.bars * 8 + note.start.beats &&
-      //     newData.start.bars * 8 + newData.start.beats <=
-      //       (note.start.bars + note.length.bars) * 8 +
-      //         (note.start.beats + note.length.beats)
-      // );
-      // console.log("existedNote", existedNote);
-
       const newTracksData = produce(tracksData, (draft) => {
-        draft[props.selectedTrackIndex].clips[0].notes.push(newData);
+        draft[props.selectedTrackIndex].clips[0].notes.push(newNote);
       });
       setTracksdata(newTracksData);
-      console.log(
-        "tracksData[props.selectedTrackIndex]",
-        tracksData[props.selectedTrackIndex]
-      );
+
+      const newPlayingNote = {
+        notation: notation,
+        octave: octave,
+        length: {
+          bars: 0,
+          beats: 1,
+        },
+      };
+      setPlayingNote(newPlayingNote);
     }
   };
 
@@ -241,26 +239,20 @@ export default function App(props: any) {
     }
   };
 
-  const handleDragNotePosition = (
+  const handleDragNote = (
     event: DraggableEvent,
     dragElement: { x: number; y: number },
     notationIndex: number,
     octave: number,
     startBars: number,
     startBeats: number
-    // index: number
   ) => {
     if (tracksData && props.selectedTrackIndex) {
       const newPositionX = dragElement.x - 25;
       const newPositionY = -dragElement.y;
-      // console.log("dragElement.y", dragElement.y);
+      const prevNotes = tracksData[props.selectedTrackIndex].clips[0].notes;
 
-      console.log("newPositionX", newPositionX);
-      console.log("newPositionY", newPositionY);
-
-      const selectedNoteIndex = tracksData[
-        props.selectedTrackIndex
-      ].clips[0].notes.findIndex(
+      const selectedNoteIndex = prevNotes.findIndex(
         (note) =>
           note.notationIndex === notationIndex &&
           note.octave === octave &&
@@ -268,85 +260,231 @@ export default function App(props: any) {
           note.start.beats === startBeats
       );
 
-      // console.log(data);
-
-      // console.log("selectedNoteIndex", selectedNoteIndex);
+      const newBeats = (newPositionX % (25 * 8)) / 25 + 1;
+      const newBars = Math.floor(newPositionX / (25 * 8)) + 1;
+      const newNotationIndex = (newPositionY / 10) % 12;
+      const newOctave = Math.floor(newPositionY / (10 * 12)) + 1;
 
       const newTracksData = produce(tracksData, (draft) => {
-        const newBeats = (newPositionX % (25 * 8)) / 25 + 1;
-        const newBars = Math.floor(newPositionX / (25 * 8)) + 1;
+        const draftNotes =
+          draft[props.selectedTrackIndex].clips[0].notes[selectedNoteIndex];
 
-        // console.log("newBeats", newBeats);
-        // console.log("newBars", newBars);
-        console.log(draft[props.selectedTrackIndex].clips[0]);
+        draftNotes.start.beats = newBeats;
+        draftNotes.start.bars = newBars;
 
-        draft[props.selectedTrackIndex].clips[0].notes[
-          selectedNoteIndex
-        ].start.beats = newBeats;
-        draft[props.selectedTrackIndex].clips[0].notes[
-          selectedNoteIndex
-        ].start.bars = newBars;
-
-        const newNotationIndex = (newPositionY / 10) % 12;
-        const newOctave = Math.floor(newPositionY / (10 * 12)) + 1;
-
-        draft[props.selectedTrackIndex].clips[0].notes[
-          selectedNoteIndex
-        ].notationIndex = newNotationIndex;
-
-        // console.log(newNotationIndex);
-
-        draft[props.selectedTrackIndex].clips[0].notes[
-          selectedNoteIndex
-        ].notation = NOTATIONS[newNotationIndex];
-        // console.log(NOTATIONS[newNotationIndex]);
-
-        draft[props.selectedTrackIndex].clips[0].notes[
-          selectedNoteIndex
-        ].octave = newOctave;
-
-        console.log("newNotationIndex", newNotationIndex);
-        console.log("newOctave", newOctave);
+        draftNotes.notationIndex = newNotationIndex;
+        draftNotes.notation = NOTATIONS[newNotationIndex];
+        draftNotes.octave = newOctave;
       });
-      console.log(newTracksData);
       setTracksdata(newTracksData);
     }
   };
 
-  const handleDragNoteStart = () => {};
+  const handleMoveNote = (
+    event: DraggableEvent,
+    dragElement: { x: number; y: number },
+    notationIndex: number,
+    octave: number,
+    startBars: number,
+    startBeats: number,
+    lengthBars: number,
+    lengthBeats: number
+  ) => {
+    if (tracksData && props.selectedTrackIndex) {
+      const newPositionX = dragElement.x - 25;
+      const newPositionY = -dragElement.y;
+      const prevNotes = tracksData[props.selectedTrackIndex].clips[0].notes;
 
-  const handleDragNoteEnd = () => {};
+      const selectedNoteIndex = prevNotes.findIndex(
+        (note) =>
+          note.notationIndex === notationIndex &&
+          note.octave === octave &&
+          note.start.bars === startBars &&
+          note.start.beats === startBeats
+      );
 
-  useEffect(() => {
-    // try {
-    //   const trackRef = doc(
-    //     db,
-    //     "projects",
-    //     props.projectId,
-    //     "tracks",
-    //     props.selectedTrackId
-    //   );
-    //   const newData = {
-    //     notation: notation,
-    //     notationIndex: notationIndex,
-    //     octave: octave,
-    //     start: {
-    //       bars: startBars,
-    //       beats: startBeats,
-    //     },
-    //     length: {
-    //       bars: 0,
-    //       beats: 1,
-    //     },
-    //   };
-    //   await updateDoc(trackRef, {
-    //     clips: tracksData[props.selectedTrackIndex].clips[0].notes.push(newData),
-    //   });
-    //   console.log("info updated");
-    // } catch (err) {
-    //   console.log(err);
-    // }
-  }, []);
+      const newNotationIndex = (newPositionY / 10) % 12;
+      const newNotation = NOTATIONS[newNotationIndex];
+      const newOctave = Math.floor(newPositionY / (10 * 12)) + 1;
+
+      if (
+        !(
+          newNotationIndex === prevNotes[selectedNoteIndex].notationIndex &&
+          newOctave === prevNotes[selectedNoteIndex].octave
+        )
+      ) {
+        const newPlayingNote = {
+          notation: newNotation,
+          octave: newOctave,
+          length: {
+            bars: lengthBars,
+            beats: lengthBeats,
+          },
+        };
+        // setPlayingNote(newPlayingNote);
+      }
+    }
+  };
+
+  const handleExtendNoteData = (
+    event: DraggableEvent,
+    dragElement: { x: number },
+    notationIndex: number,
+    octave: number,
+    startBars: number,
+    startBeats: number
+  ) => {
+    if (tracksData && props.selectedTrackIndex) {
+      const prevNotes = tracksData[props.selectedTrackIndex].clips[0].notes;
+      const selectedNoteIndex = prevNotes.findIndex(
+        (note) =>
+          note.notationIndex === notationIndex &&
+          note.octave === octave &&
+          note.start.bars === startBars &&
+          note.start.beats === startBeats
+      );
+      const prevNote = prevNotes[selectedNoteIndex];
+
+      notePrevLengthRef.current =
+        prevNote.length.bars * 8 + prevNote.length.beats;
+      notePrevStartRef.current =
+        (prevNote.start.bars - 1) * 8 + (prevNote.start.beats - 1) + 1;
+    }
+    console.log("notePrevLengthRef.current", notePrevLengthRef.current);
+    console.log("notePrevStartRef.current", notePrevStartRef.current);
+  };
+
+  const handleExtendNoteRight = (
+    event: DraggableEvent,
+    dragElement: { x: number },
+    notationIndex: number,
+    octave: number,
+    startBars: number,
+    startBeats: number
+  ) => {
+    if (tracksData && props.selectedTrackIndex) {
+      const offsetBeats = dragElement.x / 25;
+      const prevNotes = tracksData[props.selectedTrackIndex].clips[0].notes;
+
+      const selectedNoteIndex = prevNotes.findIndex(
+        (note) =>
+          note.notationIndex === notationIndex &&
+          note.octave === octave &&
+          note.start.bars === startBars &&
+          note.start.beats === startBeats
+      );
+
+      const newTracksData = produce(tracksData, (draft) => {
+        const draftNotes =
+          draft[props.selectedTrackIndex].clips[0].notes[selectedNoteIndex];
+
+        const sumLengthBeats =
+          notePrevLengthRef.current + offsetBeats <= 0
+            ? 1
+            : notePrevLengthRef.current + offsetBeats;
+
+        draftNotes.length.bars =
+          Math.floor(sumLengthBeats / 8) <= 0
+            ? 0
+            : Math.floor(sumLengthBeats / 8);
+        draftNotes.length.beats = sumLengthBeats % 8;
+      });
+      setTracksdata(newTracksData);
+    }
+  };
+
+  const handleExtendNoteLeft = (
+    event: DraggableEvent,
+    dragElement: { x: number },
+    notationIndex: number,
+    octave: number,
+    startBars: number,
+    startBeats: number
+  ) => {
+    if (tracksData && props.selectedTrackIndex) {
+      console.log("-dragElement.x", -dragElement.x);
+      const offsetBeats = -dragElement.x / 25;
+      const prevNotes = tracksData[props.selectedTrackIndex].clips[0].notes;
+
+      const selectedNoteIndex = prevNotes.findIndex(
+        (note) =>
+          note.notationIndex === notationIndex &&
+          note.octave === octave &&
+          note.start.bars === startBars &&
+          note.start.beats === startBeats
+      );
+
+      const newTracksData = produce(tracksData, (draft) => {
+        const draftNotes =
+          draft[props.selectedTrackIndex].clips[0].notes[selectedNoteIndex];
+
+        const sumLengthBeats =
+          notePrevLengthRef.current + offsetBeats <= 0
+            ? 1
+            : notePrevLengthRef.current + offsetBeats;
+
+        draftNotes.length.bars =
+          Math.floor(sumLengthBeats / 8) <= 0
+            ? 0
+            : Math.floor(sumLengthBeats / 8);
+        draftNotes.length.beats = sumLengthBeats % 8;
+
+        console.log("notePrevStartRef.current", notePrevStartRef.current);
+        console.log("offsetBeats", offsetBeats);
+        const subStartBeats =
+          notePrevStartRef.current - offsetBeats <= 1
+            ? 1
+            : notePrevStartRef.current - offsetBeats;
+        console.log("subStartBeats", subStartBeats);
+        console.log(
+          "draftNotes.start.bars",
+          subStartBeats % 8 === 0
+            ? Math.floor(subStartBeats / 8)
+            : Math.floor(subStartBeats / 8) + 1
+        );
+        console.log(
+          "draftNotes.start.beats",
+          subStartBeats % 8 === 0 ? 8 : subStartBeats % 8
+        );
+
+        draftNotes.start.bars = Math.floor(subStartBeats / 8) + 1;
+        draftNotes.start.beats = subStartBeats % 8;
+      });
+      setTracksdata(newTracksData);
+    }
+  };
+
+  // useEffect(() => {
+  //   try {
+  //     const trackRef = doc(
+  //       db,
+  //       "projects",
+  //       props.projectId,
+  //       "tracks",
+  //       props.selectedTrackId
+  //     );
+  //     const newData = {prevNotes[selectedNoteIndex].notationIndex
+  //       notation: notation,
+  //       notationIndex: notationIndex,
+  //       octave: octave,
+  //       start: {
+  //         bars: startBars,
+  //         beats: startBeats,
+  //       },
+  //       length: {
+  //         bars: 0,
+  //         beats: 1,
+  //       },
+  //     };
+  //     await updateDoc(trackRef, {
+  //       clips:
+  //         tracksData[props.selectedTrackIndex].clips[0].notes.push(newData),
+  //     });
+  //     console.log("info updated");
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // }, []);
 
   return (
     <Container>
@@ -358,6 +496,7 @@ export default function App(props: any) {
       <PianoRoll>
         {tracksData &&
           props.selectedTrackIndex &&
+          tracksData[props.selectedTrackIndex].type === "midi" &&
           tracksData[props.selectedTrackIndex].clips[0].notes.map(
             (
               note: {
@@ -375,18 +514,29 @@ export default function App(props: any) {
               },
               index: number
             ) => {
-              // console.log(note);
               return (
                 <Draggable
                   axis="both"
                   onStop={(event: DraggableEvent, dragElement: DraggableData) =>
-                    handleDragNotePosition(
+                    handleDragNote(
                       event,
                       dragElement,
                       note.notationIndex,
                       note.octave,
                       note.start.bars,
                       note.start.beats
+                    )
+                  }
+                  onDrag={(event: DraggableEvent, dragElement: DraggableData) =>
+                    handleMoveNote(
+                      event,
+                      dragElement,
+                      note.notationIndex,
+                      note.octave,
+                      note.start.bars,
+                      note.start.beats,
+                      note.length.bars,
+                      note.length.beats
                     )
                   }
                   grid={[25, 10]}
@@ -396,12 +546,10 @@ export default function App(props: any) {
                       25,
                     y: ((note.octave - 1) * 12 + note.notationIndex) * -10,
                   }}
-                  handle="#handle"
-                  key={`${note.notation}-${note.octave}-${note.start.bars}-${note.start.beats}-${note.length}`}
+                  handle=".handle-NoteBar"
+                  key={`NoteBar-${note.notation}-${note.octave}-${note.start.bars}-${note.start.beats}-${note.length}`}
                 >
                   <NoteBar
-                    key={`${note.notation}-${note.octave}-${note.start.bars}-${note.start.beats}-${note.length}`}
-                    id="handle"
                     notation={note.notation}
                     notationIndex={note.notationIndex}
                     octave={note.octave}
@@ -409,17 +557,93 @@ export default function App(props: any) {
                     startBeats={note.start.beats}
                     lengthBars={note.length.bars}
                     lengthBeats={note.length.beats}
-                    onDoubleClick={() => {
-                      handleDeleteNote(
-                        note.notationIndex,
-                        note.octave,
-                        note.start.bars,
-                        note.start.beats
-                      );
-                    }}
                   >
-                    <NoteBarSide />
-                    <NoteBarSide />
+                    <Draggable
+                      axis="both"
+                      onStart={(
+                        event: DraggableEvent,
+                        dragElement: DraggableData
+                      ) => {
+                        handleExtendNoteData(
+                          event,
+                          dragElement,
+                          note.notationIndex,
+                          note.octave,
+                          note.start.bars,
+                          note.start.beats
+                        );
+                      }}
+                      onDrag={(
+                        event: DraggableEvent,
+                        dragElement: DraggableData
+                      ) => {
+                        handleExtendNoteLeft(
+                          event,
+                          dragElement,
+                          note.notationIndex,
+                          note.octave,
+                          note.start.bars,
+                          note.start.beats
+                        );
+                      }}
+                      grid={[25, 0]}
+                      position={{
+                        x: 0,
+                        y: 0,
+                      }}
+                      handle=".handle-NoteBarSide-Left"
+                    >
+                      {/* <NoteBarSide className="handle-NoteBar handle-NoteBarSide-Left" /> */}
+                      <NoteBarSide className="handle-NoteBarSide-Left" />
+                    </Draggable>
+                    <NoteBarCenter
+                      className="handle-NoteBar"
+                      onDoubleClick={() => {
+                        handleDeleteNote(
+                          note.notationIndex,
+                          note.octave,
+                          note.start.bars,
+                          note.start.beats
+                        );
+                      }}
+                    />
+                    <Draggable
+                      axis="both"
+                      onStart={(
+                        event: DraggableEvent,
+                        dragElement: DraggableData
+                      ) => {
+                        handleExtendNoteData(
+                          event,
+                          dragElement,
+                          note.notationIndex,
+                          note.octave,
+                          note.start.bars,
+                          note.start.beats
+                        );
+                      }}
+                      onDrag={(
+                        event: DraggableEvent,
+                        dragElement: DraggableData
+                      ) => {
+                        handleExtendNoteRight(
+                          event,
+                          dragElement,
+                          note.notationIndex,
+                          note.octave,
+                          note.start.bars,
+                          note.start.beats
+                        );
+                      }}
+                      grid={[25, 0]}
+                      position={{
+                        x: 0,
+                        y: 0,
+                      }}
+                      handle=".handle-NoteBarSide-Right"
+                    >
+                      <NoteBarSide className="handle-NoteBarSide-Right" />
+                    </Draggable>
                   </NoteBar>
                 </Draggable>
               );

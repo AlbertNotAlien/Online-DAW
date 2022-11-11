@@ -71,6 +71,10 @@ interface IsMutedButtonProps {
   isMuted: string;
 }
 
+interface TrackControlsProps {
+  selectedColor: string;
+}
+
 const Progressline = styled.div<ProgresslineProps>`
   width: 1px;
   background-color: darkcyan;
@@ -92,11 +96,11 @@ const TrackLine = styled.div`
   margin-bottom: 10px;
 `;
 
-const TrackControls = styled.div`
+const TrackControls = styled.div<TrackControlsProps>`
   position: absolute;
   width: 200px;
   height: 150px;
-  background-color: gray;
+  background-color: ${(props) => props.selectedColor};
   display: flex;
   align-items: center;
 `;
@@ -181,16 +185,6 @@ const Timeline = () => {
   const [selectedTrackIndex, setSelectedTrackIndex] = useState<number>();
   // const [selectedTrack, setSelectedTrack] = useState(null);
 
-  const convertTimeToBars = (sec: number) => {
-    const bars = (sec * projectData.tempo) / 60 + 1;
-    return bars;
-  };
-
-  const convertBarsToTime = (bars: number) => {
-    const sec = ((bars - 1) * 60) / projectData.tempo;
-    return sec;
-  };
-
   useEffect(() => {
     const docRef = doc(db, "projects", projectId);
     const unsubscribe = onSnapshot(docRef, (snapshot) => {
@@ -219,6 +213,44 @@ const Timeline = () => {
     };
   }, []);
 
+  // useEffect(() => {
+  //   if (tracksData && selectedTrackIndex) {
+  //     // const uploadTracksData = async () => {
+  //     //   try {
+  //     //     const trackRef = doc(
+  //     //       db,
+  //     //       "projects",
+  //     //       projectId,
+  //     //       "tracks",
+  //     //       selectedTrackId
+  //     //     );
+  //     //     await updateDoc(trackRef, tracksData[selectedTrackIndex]);
+  //     //     console.log("info updated");
+  //     //   } catch (err) {
+  //     //     console.log(err);
+  //     //   }
+  //     // };
+  //     const uploadTracksData = () => {
+  //       console.log("coool");
+  //     };
+  //     setTimeout(() => {
+  //       uploadTracksData();
+  //       console.log("upload selected trackData");
+  //     }, 3000);
+  //   }
+  // }, [tracksData[selectedTrackIndex]]);
+
+  const convertMsToBeats = (sec: number) => {
+    const bars = (sec * projectData.tempo) / 60 + 1;
+    return bars;
+  };
+
+  const convertBeatsToMs = (bars: number) => {
+    const millisecond = ((bars - 1) * 60) / projectData.tempo;
+    // console.log("convertBeatsToMs", millisecond);
+    return millisecond;
+  };
+
   const handleClipDraggable = (
     event: any,
     dragElement: { x: number; y: number },
@@ -230,7 +262,7 @@ const Timeline = () => {
       setTrackPosition({ x: currentBar, y: 0 });
       setTracksdata(
         produce(tracksData, (draft) => {
-          draft[index].clips[0].startPoint.bars = convertBarsToTime(currentBar);
+          draft[index].clips[0].startPoint.bars = convertBeatsToMs(currentBar);
         })
       );
     }
@@ -247,6 +279,8 @@ const Timeline = () => {
     if (isPlaying) {
       setIsPlaying(false);
       pauseTimer();
+    } else if (!isPlaying) {
+      setProgress(0);
     }
   };
 
@@ -301,7 +335,7 @@ const Timeline = () => {
           ? 0
           : clickPosition - positionRemainder;
       const currentBar = currentPosition / barWidth;
-      setProgress(convertBarsToTime(currentBar + 1));
+      setProgress(convertBeatsToMs(currentBar + 1));
     }
   };
 
@@ -368,7 +402,7 @@ const Timeline = () => {
       const newTrackName = `Audio ${tracksData.length + 1}`;
       const newFileName = appendToFilename(file.name || "record");
       const newStartPoint = 1;
-      // const newStartPoint = convertTimeToBars(progress);
+      // const newStartPoint = convertMsToBeats(progress);
 
       const audioRef = ref(
         storage,
@@ -413,7 +447,7 @@ const Timeline = () => {
   return (
     <>
       <Progressline
-        progressLinePosition={(convertTimeToBars(progress) - 1) * barWidth}
+        progressLinePosition={(convertMsToBeats(progress) - 1) * barWidth}
       />
       <Controls>
         <button onClick={handlePlay}>Play</button>
@@ -430,7 +464,7 @@ const Timeline = () => {
           }}
         ></input>
         <div className="progress">{`${Math.floor(
-          convertTimeToBars(progress)
+          convertMsToBeats(progress)
         )} 小節`}</div>
         <div>{`${progress.toFixed(3)} 秒`}</div>
       </Controls>
@@ -476,7 +510,11 @@ const Timeline = () => {
                   handleSelectTrack(track.id, index);
                 }}
               >
-                <TrackControls>
+                <TrackControls
+                  selectedColor={
+                    selectedTrackId === track.id ? "#2F302F" : "#606060"
+                  }
+                >
                   <IsSoloButton
                     onClick={() => {
                       handleTrackSolo(!track.isSolo, track.id);
@@ -504,7 +542,7 @@ const Timeline = () => {
                       grid={[barWidth, 0]}
                       defaultPosition={{
                         x:
-                          convertBarsToTime(
+                          convertBeatsToMs(
                             tracksData[index]?.clips[0].startPoint.bars * 8 +
                               tracksData[index]?.clips[0].startPoint.beats
                           ) * barWidth,
@@ -526,9 +564,9 @@ const Timeline = () => {
                           // isSolo={track.isSolo}
                           // isMuted={track.isMuted}
                           progress={progress}
-                          tracksData={tracksData[index]}
-                          convertTimeToBars={convertTimeToBars}
-                          convertBarsToTime={convertBarsToTime}
+                          trackData={tracksData[index]}
+                          convertMsToBeats={convertMsToBeats}
+                          convertBeatsToMs={convertBeatsToMs}
                         />
                       </div>
                     </Draggable>
@@ -567,6 +605,11 @@ const Timeline = () => {
                           pitch={15}
                         />
                       </MidiRegion>
+                      <Tone
+                        isPlaying={isPlaying}
+                        projectData={projectData}
+                        trackData={tracksData[index]}
+                      />
                     </>
                   )}
 
@@ -587,11 +630,11 @@ const Timeline = () => {
         selectedTrackIndex={selectedTrackIndex}
       />
       {/* {console.log(selectedTrackId)} */}
-      <Tone
+      {/* <Tone
         isPlaying={isPlaying}
         projectData={projectData}
         tracksData={tracksData}
-      />
+      /> */}
     </>
   );
 };

@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react";
 import * as Tone from "tone";
+import { useRecoilState } from "recoil";
+
+import { trackDataState, playingNoteState } from "../../../lib/atoms";
 
 export default function App(props) {
   const [instrument, setInstrument] = useState(null);
+  const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
+
   const now = Tone.now();
   // const [clock, setClock] = useState(0);
 
@@ -24,37 +29,36 @@ export default function App(props) {
     setInstrument(newSynth);
   }, []);
 
-  // const playNote = (note, octave, start) => {
-  //   if (instrument) {
-  //     instrument.triggerAttackRelease(`${note}${octave}`, "8n", start);
-  //     console.log(note);
+  const playNote = (note, octave, start) => {
+    if (instrument) {
+      instrument.triggerAttackRelease(`${note}${octave}`, "8n", now);
+      console.log(note);
+    }
+  };
+
+  // useEffect(() => {
+  //   if (playingNote) {
+  //     playNote(playingNote.notation, playingNote.octave, now);
   //   }
-  // };
+  // }, [playingNote]);
 
   const playMelody = (note, octave, start) => {
     if (instrument) {
-      // console.log(start);
+      console.log("playMelody");
       instrument.triggerAttackRelease(
         `${note}${octave}`,
         "8n",
         ((start.bars * 8 + start.beats) * props.projectData.tempo) / 120
       );
-      console.log((start * props.projectData.tempo) / 120);
+      // console.log(
+      //   ((start.bars * 8 + start.beats) * props.projectData.tempo) / 120
+      // );
     }
   };
 
   const handlePlayMelody = () => {
-    // console.log("handlePlayMelody");
-    // console.log(props.tracksData.map((clip) => clip));
-    const midiTracks = props.tracksData
-      .map((track) => track)
-      .filter((track) => {
-        return track.type === "midi";
-      });
-    // console.log(notes[0].clips[0].notes);
-    midiTracks[0].clips[0].notes.forEach((data) => {
-      playMelody(data.note, data.octave, data.start);
-      // console.log(data);
+    props.trackData.clips[0].notes.forEach((note) => {
+      playMelody(note.notation, note.octave, note.start);
     });
   };
 
@@ -64,13 +68,5 @@ export default function App(props) {
     }
   }, [instrument, props.isPlaying]);
 
-  return (
-    <>
-      {/* <div className="note-wrapper">
-        <button className="note" onClick={() => playNote("A", 4, 0)}>
-          A
-        </button>
-      </div> */}
-    </>
-  );
+  return <></>;
 }
