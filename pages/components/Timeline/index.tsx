@@ -24,7 +24,6 @@ import Bars from "../Bars";
 import WaveSurfer from "../WaveSurfer";
 import Record from "../Record";
 import useRecorder from "../Record/useRecorder";
-import useTimer from "../Timer/useTimer";
 import Tone from "../Tone";
 import PianoRoll from "../PianoRoll";
 
@@ -32,36 +31,13 @@ interface ProgresslineProps {
   progressLinePosition: number;
 }
 
-interface MidiRegionProps {
-  barWidth: number;
-  length: number;
-}
-
-interface MidiNoteProps {
-  barWidth: number;
-  startTime: number;
-  pitch: number;
-}
-
-interface ProjectsData {
+interface ProjectData {
+  trackHeight: number;
+  barWidthCoefficient: number;
+  id: string;
   name: string;
   tempo: number;
 }
-
-// interface TrackData {
-//   clips: [
-//     {
-//       clipName: string;
-//       startPoint: number;
-//       url: string;
-//     }
-//   ];
-//   id: string;
-//   isMuted: boolean;
-//   isSolo: boolean;
-//   trackName: string;
-//   type: string;
-// }
 
 interface IsSoloButtonProps {
   isSolo: string;
@@ -72,6 +48,7 @@ interface IsMutedButtonProps {
 }
 
 interface TrackControlsProps {
+  trackHeight: number;
   selectedColor: string;
 }
 
@@ -99,7 +76,7 @@ const TrackLine = styled.div`
 const TrackControls = styled.div<TrackControlsProps>`
   position: absolute;
   width: 200px;
-  height: 150px;
+  height: ${(props) => props.trackHeight}px;
   background-color: ${(props) => props.selectedColor};
   display: flex;
   align-items: center;
@@ -139,33 +116,36 @@ const ClipTitle = styled.div`
   }
 `;
 
-const MidiRegion = styled.div<MidiRegionProps>`
-  width: ${(props) => props.barWidth * props.length}px;
-  height: 130px;
-  background-color: #ffffff20;
-  /* border: 1px solid #ffffff; */
-  /* margin-left: ${(props) => props.barWidth * 2}px; */
-  position: relative;
-`;
+// const MidiRegion = styled.div<MidiRegionProps>`
+//   width: ${(props) => props.barWidth * props.length}px;
+//   height: 130px;
+//   background-color: #ffffff20;
+//   /* border: 1px solid #ffffff; */
+//   /* margin-left: ${(props) => props.barWidth * 2}px; */
+//   position: relative;
+// `;
 
-const MidiNote = styled.div<MidiNoteProps>`
-  width: ${(props) => props.barWidth * 0.25}px;
-  height: 5px;
-  background-color: #ffffff;
-  border: 1px solid #ffffff;
-  position: absolute;
-  bottom: ${(props) => props.pitch * 5}px;
-  left: ${(props) => props.barWidth * 0.25 * props.startTime}px;
-`;
+// const MidiNote = styled.div<MidiNoteProps>`
+//   width: ${(props) => props.barWidth * 0.25}px;
+//   height: 5px;
+//   background-color: #ffffff;
+//   border: 1px solid #ffffff;
+//   position: absolute;
+//   bottom: ${(props) => props.pitch * 5}px;
+//   left: ${(props) => props.barWidth * 0.25 * props.startTime}px;
+// `;
 
 const Timeline = () => {
-  const [projectData, setProjectData] = useState<ProjectsData>({
+  const [projectData, setProjectData] = useState<ProjectData>({
+    barWidthCoefficient: 9.5,
+    id: "",
     name: "",
-    tempo: 0,
+    tempo: 60,
+    trackHeight: 150,
   });
   const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
   const projectId = "5BbhQTKKkFcM9nCjMG3I";
-  const barWidthCoefficient = 9.5; // 一個bar長 9.5px/58bpm
+  const barWidthCoefficient = projectData.barWidthCoefficient; // 一個bar長 9.5px/58bpm
   const barWidth = (120 / projectData.tempo) * barWidthCoefficient;
 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -188,7 +168,7 @@ const Timeline = () => {
   useEffect(() => {
     const docRef = doc(db, "projects", projectId);
     const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      const newData = snapshot.data() as ProjectsData;
+      const newData = snapshot.data() as ProjectData;
       setProjectData(newData);
     });
 
@@ -246,7 +226,7 @@ const Timeline = () => {
   };
 
   const convertBeatsToMs = (bars: number) => {
-    const millisecond = ((bars - 1) * 60) / projectData.tempo;
+    const millisecond = (bars * 60) / projectData.tempo;
     // console.log("convertBeatsToMs", millisecond);
     return millisecond;
   };
@@ -514,6 +494,7 @@ const Timeline = () => {
                   selectedColor={
                     selectedTrackId === track.id ? "#2F302F" : "#606060"
                   }
+                  trackHeight={projectData.trackHeight}
                 >
                   <IsSoloButton
                     onClick={() => {
@@ -543,8 +524,10 @@ const Timeline = () => {
                       defaultPosition={{
                         x:
                           convertBeatsToMs(
-                            tracksData[index]?.clips[0].startPoint.bars * 8 +
-                              tracksData[index]?.clips[0].startPoint.beats
+                            (tracksData[index]?.clips[0].startPoint.bars - 1) *
+                              8 +
+                              (tracksData[index]?.clips[0].startPoint.quarters -
+                                1)
                           ) * barWidth,
                         y: 0,
                       }}
@@ -558,11 +541,8 @@ const Timeline = () => {
                         <WaveSurfer
                           key={index}
                           index={index}
-                          url={track.clips[0].url}
                           projectData={projectData}
                           isPlaying={isPlaying}
-                          // isSolo={track.isSolo}
-                          // isMuted={track.isMuted}
                           progress={progress}
                           trackData={tracksData[index]}
                           convertMsToBeats={convertMsToBeats}
@@ -573,50 +553,16 @@ const Timeline = () => {
                   ) : (
                     <>
                       <ClipTitle />
-                      <MidiRegion barWidth={barWidth} length={3}>
-                        <MidiNote
-                          barWidth={barWidth}
-                          startTime={0}
-                          pitch={10}
-                        />
-                        <MidiNote
-                          barWidth={barWidth}
-                          startTime={1}
-                          pitch={12}
-                        />
-                        <MidiNote
-                          barWidth={barWidth}
-                          startTime={2}
-                          pitch={15}
-                        />
-                        <MidiNote
-                          barWidth={barWidth}
-                          startTime={3}
-                          pitch={10}
-                        />
-                        <MidiNote
-                          barWidth={barWidth}
-                          startTime={4}
-                          pitch={12}
-                        />
-                        <MidiNote
-                          barWidth={barWidth}
-                          startTime={5}
-                          pitch={15}
-                        />
-                      </MidiRegion>
                       <Tone
                         isPlaying={isPlaying}
                         projectData={projectData}
                         trackData={tracksData[index]}
+                        barWidth={barWidth}
                       />
                     </>
                   )}
 
-                  <Bars
-                    // onClick={handleProgressLine}
-                    projectData={projectData}
-                  />
+                  <Bars projectData={projectData} />
                 </Track>
               </TrackLine>
             );
@@ -629,12 +575,6 @@ const Timeline = () => {
         selectedTrackId={selectedTrackId}
         selectedTrackIndex={selectedTrackIndex}
       />
-      {/* {console.log(selectedTrackId)} */}
-      {/* <Tone
-        isPlaying={isPlaying}
-        projectData={projectData}
-        tracksData={tracksData}
-      /> */}
     </>
   );
 };

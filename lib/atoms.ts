@@ -1,43 +1,39 @@
 import { useState, useEffect, useRef, MouseEvent } from "react";
 import { atom, selector } from "recoil";
 
-// import {
-//   doc,
-//   collection,
-//   getDoc,
-//   setDoc,
-//   updateDoc,
-//   onSnapshot,
-//   DocumentData,
-//   orderBy,
-// } from "firebase/firestore";
-// import { db } from "../lib/firebase";
+export interface NoteData {
+  length: {
+    bars: number;
+    quarters: number;
+    sixteenths: number;
+  };
+  notation: string;
+  notationIndex: number;
+  octave: number;
+  start: {
+    bars: number;
+    quarters: number;
+    sixteenths: number;
+  };
+  abc: number;
+}
 
 export interface MidiData {
-  notes: {
-    notation: string;
-    notationIndex: number;
-    octave: number;
-    start: {
-      bars: number;
-      beats: number;
-    };
-    length: {
-      bars: number;
-      beats: number;
-    };
-  }[];
+  notes: NoteData[];
   startPoint: {
     bars: number;
-    beats: number;
+    quarters: number;
+    sixteenths: number;
   };
+  clipName: string;
 }
 
 export interface AudioData {
   clipName: string;
   startPoint: {
     bars: number;
-    beats: number;
+    quarters: number;
+    sixteenths: number;
   };
   url: string;
 }
@@ -57,7 +53,8 @@ export interface PlayingNoteData {
   octave: number;
   length: {
     bars: number;
-    beats: number;
+    quarters: number;
+    sixteenths: number;
   };
 }
 

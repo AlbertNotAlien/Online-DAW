@@ -28,11 +28,11 @@ const WaveSurfer = (props) => {
 
   const startPoint = props.trackData.clips[0].startPoint;
   const startMillisecond = props.convertBeatsToMs(
-    startPoint.bars * 8 + startPoint.beats
+    (startPoint.bars - 1) * 8 + (startPoint.quarters - 1)
   );
 
   // console.log(props.trackData.clips[0].startPoint.bars);
-  // console.log(props.trackData.clips[0].startPoint.beats);
+  // console.log(props.trackData.clips[0].startPoint.quarters);
 
   // const [isMute, setIsMute] = useState(false);
   // const [isSolo, setIsSolo] = useState(false);
@@ -44,8 +44,10 @@ const WaveSurfer = (props) => {
       const WaveSurfer = (await import("wavesurfer.js")).default;
       const options = formWaveSurferOptions(waveformRef.current);
 
+      // console.log("props.trackData", props.trackData.clips[0].url);
+
       wavesurfer.current = WaveSurfer.create(options);
-      wavesurfer.current.load(props.url);
+      wavesurfer.current.load(props.trackData.clips[0].url);
 
       wavesurfer.current.on("ready", function () {
         const audioDuration = wavesurfer.current.getDuration();
@@ -61,7 +63,7 @@ const WaveSurfer = (props) => {
         wavesurfer.current.destroy();
       }
     };
-  }, []);
+  }, [props.trackData.clips]);
 
   useEffect(() => {
     if (
@@ -91,9 +93,18 @@ const WaveSurfer = (props) => {
         startMillisecond + duration
       );
     }
-    console.log("props.progress", props.progress);
-    console.log("startMillisecond", startMillisecond);
-  }, [props.isPlaying, startPoint, props.progress > startMillisecond]);
+    // console.log("props.trackData", props.trackData.trackName);
+
+    // console.log("props.progress", props.progress);
+    // console.log("startMillisecond", startMillisecond);
+  }, [
+    duration,
+    props.isPlaying,
+    props.progress,
+    props.trackData.trackName,
+    startMillisecond,
+  ]);
+  // }, [props.isPlaying, startMillisecond, props.progress > startMillisecond]);
 
   useEffect(() => {
     if (wavesurfer.current) {

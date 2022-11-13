@@ -20,6 +20,39 @@ import { useRecoilState } from "recoil";
 
 import { tracksDataState, playingNoteState } from "../../../lib/atoms";
 
+interface DraggableData {
+  node: HTMLElement;
+  x: number;
+  y: number;
+  deltaX: number;
+  deltaY: number;
+  lastX: number;
+  lastY: number;
+}
+
+interface NoteBarProps {
+  notation: string;
+  notationIndex: number;
+  octave: number;
+  startBars: number;
+  startQuarters: number;
+  startSixteenths: number;
+  lengthBars: number;
+  lengthQuarters: number;
+  lengthSixteenths: number;
+}
+
+interface PianoKeysProps {
+  notation: string;
+}
+
+interface SixteenthBlockProps {
+  notation: string;
+  barsIndex: number;
+  quartersIndex: number;
+  sixteenthsIndex: number;
+}
+
 const Container = styled.div`
   display: flex;
 `;
@@ -37,73 +70,78 @@ const NoteRulerInfo = styled.p`
   margin: 0px;
 `;
 
-const PianoKey = styled.button`
+const PianoKey = styled.button<PianoKeysProps>`
   width: 25px;
   height: 10px;
   border: none;
-  border-bottom: 1px solid gray;
   border-right: 1px solid black;
-  /* &:hover {
-    filter: brightness(120%);
-  } */
+  border-top: 1px solid black;
+  background-color: ${(props) =>
+    props.notation.length > 1 ? "black" : "white"};
 `;
 
-const MidiKeys = styled.div`
-  display: flex;
-`;
-
-const WhiteKeys = styled(MidiKeys)`
-  /* & + & {
-    border-bottom: red;
-  } */
-`;
-
-const BlackKeys = styled(MidiKeys)``;
-
-const PianoWhiteKey = styled(PianoKey)`
-  background-color: white;
-  /* & + & {
-    border-bottom: red;
-  } */
-`;
-
-const PianoBlackKey = styled(PianoKey)`
-  background-color: black;
-`;
-
-const MidiColumn = styled.div`
+const OctaveWrapper = styled.div`
   display: flex;
   flex-direction: column-reverse;
 `;
 
+const NoationWrapper = styled.div`
+  display: flex;
+`;
+
+const BarsWrapper = styled.div`
+  display: flex;
+`;
+
+const QuartersWrapper = styled.div`
+  display: flex;
+`;
+
+// const MidiKeys = styled.div`
+//   display: flex;
+// `;
+
 const MidiBlock = styled.div`
   width: 25px;
   height: 10px;
-  border-right: 1px solid gray;
+  /* border-right: 1px solid gray; */
   background-color: darkcyan;
   &:hover {
     filter: brightness(120%);
   }
 `;
 
-const MidiBlockWhiteKeyBright = styled(MidiBlock)`
-  background-color: #a5a5a5;
-`;
-
-const MidiBlockBlackKeyBright = styled(MidiBlock)`
-  background-color: #969696;
-`;
-
-const MidiBlockWhiteKeyDark = styled(MidiBlock)`
-  background-color: #9f9f9f;
-`;
-
-const MidiBlockBlackKeyDark = styled(MidiBlock)`
-  background-color: #8f8f8f;
+const SixteenthBlock = styled(MidiBlock)<SixteenthBlockProps>`
+  background-color: ${(props) =>
+    (props.notation.length === 1 && props.barsIndex % 2 === 0 && "#9F9F9F") ||
+    (props.notation.length === 1 && props.barsIndex % 2 === 1 && "#A5A5A5") ||
+    (props.notation.length === 2 && props.barsIndex % 2 === 0 && "#909090") ||
+    (props.notation.length === 2 && props.barsIndex % 2 === 1 && "#969696")};
+  border-right: ${(props) =>
+    (props.sixteenthsIndex % 4 === 1 && "1px solid hsl(0, 0%, 50%)") ||
+    (props.sixteenthsIndex % 2 === 1 && "1px solid hsl(0, 0%, 45%)") ||
+    "1px solid hsl(0, 0%, 55%)"};
+  border-top: ${(props) =>
+    (props.notation === "E" &&
+      props.barsIndex % 2 === 0 &&
+      "1px solid hsl(0, 0%, 60%)") ||
+    (props.notation === "E" &&
+      props.barsIndex % 2 === 1 &&
+      "1px solid hsl(0, 0%, 65%)") ||
+    (props.notation === "B" &&
+      props.barsIndex % 2 === 0 &&
+      "1px solid hsl(0, 0%, 55%)") ||
+    (props.notation === "B" &&
+      props.barsIndex % 2 === 1 &&
+      "1px solid hsl(0, 0%, 60%)")};
 `;
 
 const NoteBar = styled(MidiBlock)<NoteBarProps>`
-  width: ${(props) => (props.lengthBars * 8 + props.lengthBeats) * 25}px;
+  width: ${(props) =>
+    (props.lengthBars * 16 +
+      props.lengthQuarters * 4 +
+      props.lengthSixteenths) *
+    25}px;
   background: none;
   position: absolute;
   z-index: 1;
@@ -113,40 +151,17 @@ const NoteBar = styled(MidiBlock)<NoteBarProps>`
 
 const NoteBarCenter = styled.div`
   background-color: red;
-  /* flex-wrap: 1; */
-  /* width: 23px; */
   width: 100%;
   cursor: move;
 `;
 
 const NoteBarSide = styled.div`
   width: 5px;
-  /* height: 100%; */
   height: 10px;
   background-color: blue;
   cursor: col-resize;
   z-index: 2;
 `;
-
-interface NoteBarProps {
-  notation: string;
-  notationIndex: number;
-  octave: number;
-  startBars: number;
-  startBeats: number;
-  lengthBars: number;
-  lengthBeats: number;
-}
-
-interface DraggableData {
-  node: HTMLElement;
-  x: number;
-  y: number;
-  deltaX: number;
-  deltaY: number;
-  lastX: number;
-  lastY: number;
-}
 
 export default function App(props: any) {
   const OCTAVES: number = 6;
@@ -164,14 +179,12 @@ export default function App(props: any) {
     "A#",
     "B",
   ];
-  const DOUBLE_MEASURES: number = 4;
-  // const BEATS: number = 4;
 
   const [hoverNote, setHoverNote] = useState("G5");
   const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
   const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
-  const notePrevLengthRef = useRef(0);
-  const notePrevStartRef = useRef(0);
+  const prevNoteLengthRef = useRef(0);
+  const prevNoteStartIndexRef = useRef(0);
 
   // console.log("tracksData", tracksData);
 
@@ -180,9 +193,10 @@ export default function App(props: any) {
     notationIndex: number,
     octave: number,
     startBars: number,
-    startBeats: number
+    startQuarters: number,
+    startSixteenths: number
   ) => {
-    console.log("doubleClick");
+    console.log("handleAddNote");
     if (tracksData && props.selectedTrackIndex) {
       const newNote = {
         notation: notation,
@@ -190,17 +204,21 @@ export default function App(props: any) {
         octave: octave,
         start: {
           bars: startBars,
-          beats: startBeats,
+          quarters: startQuarters,
+          sixteenths: startSixteenths,
         },
         length: {
           bars: 0,
-          beats: 1,
+          quarters: 0,
+          sixteenths: 1,
         },
       };
+      console.log("newNote", newNote);
 
       const newTracksData = produce(tracksData, (draft) => {
         draft[props.selectedTrackIndex].clips[0].notes.push(newNote);
       });
+      // console.log("newTracksData", newTracksData);
       setTracksdata(newTracksData);
 
       const newPlayingNote = {
@@ -208,7 +226,8 @@ export default function App(props: any) {
         octave: octave,
         length: {
           bars: 0,
-          beats: 1,
+          quarters: 0,
+          sixteenths: 1,
         },
       };
       setPlayingNote(newPlayingNote);
@@ -219,8 +238,10 @@ export default function App(props: any) {
     notationIndex: number,
     octave: number,
     startBars: number,
-    startBeats: number
+    startQuarters: number,
+    startSixteenths: number
   ) => {
+    console.log("handleDeleteNote");
     if (tracksData && props.selectedTrackIndex) {
       const newTracksData = produce(tracksData, (draft) => {
         draft[props.selectedTrackIndex].clips[0].notes = draft[
@@ -231,7 +252,8 @@ export default function App(props: any) {
               note.notationIndex === notationIndex &&
               note.octave === octave &&
               note.start.bars === startBars &&
-              note.start.beats === startBeats
+              note.start.quarters === startQuarters &&
+              note.start.sixteenths === startSixteenths
             )
         );
       });
@@ -245,11 +267,13 @@ export default function App(props: any) {
     notationIndex: number,
     octave: number,
     startBars: number,
-    startBeats: number
+    startQuarters: number,
+    startSixteenths: number
   ) => {
+    console.log("handleDragNote");
     if (tracksData && props.selectedTrackIndex) {
-      const newPositionX = dragElement.x - 25;
-      const newPositionY = -dragElement.y;
+      const sixteenthsIndex = (dragElement.x - 25) / 25;
+      const pitchIndex = -dragElement.y / 10;
       const prevNotes = tracksData[props.selectedTrackIndex].clips[0].notes;
 
       const selectedNoteIndex = prevNotes.findIndex(
@@ -257,24 +281,30 @@ export default function App(props: any) {
           note.notationIndex === notationIndex &&
           note.octave === octave &&
           note.start.bars === startBars &&
-          note.start.beats === startBeats
+          note.start.quarters === startQuarters &&
+          note.start.sixteenths === startSixteenths
       );
 
-      const newBeats = (newPositionX % (25 * 8)) / 25 + 1;
-      const newBars = Math.floor(newPositionX / (25 * 8)) + 1;
-      const newNotationIndex = (newPositionY / 10) % 12;
-      const newOctave = Math.floor(newPositionY / (10 * 12)) + 1;
+      // console.log("sixteenthsIndex", sixteenthsIndex);
+
+      const newSixteenths = (sixteenthsIndex % 4) + 1;
+      const newQuarters = Math.floor((sixteenthsIndex % 16) / 4) + 1;
+      const newBars = Math.floor(sixteenthsIndex / 16) + 1;
+
+      const newNotationIndex = pitchIndex % 12;
+      const newOctave = Math.floor(pitchIndex / 12) + 1;
 
       const newTracksData = produce(tracksData, (draft) => {
         const draftNotes =
           draft[props.selectedTrackIndex].clips[0].notes[selectedNoteIndex];
 
-        draftNotes.start.beats = newBeats;
+        draftNotes.start.sixteenths = newSixteenths;
+        draftNotes.start.quarters = newQuarters;
         draftNotes.start.bars = newBars;
 
+        draftNotes.octave = newOctave;
         draftNotes.notationIndex = newNotationIndex;
         draftNotes.notation = NOTATIONS[newNotationIndex];
-        draftNotes.octave = newOctave;
       });
       setTracksdata(newTracksData);
     }
@@ -286,13 +316,15 @@ export default function App(props: any) {
     notationIndex: number,
     octave: number,
     startBars: number,
-    startBeats: number,
+    startQuarters: number,
+    startSixteenths: number,
     lengthBars: number,
-    lengthBeats: number
+    lengthQuarters: number,
+    lengthSixteenths: number
   ) => {
+    console.log("handleMoveNote");
     if (tracksData && props.selectedTrackIndex) {
-      const newPositionX = dragElement.x - 25;
-      const newPositionY = -dragElement.y;
+      const pitchIndex = -dragElement.y;
       const prevNotes = tracksData[props.selectedTrackIndex].clips[0].notes;
 
       const selectedNoteIndex = prevNotes.findIndex(
@@ -300,12 +332,13 @@ export default function App(props: any) {
           note.notationIndex === notationIndex &&
           note.octave === octave &&
           note.start.bars === startBars &&
-          note.start.beats === startBeats
+          note.start.quarters === startQuarters &&
+          note.start.sixteenths === startSixteenths
       );
 
-      const newNotationIndex = (newPositionY / 10) % 12;
+      const newNotationIndex = pitchIndex % 12;
       const newNotation = NOTATIONS[newNotationIndex];
-      const newOctave = Math.floor(newPositionY / (10 * 12)) + 1;
+      const newOctave = Math.floor(pitchIndex / 12) + 1;
 
       if (
         !(
@@ -318,7 +351,8 @@ export default function App(props: any) {
           octave: newOctave,
           length: {
             bars: lengthBars,
-            beats: lengthBeats,
+            quarters: lengthQuarters,
+            sixteenths: lengthSixteenths,
           },
         };
         // setPlayingNote(newPlayingNote);
@@ -326,14 +360,16 @@ export default function App(props: any) {
     }
   };
 
-  const handleExtendNoteData = (
+  const handlePrevNoteData = (
     event: DraggableEvent,
     dragElement: { x: number },
     notationIndex: number,
     octave: number,
     startBars: number,
-    startBeats: number
+    startQuarters: number,
+    startSixteenths: number
   ) => {
+    console.log("handlePrevNoteData");
     if (tracksData && props.selectedTrackIndex) {
       const prevNotes = tracksData[props.selectedTrackIndex].clips[0].notes;
       const selectedNoteIndex = prevNotes.findIndex(
@@ -341,17 +377,22 @@ export default function App(props: any) {
           note.notationIndex === notationIndex &&
           note.octave === octave &&
           note.start.bars === startBars &&
-          note.start.beats === startBeats
+          note.start.quarters === startQuarters &&
+          note.start.sixteenths === startSixteenths
       );
       const prevNote = prevNotes[selectedNoteIndex];
 
-      notePrevLengthRef.current =
-        prevNote.length.bars * 8 + prevNote.length.beats;
-      notePrevStartRef.current =
-        (prevNote.start.bars - 1) * 8 + (prevNote.start.beats - 1) + 1;
+      prevNoteLengthRef.current =
+        prevNote.length.bars * 16 +
+        prevNote.length.quarters * 4 +
+        prevNote.length.sixteenths;
+      prevNoteStartIndexRef.current =
+        (prevNote.start.bars - 1) * 16 +
+        (prevNote.start.quarters - 1) * 4 +
+        (prevNote.start.sixteenths - 1);
     }
-    console.log("notePrevLengthRef.current", notePrevLengthRef.current);
-    console.log("notePrevStartRef.current", notePrevStartRef.current);
+    console.log("prevNoteLengthRef.current", prevNoteLengthRef.current);
+    console.log("prevNoteStartIndexRef.current", prevNoteStartIndexRef.current);
   };
 
   const handleExtendNoteRight = (
@@ -360,10 +401,11 @@ export default function App(props: any) {
     notationIndex: number,
     octave: number,
     startBars: number,
-    startBeats: number
+    startQuarters: number,
+    startSixteenths: number
   ) => {
     if (tracksData && props.selectedTrackIndex) {
-      const offsetBeats = dragElement.x / 25;
+      const offsetSixteenths = dragElement.x / 25;
       const prevNotes = tracksData[props.selectedTrackIndex].clips[0].notes;
 
       const selectedNoteIndex = prevNotes.findIndex(
@@ -371,23 +413,22 @@ export default function App(props: any) {
           note.notationIndex === notationIndex &&
           note.octave === octave &&
           note.start.bars === startBars &&
-          note.start.beats === startBeats
+          note.start.quarters === startQuarters &&
+          note.start.sixteenths === startSixteenths
       );
 
       const newTracksData = produce(tracksData, (draft) => {
         const draftNotes =
           draft[props.selectedTrackIndex].clips[0].notes[selectedNoteIndex];
 
-        const sumLengthBeats =
-          notePrevLengthRef.current + offsetBeats <= 0
+        const sumLengthSixteenths =
+          prevNoteLengthRef.current + offsetSixteenths <= 0
             ? 1
-            : notePrevLengthRef.current + offsetBeats;
+            : prevNoteLengthRef.current + offsetSixteenths;
 
-        draftNotes.length.bars =
-          Math.floor(sumLengthBeats / 8) <= 0
-            ? 0
-            : Math.floor(sumLengthBeats / 8);
-        draftNotes.length.beats = sumLengthBeats % 8;
+        draftNotes.length.bars = Math.floor(sumLengthSixteenths / 16);
+        draftNotes.length.quarters = Math.floor((sumLengthSixteenths % 16) / 4);
+        draftNotes.length.sixteenths = sumLengthSixteenths % 4;
       });
       setTracksdata(newTracksData);
     }
@@ -399,11 +440,12 @@ export default function App(props: any) {
     notationIndex: number,
     octave: number,
     startBars: number,
-    startBeats: number
+    startQuarters: number,
+    startSixteenths: number
   ) => {
     if (tracksData && props.selectedTrackIndex) {
       console.log("-dragElement.x", -dragElement.x);
-      const offsetBeats = -dragElement.x / 25;
+      const offsetSixteenths = -dragElement.x / 25;
       const prevNotes = tracksData[props.selectedTrackIndex].clips[0].notes;
 
       const selectedNoteIndex = prevNotes.findIndex(
@@ -411,44 +453,36 @@ export default function App(props: any) {
           note.notationIndex === notationIndex &&
           note.octave === octave &&
           note.start.bars === startBars &&
-          note.start.beats === startBeats
+          note.start.quarters === startQuarters &&
+          note.start.sixteenths === startSixteenths
       );
 
       const newTracksData = produce(tracksData, (draft) => {
         const draftNotes =
           draft[props.selectedTrackIndex].clips[0].notes[selectedNoteIndex];
 
-        const sumLengthBeats =
-          notePrevLengthRef.current + offsetBeats <= 0
+        const newLengthSixteenths =
+          prevNoteLengthRef.current + offsetSixteenths <= 0
             ? 1
-            : notePrevLengthRef.current + offsetBeats;
+            : prevNoteLengthRef.current + offsetSixteenths;
 
-        draftNotes.length.bars =
-          Math.floor(sumLengthBeats / 8) <= 0
+        draftNotes.length.bars = Math.floor(newLengthSixteenths / 16);
+        draftNotes.length.quarters = Math.floor((newLengthSixteenths % 16) / 4);
+        draftNotes.length.sixteenths = newLengthSixteenths % 4;
+
+        const newStartSixteenthsIndex =
+          prevNoteStartIndexRef.current - offsetSixteenths <= 0
             ? 0
-            : Math.floor(sumLengthBeats / 8);
-        draftNotes.length.beats = sumLengthBeats % 8;
+            : prevNoteStartIndexRef.current - offsetSixteenths;
 
-        console.log("notePrevStartRef.current", notePrevStartRef.current);
-        console.log("offsetBeats", offsetBeats);
-        const subStartBeats =
-          notePrevStartRef.current - offsetBeats <= 1
-            ? 1
-            : notePrevStartRef.current - offsetBeats;
-        console.log("subStartBeats", subStartBeats);
-        console.log(
-          "draftNotes.start.bars",
-          subStartBeats % 8 === 0
-            ? Math.floor(subStartBeats / 8)
-            : Math.floor(subStartBeats / 8) + 1
-        );
-        console.log(
-          "draftNotes.start.beats",
-          subStartBeats % 8 === 0 ? 8 : subStartBeats % 8
-        );
+        const newStartSixteenths = (newStartSixteenthsIndex % 4) + 1;
+        const newStartQuarters =
+          Math.floor((newStartSixteenthsIndex % 16) / 4) + 1;
+        const newStartBars = Math.floor(newStartSixteenthsIndex / 16) + 1;
 
-        draftNotes.start.bars = Math.floor(subStartBeats / 8) + 1;
-        draftNotes.start.beats = subStartBeats % 8;
+        draftNotes.start.bars = newStartBars;
+        draftNotes.start.quarters = newStartQuarters;
+        draftNotes.start.sixteenths = newStartSixteenths;
       });
       setTracksdata(newTracksData);
     }
@@ -469,11 +503,11 @@ export default function App(props: any) {
   //       octave: octave,
   //       start: {
   //         bars: startBars,
-  //         beats: startBeats,
+  //         quarters: startQuarters,
   //       },
   //       length: {
   //         bars: 0,
-  //         beats: 1,
+  //         quarters: 1,
   //       },
   //     };
   //     await updateDoc(trackRef, {
@@ -489,9 +523,7 @@ export default function App(props: any) {
   return (
     <Container>
       <NoteRuler>
-        <>
-          <NoteRulerInfo>{hoverNote}</NoteRulerInfo>
-        </>
+        <NoteRulerInfo>{hoverNote}</NoteRulerInfo>
       </NoteRuler>
       <PianoRoll>
         {tracksData &&
@@ -505,11 +537,13 @@ export default function App(props: any) {
                 octave: number;
                 start: {
                   bars: number;
-                  beats: number;
+                  quarters: number;
+                  sixteenths: number;
                 };
                 length: {
                   bars: number;
-                  beats: number;
+                  quarters: number;
+                  sixteenths: number;
                 };
               },
               index: number
@@ -524,7 +558,8 @@ export default function App(props: any) {
                       note.notationIndex,
                       note.octave,
                       note.start.bars,
-                      note.start.beats
+                      note.start.quarters,
+                      note.start.sixteenths
                     )
                   }
                   onDrag={(event: DraggableEvent, dragElement: DraggableData) =>
@@ -534,29 +569,36 @@ export default function App(props: any) {
                       note.notationIndex,
                       note.octave,
                       note.start.bars,
-                      note.start.beats,
+                      note.start.quarters,
+                      note.start.sixteenths,
                       note.length.bars,
-                      note.length.beats
+                      note.length.quarters,
+                      note.length.sixteenths
                     )
                   }
                   grid={[25, 10]}
                   position={{
                     x:
-                      ((note.start.bars - 1) * 8 + (note.start.beats - 1) + 1) *
+                      ((note.start.bars - 1) * 16 +
+                        (note.start.quarters - 1) * 4 +
+                        (note.start.sixteenths - 1) +
+                        1) *
                       25,
                     y: ((note.octave - 1) * 12 + note.notationIndex) * -10,
                   }}
                   handle=".handle-NoteBar"
-                  key={`NoteBar-${note.notation}-${note.octave}-${note.start.bars}-${note.start.beats}-${note.length}`}
+                  key={`NoteBar-${note.notation}-${note.octave}-${note.start.bars}-${note.start.quarters}-${note.start.sixteenths}`}
                 >
                   <NoteBar
                     notation={note.notation}
                     notationIndex={note.notationIndex}
                     octave={note.octave}
                     startBars={note.start.bars}
-                    startBeats={note.start.beats}
+                    startQuarters={note.start.quarters}
+                    startSixteenths={note.start.sixteenths}
                     lengthBars={note.length.bars}
-                    lengthBeats={note.length.beats}
+                    lengthQuarters={note.length.quarters}
+                    lengthSixteenths={note.length.sixteenths}
                   >
                     <Draggable
                       axis="both"
@@ -564,13 +606,14 @@ export default function App(props: any) {
                         event: DraggableEvent,
                         dragElement: DraggableData
                       ) => {
-                        handleExtendNoteData(
+                        handlePrevNoteData(
                           event,
                           dragElement,
                           note.notationIndex,
                           note.octave,
                           note.start.bars,
-                          note.start.beats
+                          note.start.quarters,
+                          note.start.sixteenths
                         );
                       }}
                       onDrag={(
@@ -583,7 +626,8 @@ export default function App(props: any) {
                           note.notationIndex,
                           note.octave,
                           note.start.bars,
-                          note.start.beats
+                          note.start.quarters,
+                          note.start.sixteenths
                         );
                       }}
                       grid={[25, 0]}
@@ -599,11 +643,13 @@ export default function App(props: any) {
                     <NoteBarCenter
                       className="handle-NoteBar"
                       onDoubleClick={() => {
+                        console.log("onDoubleClick handleDeleteNote");
                         handleDeleteNote(
                           note.notationIndex,
                           note.octave,
                           note.start.bars,
-                          note.start.beats
+                          note.start.quarters,
+                          note.start.sixteenths
                         );
                       }}
                     />
@@ -613,13 +659,14 @@ export default function App(props: any) {
                         event: DraggableEvent,
                         dragElement: DraggableData
                       ) => {
-                        handleExtendNoteData(
+                        handlePrevNoteData(
                           event,
                           dragElement,
                           note.notationIndex,
                           note.octave,
                           note.start.bars,
-                          note.start.beats
+                          note.start.quarters,
+                          note.start.sixteenths
                         );
                       }}
                       onDrag={(
@@ -632,7 +679,8 @@ export default function App(props: any) {
                           note.notationIndex,
                           note.octave,
                           note.start.bars,
-                          note.start.beats
+                          note.start.quarters,
+                          note.start.sixteenths
                         );
                       }}
                       grid={[25, 0]}
@@ -650,137 +698,63 @@ export default function App(props: any) {
             }
           )}
         {new Array(OCTAVES).fill(0).map((_, octaveIndex) => (
-          <MidiColumn key={octaveIndex}>
+          <OctaveWrapper key={octaveIndex}>
             {NOTATIONS.map((notation, notationIndex) => (
-              <div
+              <NoationWrapper
                 key={`${notation}-${notationIndex}`}
                 onMouseLeave={() => {
                   setHoverNote("");
                 }}
               >
-                {notation.length === 1 ? (
-                  <WhiteKeys>
-                    <PianoWhiteKey onClick={() => {}} />
-                    {new Array(DOUBLE_MEASURES).fill(0).map((_, barsIndex) => (
-                      <>
-                        {new Array(8).fill(0).map((_, beatsIndex) => (
-                          <MidiBlockWhiteKeyDark
+                <PianoKey notation={notation} onClick={() => {}} />
+                {new Array(4).fill(0).map((_, barsIndex) => (
+                  <BarsWrapper key={barsIndex}>
+                    {new Array(4).fill(0).map((_, quartersIndex) => (
+                      <QuartersWrapper key={quartersIndex}>
+                        {new Array(4).fill(0).map((_, sixteenthsIndex) => (
+                          <SixteenthBlock
                             onDoubleClick={() => {
+                              console.log("doubleClick handleAddNote");
                               handleAddNote(
                                 notation,
                                 notationIndex,
                                 octaveIndex + 1,
-                                barsIndex * 2 + 1,
-                                beatsIndex + 1
+                                barsIndex + 1,
+                                quartersIndex + 1,
+                                sixteenthsIndex + 1
                               );
+                              // tracksData[2].clips[0].notes.forEach((note) => {
+                              //   console.log("note", note);
+                              // });
                             }}
                             onMouseOver={() => {
                               setHoverNote(
-                                `notation${notation}
-                                  octave${octaveIndex + 1}
-                                  bars${barsIndex * 2 + 1}
-                                  beats${beatsIndex + 1}`
+                                `
+                                notation${notation}
+                                octave${octaveIndex + 1}
+                                bars${barsIndex + 1}
+                                quarters${quartersIndex + 1}
+                                sixteenths${sixteenthsIndex + 1}
+                                `
                               );
                             }}
+                            notation={notation}
+                            barsIndex={barsIndex}
+                            quartersIndex={quartersIndex}
+                            sixteenthsIndex={sixteenthsIndex}
                             key={`
-                                ${notation}-${octaveIndex + 1}-${
-                              barsIndex * 2 + 1
-                            }-${beatsIndex + 1}`}
+                              ${notation}-${octaveIndex + 1}-${barsIndex + 1}-${
+                              quartersIndex + 1
+                            }-${sixteenthsIndex + 1}`}
                           />
                         ))}
-                        {new Array(8).fill(0).map((_, beatsIndex) => (
-                          <MidiBlockWhiteKeyBright
-                            onDoubleClick={() => {
-                              handleAddNote(
-                                notation,
-                                notationIndex,
-                                octaveIndex + 1,
-                                (barsIndex + 1) * 2,
-                                beatsIndex + 1
-                              );
-                            }}
-                            onMouseOver={() => {
-                              setHoverNote(
-                                `notation${notation} octave${
-                                  octaveIndex + 1
-                                } bars${(barsIndex + 1) * 2} beats${
-                                  beatsIndex + 1
-                                }`
-                              );
-                            }}
-                            key={`
-                              ${notation}-${octaveIndex + 1}-${
-                              (barsIndex + 1) * 2
-                            }-${beatsIndex + 1}`}
-                          />
-                        ))}
-                      </>
+                      </QuartersWrapper>
                     ))}
-                  </WhiteKeys>
-                ) : (
-                  <BlackKeys>
-                    <PianoBlackKey onClick={() => {}} />
-                    {new Array(DOUBLE_MEASURES).fill(0).map((_, barsIndex) => (
-                      <>
-                        {new Array(8).fill(0).map((_, beatsIndex) => (
-                          <MidiBlockBlackKeyDark
-                            onDoubleClick={() => {
-                              handleAddNote(
-                                notation,
-                                notationIndex,
-                                octaveIndex + 1,
-                                barsIndex * 2 + 1,
-                                beatsIndex + 1
-                              );
-                            }}
-                            onMouseOver={() => {
-                              setHoverNote(
-                                `notation${notation} octave${
-                                  octaveIndex + 1
-                                } bars${barsIndex * 2 + 1} beats${
-                                  beatsIndex + 1
-                                }`
-                              );
-                            }}
-                            key={`
-                                ${notation}-${octaveIndex + 1}-${
-                              barsIndex * 2 + 1
-                            }-${beatsIndex + 1}`}
-                          />
-                        ))}
-                        {new Array(8).fill(0).map((_, beatsIndex) => (
-                          <MidiBlockBlackKeyBright
-                            onDoubleClick={() => {
-                              handleAddNote(
-                                notation,
-                                notationIndex,
-                                octaveIndex + 1,
-                                (barsIndex + 1) * 2,
-                                beatsIndex + 1
-                              );
-                            }}
-                            onMouseOver={() => {
-                              setHoverNote(
-                                `notation${notation} octave${
-                                  octaveIndex + 1
-                                } bars${(barsIndex + 1) * 2} beats${
-                                  beatsIndex + 1
-                                }`
-                              );
-                            }}
-                            key={`
-                              ${notation}-${octaveIndex + 1}-${
-                              (barsIndex + 1) * 2
-                            }-${beatsIndex + 1}`}
-                          />
-                        ))}
-                      </>
-                    ))}
-                  </BlackKeys>
-                )}
-              </div>
+                  </BarsWrapper>
+                ))}
+              </NoationWrapper>
             ))}
-          </MidiColumn>
+          </OctaveWrapper>
         ))}
       </PianoRoll>
     </Container>
