@@ -51,11 +51,6 @@ export interface TrackData {
 export interface PlayingNoteData {
   notation: string;
   octave: number;
-  length: {
-    bars: number;
-    quarters: number;
-    sixteenths: number;
-  };
 }
 
 export const tracksDataState = atom({

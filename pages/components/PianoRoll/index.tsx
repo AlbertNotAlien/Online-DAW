@@ -44,6 +44,7 @@ interface NoteBarProps {
 
 interface PianoKeysProps {
   notation: string;
+  isOnClick: boolean;
 }
 
 interface SixteenthBlockProps {
@@ -77,7 +78,10 @@ const PianoKey = styled.button<PianoKeysProps>`
   border-right: 1px solid black;
   border-top: 1px solid black;
   background-color: ${(props) =>
-    props.notation.length > 1 ? "black" : "white"};
+    // props.notation.length > 1 ? "black" : "white"};
+    (props.isOnClick === true && "red") ||
+    (props.notation.length === 1 && props.isOnClick === false && "white") ||
+    (props.notation.length > 1 && props.isOnClick === false && "black")};
 `;
 
 const OctaveWrapper = styled.div`
@@ -180,11 +184,12 @@ export default function App(props: any) {
     "B",
   ];
 
-  const [hoverNote, setHoverNote] = useState("G5");
+  const [hoverMidiBlock, setHoverMidiBlock] = useState("G5");
   const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
   const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
   const prevNoteLengthRef = useRef(0);
   const prevNoteStartIndexRef = useRef(0);
+  const [isMouseDownPianoRoll, setIsMouseDownPianoRoll] = useState(false);
 
   // console.log("tracksData", tracksData);
 
@@ -224,11 +229,6 @@ export default function App(props: any) {
       const newPlayingNote = {
         notation: notation,
         octave: octave,
-        length: {
-          bars: 0,
-          quarters: 0,
-          sixteenths: 1,
-        },
       };
       setPlayingNote(newPlayingNote);
     }
@@ -322,9 +322,9 @@ export default function App(props: any) {
     lengthQuarters: number,
     lengthSixteenths: number
   ) => {
-    console.log("handleMoveNote");
+    // console.log("handleMoveNote");
     if (tracksData && props.selectedTrackIndex) {
-      const pitchIndex = -dragElement.y;
+      const pitchIndex = -dragElement.y / 10;
       const prevNotes = tracksData[props.selectedTrackIndex].clips[0].notes;
 
       const selectedNoteIndex = prevNotes.findIndex(
@@ -338,24 +338,19 @@ export default function App(props: any) {
 
       const newNotationIndex = pitchIndex % 12;
       const newNotation = NOTATIONS[newNotationIndex];
+      console.log("pitchIndex", pitchIndex);
       const newOctave = Math.floor(pitchIndex / 12) + 1;
 
       if (
-        !(
-          newNotationIndex === prevNotes[selectedNoteIndex].notationIndex &&
-          newOctave === prevNotes[selectedNoteIndex].octave
-        )
+        newNotationIndex !== prevNotes[selectedNoteIndex].notationIndex ||
+        newOctave !== prevNotes[selectedNoteIndex].octave
       ) {
         const newPlayingNote = {
           notation: newNotation,
           octave: newOctave,
-          length: {
-            bars: lengthBars,
-            quarters: lengthQuarters,
-            sixteenths: lengthSixteenths,
-          },
         };
-        // setPlayingNote(newPlayingNote);
+        console.log("newPlayingNote", newPlayingNote);
+        setPlayingNote(newPlayingNote);
       }
     }
   };
@@ -523,31 +518,28 @@ export default function App(props: any) {
   return (
     <Container>
       <NoteRuler>
-        <NoteRulerInfo>{hoverNote}</NoteRulerInfo>
+        <NoteRulerInfo>{hoverMidiBlock}</NoteRulerInfo>
       </NoteRuler>
       <PianoRoll>
         {tracksData &&
           props.selectedTrackIndex &&
           tracksData[props.selectedTrackIndex].type === "midi" &&
           tracksData[props.selectedTrackIndex].clips[0].notes.map(
-            (
-              note: {
-                notation: string;
-                notationIndex: number;
-                octave: number;
-                start: {
-                  bars: number;
-                  quarters: number;
-                  sixteenths: number;
-                };
-                length: {
-                  bars: number;
-                  quarters: number;
-                  sixteenths: number;
-                };
-              },
-              index: number
-            ) => {
+            (note: {
+              notation: string;
+              notationIndex: number;
+              octave: number;
+              start: {
+                bars: number;
+                quarters: number;
+                sixteenths: number;
+              };
+              length: {
+                bars: number;
+                quarters: number;
+                sixteenths: number;
+              };
+            }) => {
               return (
                 <Draggable
                   axis="both"
@@ -703,10 +695,29 @@ export default function App(props: any) {
               <NoationWrapper
                 key={`${notation}-${notationIndex}`}
                 onMouseLeave={() => {
-                  setHoverNote("");
+                  setHoverMidiBlock("");
                 }}
               >
-                <PianoKey notation={notation} onClick={() => {}} />
+                <PianoKey
+                  notation={notation}
+                  onMouseDown={() => {
+                    const newPlayingNote = {
+                      notation: notation,
+                      octave: octaveIndex + 1,
+                    };
+                    setPlayingNote(newPlayingNote);
+                    setIsMouseDownPianoRoll(true);
+                  }}
+                  onMouseUp={() => {
+                    setPlayingNote(null);
+                    setIsMouseDownPianoRoll(false);
+                  }}
+                  isOnClick={
+                    playingNote?.notation === notation &&
+                    playingNote?.octave === octaveIndex + 1 &&
+                    isMouseDownPianoRoll === true
+                  }
+                />
                 {new Array(4).fill(0).map((_, barsIndex) => (
                   <BarsWrapper key={barsIndex}>
                     {new Array(4).fill(0).map((_, quartersIndex) => (
@@ -728,7 +739,7 @@ export default function App(props: any) {
                               // });
                             }}
                             onMouseOver={() => {
-                              setHoverNote(
+                              setHoverMidiBlock(
                                 `
                                 notation${notation}
                                 octave${octaveIndex + 1}

@@ -23,7 +23,6 @@ import { tracksDataState, TrackData } from "../../../lib/atoms";
 import Bars from "../Bars";
 import WaveSurfer from "../WaveSurfer";
 import Record from "../Record";
-import useRecorder from "../Record/useRecorder";
 import Tone from "../Tone";
 import PianoRoll from "../PianoRoll";
 
@@ -78,13 +77,21 @@ const TrackControls = styled.div<TrackControlsProps>`
   width: 200px;
   height: ${(props) => props.trackHeight}px;
   background-color: ${(props) => props.selectedColor};
-  display: flex;
+  /* display: flex; */
   align-items: center;
+  padding-left: 10px;
+`;
+
+const TrackTitle = styled.p`
+  font-size: 15px;
+`;
+
+const TrackButtons = styled.div`
+  display: flex;
 `;
 
 const TrackButton = styled.button`
   height: 20px;
-  margin-left: 10px;
   border: none;
   border-radius: 5px;
 `;
@@ -157,7 +164,6 @@ const Timeline = () => {
   const audioListRef = ref(storage, `projects/${projectId}/audios`);
   const [audioList, setAudioList] = useState<string[]>([]);
 
-  const recordRef = useRef<HTMLDivElement>(null);
   const secondsRef = useRef<number>(0);
   const intervalRef = useRef<any>(null);
 
@@ -427,7 +433,9 @@ const Timeline = () => {
   return (
     <>
       <Progressline
-        progressLinePosition={(convertMsToBeats(progress) - 1) * barWidth}
+        progressLinePosition={
+          (convertMsToBeats(progress) - 1) * barWidth * 1.05
+        }
       />
       <Controls>
         <button onClick={handlePlay}>Play</button>
@@ -480,13 +488,7 @@ const Timeline = () => {
             return (
               <TrackLine
                 key={`${track.trackName}-${index}`}
-                // tabindex={0}
-                // onFocus={() => {
-                //   console.log("onFocus", track.id);
-                //   handleSelectTrack(track.id, index);
-                // }}
                 onClick={() => {
-                  // console.log("onClick", track.id);
                   handleSelectTrack(track.id, index);
                 }}
               >
@@ -496,22 +498,25 @@ const Timeline = () => {
                   }
                   trackHeight={projectData.trackHeight}
                 >
-                  <IsSoloButton
-                    onClick={() => {
-                      handleTrackSolo(!track.isSolo, track.id);
-                    }}
-                    isSolo={track.isSolo ? "#2F302F" : "#606060"}
-                  >
-                    Solo
-                  </IsSoloButton>
-                  <IsMutedButton
-                    onClick={() => {
-                      handleTrackMute(!track.isMuted, track.id);
-                    }}
-                    isMuted={track.isMuted ? "#2F302F" : "#606060"}
-                  >
-                    Mute
-                  </IsMutedButton>
+                  <TrackTitle>{track.trackName}</TrackTitle>
+                  <TrackButtons>
+                    {/* <IsSoloButton
+                      onClick={() => {
+                        handleTrackSolo(!track.isSolo, track.id);
+                      }}
+                      isSolo={track.isSolo ? "#2F302F" : "#606060"}
+                    >
+                      Solo
+                    </IsSoloButton> */}
+                    <IsMutedButton
+                      onClick={() => {
+                        handleTrackMute(!track.isMuted, track.id);
+                      }}
+                      isMuted={track.isMuted ? "#2F302F" : "#606060"}
+                    >
+                      Mute
+                    </IsMutedButton>
+                  </TrackButtons>
                 </TrackControls>
                 <Track>
                   {track.type === "audio" ? (
@@ -534,7 +539,7 @@ const Timeline = () => {
                       handle="#handle"
                       bounds={{ left: 0 }}
                     >
-                      <div>
+                      <>
                         <ClipTitle id="handle">
                           {track.clips[0].clipName}
                         </ClipTitle>
@@ -548,7 +553,7 @@ const Timeline = () => {
                           convertMsToBeats={convertMsToBeats}
                           convertBeatsToMs={convertBeatsToMs}
                         />
-                      </div>
+                      </>
                     </Draggable>
                   ) : (
                     <>
@@ -558,11 +563,17 @@ const Timeline = () => {
                         projectData={projectData}
                         trackData={tracksData[index]}
                         barWidth={barWidth}
+                        progress={progress}
                       />
                     </>
                   )}
 
-                  <Bars projectData={projectData} />
+                  <Bars
+                    onClick={() => {
+                      console.log("!");
+                    }}
+                    projectData={projectData}
+                  />
                 </Track>
               </TrackLine>
             );

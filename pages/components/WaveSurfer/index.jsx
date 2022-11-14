@@ -87,7 +87,7 @@ const WaveSurfer = (props) => {
       props.isPlaying &&
       props.progress > startMillisecond
     ) {
-      console.log("play");
+      // console.log("play");
       wavesurfer.current.play(
         props.progress - startMillisecond,
         startMillisecond + duration

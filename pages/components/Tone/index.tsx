@@ -37,7 +37,7 @@ const MidiNote = styled.div<MidiNoteProps>`
   position: absolute;
   bottom: ${(props) =>
     (props.pitch * (props.trackHeight - 20)) / (6 * 12 + 1)}px;
-  left: ${(props) => props.barWidth * 0.5 * props.startTime}px;
+  left: ${(props) => props.barWidth * props.startTime * 0.25}px;
 `;
 
 export default function App(props: any) {
@@ -49,83 +49,129 @@ export default function App(props: any) {
 
   // cause Tone.js can't run in SSR
   useEffect(() => {
-    // Tone.Transport.bpm.value = 150;
     const vol = new Tone.Volume(-50).toDestination();
     const newSynth = new Tone.Synth().connect(vol).toDestination();
-    console.log("newSynth", newSynth);
     setInstrument(newSynth);
   }, []);
 
-  const playNote = (
-    note: string,
-    octave: number,
-    start: { bars: number; quarters: number; sixteenths: number }
-  ) => {
+  const playNote = (notation: string, octave: number) => {
     if (instrument) {
-      instrument.triggerAttackRelease(`${note}${octave}`, "8n", now);
-      console.log(note);
+      instrument.triggerAttackRelease(`${notation}${octave}`, "8n", now);
     }
-  };
-
-  // useEffect(() => {
-  //   if (playingNote) {
-  //     playNote(playingNote.notation, playingNote.octave, now);
-  //   }
-  // }, [playingNote]);
-
-  const playMelody = (
-    note: string,
-    octave: number,
-    start: { bars: number; quarters: number; sixteenths: number },
-    length: { bars: number; quarters: number; sixteenths: number }
-  ) => {
-    if (instrument) {
-      console.log("playMelody");
-      instrument.triggerAttackRelease(
-        `${note}${octave}`,
-        `${start.bars * 16}+ ${start.quarters * 4} + ${start.sixteenths * 1}`,
-        now +
-          (((start.bars - 1) * 16 +
-            (start.quarters - 1) * 4 +
-            (start.sixteenths - 1)) *
-            props.projectData.tempo) /
-            60
-      );
-      console.log(
-        (((start.bars - 1) * 16 +
-          (start.quarters - 1) * 4 +
-          (start.sixteenths - 1)) *
-          props.projectData.tempo) /
-          60
-      );
-    }
-  };
-
-  const handlePlayMelody = () => {
-    console.log(props.trackData);
-    props.trackData.clips[0].notes.forEach((note: NoteData) => {
-      console.log(note);
-      playMelody(note.notation, note.octave, note.start, note.length);
-      console.log(
-        "note.notation, note.octave, note.start",
-        note.notation,
-        note.octave,
-        note.start
-      );
-    });
   };
 
   useEffect(() => {
+    if (playingNote) {
+      playNote(playingNote.notation, playingNote.octave);
+    }
+  }, [playingNote]);
+
+  // const playMelody = (
+  //   note: string,
+  //   octave: number,
+  //   start: { bars: number; quarters: number; sixteenths: number },
+  //   length: { bars: number; quarters: number; sixteenths: number }
+  // ) => {
+  //   if (instrument) {
+  //     console.log("playMelody");
+  //     instrument.triggerAttackRelease(
+  //       `${note}${octave}`,
+  //       `${start.bars * 16}+ ${start.quarters * 4} + ${start.sixteenths * 1}`,
+  //       now +
+  //         (((start.bars - 1) * 16 +
+  //           (start.quarters - 1) * 4 +
+  //           (start.sixteenths - 1)) *
+  //           props.projectData.tempo) /
+  //           60
+  //     );
+  //     // console.log(
+  //     //   (((start.bars - 1) * 16 +
+  //     //     (start.quarters - 1) * 4 +
+  //     //     (start.sixteenths - 1)) *
+  //     //     props.projectData.tempo) /
+  //     //     60
+  //     // );
+  //   }
+  // };
+
+  // const handlePlayMelody = (note: NoteData) => {
+  //   Tone.Transport.bpm.value = 200;
+  //   if (instrument) {
+  //     instrument.triggerAttackRelease(
+  //       `${note.notation}${note.octave}`,
+  //       `${
+  //         (((note.length.bars * 16 +
+  //           note.length.quarters * 4 +
+  //           note.length.sixteenths * 1) /
+  //           4) *
+  //           props.projectData.tempo) /
+  //         60
+  //       }`,
+  //       `${
+  //         ((((note.start.bars - 1) * 16 +
+  //           (note.start.quarters - 1) * 4 +
+  //           (note.start.sixteenths - 1) * 1) /
+  //           4) *
+  //           props.projectData.tempo) /
+  //         60
+  //       }`
+  //     );
+  //     Tone.Transport.start();
+  //   }
+  // };
+
+  const handlePlayMelody = (note: NoteData) => {
+    console.log("handlePlayMelody");
+    if (instrument) {
+      Tone.Transport.schedule(function (time) {
+        console.log(Tone.Transport.getSecondsAtTime(time));
+        console.log(Tone.Transport.position);
+
+        instrument.triggerAttackRelease(
+          `${note.notation}${note.octave}`,
+          `${note.length.bars}:${note.length.quarters}:${note.length.sixteenths}`
+        );
+      }, `${note.start.bars}:${note.start.quarters}:${note.start.sixteenths}`);
+      console.log(
+        "note",
+        `${note.start.bars}:${note.start.quarters}:${note.start.sixteenths}`
+      );
+    }
+  };
+
+  useEffect(() => {
+    Tone.Transport.bpm.value = 158;
     if (instrument && props.isPlaying) {
-      handlePlayMelody();
+      const timer = setInterval(() => console.log(Tone.now()), 100);
+      const startPlaying = async () => {
+        Tone.Transport.position = 0;
+        Tone.Transport.start(0);
+
+        await Tone.start();
+      };
+      startPlaying();
+
+      console.log("Tone.Transport.start()");
+      // Tone.Transport.start(0);
+      // console.log(Tone.Transport.position);
+      props.trackData.clips[0].notes.forEach(
+        (note: NoteData, index: number) => {
+          handlePlayMelody(note);
+        }
+      );
+      return () => clearInterval(timer);
+    } else if (instrument && !props.isPlaying) {
+      console.log("Tone.Transport.pause()");
+      Tone.Transport.pause();
+      // Tone.stop();
     }
   }, [instrument, props.isPlaying]);
 
-  console.log(props.trackData.clips[0].notes);
+  // console.log(props.trackData.clips[0].notes);
 
   return (
     <>
-      <MidiRegion barWidth={props.barWidth} length={3}>
+      <MidiRegion barWidth={props.barWidth} length={100}>
         {props.trackData.clips[0].notes.map((note: NoteData, index: number) => (
           <MidiNote
             key={`${note.notation}-${note.octave}-${note.start.bars}-${note.start.quarters}-${note.start.sixteenths}`}
@@ -135,7 +181,10 @@ export default function App(props: any) {
               (note.start.sixteenths - 1)
             }
             width={
-              (note.length.bars * 8 + note.length.quarters) * props.barWidth
+              (note.length.bars * 16 +
+                note.length.quarters * 4 +
+                note.length.sixteenths) *
+              props.barWidth
             }
             barWidth={props.barWidth}
             pitch={(note.octave - 1) * 12 + note.notationIndex}
