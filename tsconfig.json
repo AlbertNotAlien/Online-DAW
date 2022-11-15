@@ -19,8 +19,9 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    "pages/components/WaveSurfer/index.tsx",
-    "pages/components/Tone/index.tsx"
+    "components/WaveSurfer/index.tsx",
+    "components/Tone/index.tsx",
+    "pages/components/PianoRoll/index.jsx"
   ],
   "exclude": ["node_modules"]
 }

@@ -3,7 +3,7 @@ import Image from "next/image";
 import styles from "../styles/Home.module.css";
 import { forwardRef, useRef, useImperativeHandle, useState } from "react";
 
-import Timeline from "./components/Timeline";
+import Timeline from "../src/components/Timeline";
 
 import { Provider } from "react-redux";
 

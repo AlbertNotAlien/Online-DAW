@@ -53,6 +53,12 @@ export interface PlayingNoteData {
   octave: number;
 }
 
+export interface NoteRulerInfo {
+  notation: string;
+  notationIndex: number;
+  octaveIndex: number;
+}
+
 export const tracksDataState = atom({
   key: "tracksDataState",
   default: null as TrackData[] | null,
@@ -61,6 +67,16 @@ export const tracksDataState = atom({
 export const playingNoteState = atom({
   key: "playingNoteState",
   default: null as PlayingNoteData | null,
+});
+
+export const hoverMidiInfoState = atom({
+  key: "hoverMidiInfoState",
+  default: null as NoteRulerInfo | null,
+});
+
+export const selectedTrackIndexState = atom({
+  key: "selectedTrackIndexState",
+  default: null as number | null,
 });
 
 // const uploadTrackData = async (tracksData: boolean, trackId: string) => {
