@@ -142,8 +142,8 @@ const Tracks = (props: any) => {
   const [progress, setProgress] = useState<number>(0);
   const [trackPosition, setTrackPosition] = useState({ x: 0, y: 0 });
 
-  const secondsRef = useRef<number>(0);
-  const intervalRef = useRef<any>(null);
+  // const secondsRef = useRef<number>(0);
+  // const intervalRef = useRef<any>(null);
 
   const [selectedTrackId, setSelectedTrackId] = useState("");
   const [selectedTrackIndex, setSelectedTrackIndex] = useRecoilState(
@@ -259,21 +259,15 @@ const Tracks = (props: any) => {
   };
 
   const handlePlayAudio = (url: string) => {
+    Tone.Transport.position = "1:1:1";
     const player = new Tone.Player(url).toDestination();
     Tone.loaded().then(() => {
-      player.start();
-    });
-  };
-
-  const handlePauseAudio = (url: string) => {
-    const player = new Tone.Player(url).toDestination();
-    Tone.loaded().then(() => {
-      player.stop();
+      player.sync().start("1:1:1");
     });
   };
 
   useEffect(() => {
-    Tone.Transport.bpm.value = 158; //////////////////////////////////////////////////////////
+    Tone.Transport.bpm.value = 58; //////////////////////////////////////////////////////////
     if (instrument && props.isPlaying) {
       const timer = setInterval(() => console.log(Tone.now()), 100);
       // console.log(Tone);
@@ -282,7 +276,6 @@ const Tracks = (props: any) => {
         Tone.Transport.position = 0;
         Tone.Transport.cancel();
 
-        Tone.Transport.start();
         tracksData
           ?.filter((track) => track.type === "midi")
           .forEach((track) =>
@@ -295,6 +288,14 @@ const Tracks = (props: any) => {
           ?.filter((track) => track.type === "audio")
           .forEach((track) => handlePlayAudio(track.clips[0].url));
 
+        // metronome
+        // const synth = new Tone.Synth().toDestination();
+        // Tone.Transport.scheduleRepeat((time) => {
+        //   synth.triggerAttackRelease("C5", "16n");
+        // }, "4n");
+
+        Tone.Transport.start();
+
         await Tone.start(); /////////////////////////////////
       };
       startPlaying();
@@ -302,14 +303,59 @@ const Tracks = (props: any) => {
     } else if (instrument && !props.isPlaying) {
       console.log("Tone.Transport.pause()");
       Tone.Transport.pause();
-      tracksData
-        ?.filter((track) => track.type === "audio")
-        .forEach((track) => handlePauseAudio(track.clips[0].url));
     }
   }, [instrument, props.isPlaying]);
 
+  const exportAudio = () => {
+    const audio = document.querySelector("audio");
+    const synth = new Tone.Synth();
+    const audioContext = Tone.context;
+    const dest = audioContext.createMediaStreamDestination();
+    const recorder = new MediaRecorder(dest.stream);
+
+    synth.connect(dest);
+    synth.toDestination();
+
+    console.log(tracksData[3].clips[0].url);
+
+    const url1: string = tracksData[3].clips[0].url;
+    const player = new Tone.Player(url1).toDestination();
+    player.connect(dest);
+    Tone.loaded().then(() => {
+      player.start();
+    });
+
+    const chunks: any[] = [];
+
+    const notes = "CDEFGAB".split("").map((notation) => `${notation}4`);
+    let note = 0;
+    Tone.Transport.scheduleRepeat((time) => {
+      if (note === 0) recorder.start();
+      if (note > notes.length) {
+        synth.triggerRelease(time);
+        recorder.stop();
+        Tone.Transport.stop();
+        player.stop();
+      } else synth.triggerAttack(notes[note], time);
+      note++;
+    }, "4n");
+
+    recorder.ondataavailable = (event) => chunks.push(event.data);
+    recorder.onstop = (event) => {
+      let blob = new Blob(chunks, { type: "audio/mp3" });
+      console.log(URL.createObjectURL(blob));
+      if (audio) {
+        audio.src = URL.createObjectURL(blob);
+      }
+    };
+
+    Tone.Transport.start();
+  };
+
   return (
-    <div>
+    <>
+      <audio controls></audio>
+      <button onClick={exportAudio}>export</button>
       {tracksData &&
         tracksData.length > 0 &&
         tracksData.map((track, index) => {
@@ -401,7 +447,7 @@ const Tracks = (props: any) => {
             </TrackLine>
           );
         })}
-    </div>
+    </>
   );
 };
 

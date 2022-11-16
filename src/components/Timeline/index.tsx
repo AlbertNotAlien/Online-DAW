@@ -394,6 +394,7 @@ const Timeline = () => {
         progress={progress}
         convertBeatsToMs={convertBeatsToMs}
         convertMsToBeats={convertMsToBeats}
+        handleUploadAudio={handleUploadAudio}
       />
       <PianoRoll
         projectId={projectId}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, MouseEvent } from "react";
 import styled from "styled-components";
 import { useRecoilValue } from "recoil";
+import * as Tone from "tone";
 
 import {
   tracksDataState,
