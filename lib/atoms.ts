@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef, MouseEvent } from "react";
 import { atom, selector } from "recoil";
 
+export interface ProjectData {
+  barWidthCoefficient: number;
+  id: string;
+  name: string;
+  tempo: number;
+  trackHeight: number;
+}
+
 export interface NoteData {
   length: {
     bars: number;
@@ -59,6 +67,17 @@ export interface NoteRulerInfo {
   octaveIndex: number;
 }
 
+export const projectDataState = atom({
+  key: "projectDataState",
+  default: {
+    barWidthCoefficient: 9.5,
+    id: "",
+    name: "",
+    tempo: 60,
+    trackHeight: 150,
+  } as ProjectData,
+});
+
 export const tracksDataState = atom({
   key: "tracksDataState",
   default: null as TrackData[] | null,
@@ -77,6 +96,16 @@ export const hoverMidiInfoState = atom({
 export const selectedTrackIndexState = atom({
   key: "selectedTrackIndexState",
   default: null as number | null,
+});
+
+export const barWidthState = atom({
+  key: "barWidthState",
+  default: 0, // *BPM
+});
+
+export const selectedTrackIdState = atom({
+  key: "selectedTrackIdState",
+  default: "",
 });
 
 // const uploadTrackData = async (tracksData: boolean, trackId: string) => {

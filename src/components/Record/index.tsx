@@ -4,8 +4,8 @@ import useRecorder from "./useRecorder";
 import Timeline from "../Timeline";
 import { useEffect } from "react";
 
-const Record = (props) => {
-  let [recordFile, recordURL, isRecording, startRecording, stopRecording] =
+const Record = (props: any) => {
+  const [recordFile, recordURL, isRecording, startRecording, stopRecording] =
     useRecorder();
 
   useEffect(() => {

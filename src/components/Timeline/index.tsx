@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, MouseEvent } from "react";
 import styled from "styled-components";
-import Draggable from "react-draggable";
 import { useRecoilState } from "recoil";
 import produce from "immer";
 
@@ -20,14 +19,16 @@ import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import {
   tracksDataState,
+  projectDataState,
+  selectedTrackIdState,
   selectedTrackIndexState,
   TrackData,
 } from "../../../lib/atoms";
-import Bars from "../Bars";
-import WaveSurfer from "../WaveSurfer";
+// import TrackBars from "../Tracks/TrackBars/TrackNotes";
+import WaveSurfer from "../Tracks/WaveSurfer";
 import Record from "../Record";
 import Export from "../Export";
-import Tone from "../Tone";
+import Tracks from "../Tracks";
 import PianoRoll from "../PianoRoll";
 
 interface ProgresslineProps {
@@ -42,18 +43,9 @@ interface ProjectData {
   tempo: number;
 }
 
-interface IsSoloButtonProps {
-  isSolo: string;
-}
-
-interface IsMutedButtonProps {
-  isMuted: string;
-}
-
-interface TrackControlsProps {
-  trackHeight: number;
-  selectedColor: string;
-}
+// interface IsSoloButtonProps {
+//   isSolo: string;
+// }
 
 const Progressline = styled.div<ProgresslineProps>`
   width: 1px;
@@ -68,63 +60,6 @@ const Controls = styled.div`
   margin: 20px 0px;
   display: flex;
   column-gap: 15px;
-`;
-
-const TrackLine = styled.div`
-  display: flex;
-  width: 100%;
-  margin-bottom: 10px;
-`;
-
-const TrackControls = styled.div<TrackControlsProps>`
-  position: absolute;
-  width: 200px;
-  height: ${(props) => props.trackHeight}px;
-  background-color: ${(props) => props.selectedColor};
-  /* display: flex; */
-  align-items: center;
-  padding-left: 10px;
-`;
-
-const TrackTitle = styled.p`
-  font-size: 15px;
-`;
-
-const TrackButtons = styled.div`
-  display: flex;
-`;
-
-const TrackButton = styled.button`
-  height: 20px;
-  border: none;
-  border-radius: 5px;
-`;
-
-const IsSoloButton = styled(TrackButton)<IsSoloButtonProps>`
-  background-color: ${(props) => props.isSolo};
-`;
-
-const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
-  background-color: ${(props) => props.isMuted};
-`;
-
-const Track = styled.div`
-  margin-left: 200px;
-  position: relative;
-`;
-
-const ClipTitle = styled.div`
-  height: 20px;
-  width: 100%;
-  padding-left: 10px;
-  background-color: darkcyan;
-
-  cursor: move; /* fallback if grab cursor is unsupported */
-  cursor: grab;
-
-  &:active {
-    cursor: grabbing;
-  }
 `;
 
 // const MidiRegion = styled.div<MidiRegionProps>`
@@ -147,13 +82,8 @@ const ClipTitle = styled.div`
 // `;
 
 const Timeline = () => {
-  const [projectData, setProjectData] = useState<ProjectData>({
-    barWidthCoefficient: 9.5,
-    id: "",
-    name: "",
-    tempo: 60,
-    trackHeight: 150,
-  });
+  const [projectData, setProjectData] =
+    useRecoilState<ProjectData>(projectDataState);
   const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
   const projectId = "5BbhQTKKkFcM9nCjMG3I";
   const barWidthCoefficient = projectData.barWidthCoefficient; // 一個bar長 9.5px/58bpm
@@ -161,19 +91,20 @@ const Timeline = () => {
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState<number>(0);
-  const [trackPosition, setTrackPosition] = useState({ x: 0, y: 0 });
+  // const [trackPosition, setTrackPosition] = useState({ x: 0, y: 0 });
   // const progressIncrementRef = useRef<number>(0);
 
   const uploadRef = useRef<HTMLInputElement>(null);
-  const loadTotalRef = useRef(null);
-  const progressRef = useRef(null);
+  // const loadTotalRef = useRef(null);
+  // const progressRef = useRef(null);
   // const audioListRef = ref(storage, `projects/${projectId}/audios`);
   const [audioList, setAudioList] = useState<string[]>([]);
 
   const secondsRef = useRef<number>(0);
   const intervalRef = useRef<any>(null);
 
-  const [selectedTrackId, setSelectedTrackId] = useState("");
+  const [selectedTrackId, setSelectedTrackId] =
+    useRecoilState(selectedTrackIdState);
   const [selectedTrackIndex, setSelectedTrackIndex] = useRecoilState(
     selectedTrackIndexState
   );
@@ -245,23 +176,6 @@ const Timeline = () => {
     return millisecond;
   };
 
-  const handleClipDraggable = (
-    event: any,
-    dragElement: { x: number; y: number },
-    index: number
-  ) => {
-    const positionX = Math.abs(dragElement.x) < barWidth ? 0 : dragElement.x;
-    const currentBar = Math.floor(positionX / barWidth) + 1;
-    if (tracksData && tracksData[index].clips) {
-      setTrackPosition({ x: currentBar, y: 0 });
-      setTracksdata(
-        produce(tracksData, (draft) => {
-          draft[index].clips[0].startPoint.bars = convertBeatsToMs(currentBar);
-        })
-      );
-    }
-  };
-
   const handlePlay = () => {
     if (!isPlaying) {
       setIsPlaying(true);
@@ -292,32 +206,6 @@ const Timeline = () => {
 
   const pauseTimer = () => {
     clearInterval(intervalRef.current);
-  };
-
-  const handleTrackMute = async (isMuted: boolean, trackId: string) => {
-    try {
-      const trackRef = doc(db, "projects", projectId, "tracks", trackId);
-      const newData = {
-        isMuted: isMuted,
-      };
-      await updateDoc(trackRef, newData);
-      console.log("info updated");
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const handleTrackSolo = async (isSolo: boolean, trackId: string) => {
-    try {
-      const trackRef = doc(db, "projects", projectId, "tracks", trackId);
-      const newData = {
-        isSolo: isSolo,
-      };
-      await updateDoc(trackRef, newData);
-      console.log("info updated");
-    } catch (err) {
-      console.log(err);
-    }
   };
 
   const handleProgressLine = (e: MouseEvent<HTMLDivElement>) => {
@@ -363,7 +251,8 @@ const Timeline = () => {
     startPoint: { bars: number; quarters: number; sixteenths: number },
     url: string,
     isMuted: boolean,
-    isSolo: boolean
+    isSolo: boolean,
+    selectedBy: string
   ) => {
     try {
       const trackRef = doc(collection(db, "projects", projectId, "tracks"));
@@ -380,6 +269,7 @@ const Timeline = () => {
             url: url,
           },
         ],
+        selectedBy: selectedBy,
       };
       await setDoc(trackRef, newData);
       console.log("info uploaded");
@@ -405,11 +295,12 @@ const Timeline = () => {
 
       // const audioRef = ref(storage, `audios/${file.name + v4()}`);
 
-      console.log("file", file);
+      // console.log("file", file);
 
       uploadBytes(audioRef, file).then((snapshot) => {
         getDownloadURL(snapshot.ref).then((url) => {
           setAudioList((prev) => [...prev, url]);
+          console.log("url", url);
 
           uploadFileInfo(
             newTrackName,
@@ -418,23 +309,12 @@ const Timeline = () => {
             newStartPoint,
             url,
             false,
-            false
+            false,
+            ""
           );
           console.log("uploadBytes");
         });
       });
-    }
-  };
-
-  const handleSelectTrack = (trackId: string, trackIndex: number) => {
-    if (tracksData) {
-      setTracksdata(
-        produce(tracksData, (draft) => {
-          draft[trackIndex].isSelected = true;
-        })
-      );
-      setSelectedTrackId(trackId);
-      setSelectedTrackIndex(trackIndex);
     }
   };
 
@@ -504,101 +384,17 @@ const Timeline = () => {
           handlePlay={handlePlay}
           handlePause={handlePause}
         />
-        <Export />
+        <Export handleUploadAudio={handleUploadAudio} />
       </Controls>
-      <div>
-        {tracksData &&
-          tracksData.length > 0 &&
-          tracksData.map((track, index) => {
-            return (
-              <TrackLine
-                key={`${track.trackName}-${index}`}
-                onClick={() => {
-                  handleSelectTrack(track.id, index);
-                }}
-              >
-                <TrackControls
-                  selectedColor={
-                    selectedTrackId === track.id ? "#2F302F" : "#606060"
-                  }
-                  trackHeight={projectData.trackHeight}
-                >
-                  <TrackTitle>{track.trackName}</TrackTitle>
-                  <TrackButtons>
-                    {/* <IsSoloButton
-                      onClick={() => {
-                        handleTrackSolo(!track.isSolo, track.id);
-                      }}
-                      isSolo={track.isSolo ? "#2F302F" : "#606060"}
-                    >
-                      Solo
-                    </IsSoloButton> */}
-                    <IsMutedButton
-                      onClick={() => {
-                        handleTrackMute(!track.isMuted, track.id);
-                      }}
-                      isMuted={track.isMuted ? "#2F302F" : "#606060"}
-                    >
-                      Mute
-                    </IsMutedButton>
-                  </TrackButtons>
-                </TrackControls>
-                <Track>
-                  {track.type === "audio" ? (
-                    <Draggable
-                      axis="x"
-                      onStop={(event, dragElement) =>
-                        handleClipDraggable(event, dragElement, index)
-                      }
-                      grid={[barWidth, 0]}
-                      defaultPosition={{
-                        x:
-                          convertBeatsToMs(
-                            (tracksData[index]?.clips[0].startPoint.bars - 1) *
-                              8 +
-                              (tracksData[index]?.clips[0].startPoint.quarters -
-                                1)
-                          ) * barWidth,
-                        y: 0,
-                      }}
-                      handle="#handle"
-                      bounds={{ left: 0 }}
-                    >
-                      <>
-                        <ClipTitle id="handle">
-                          {track.clips[0].clipName}
-                        </ClipTitle>
-                        <WaveSurfer
-                          key={index}
-                          index={index}
-                          projectData={projectData}
-                          isPlaying={isPlaying}
-                          progress={progress}
-                          trackData={tracksData[index]}
-                          convertMsToBeats={convertMsToBeats}
-                          convertBeatsToMs={convertBeatsToMs}
-                        />
-                      </>
-                    </Draggable>
-                  ) : (
-                    <>
-                      <ClipTitle />
-                      <Tone
-                        isPlaying={isPlaying}
-                        projectData={projectData}
-                        trackData={tracksData[index]}
-                        barWidth={barWidth}
-                        progress={progress}
-                      />
-                    </>
-                  )}
-
-                  <Bars projectData={projectData} />
-                </Track>
-              </TrackLine>
-            );
-          })}
-      </div>
+      <Tracks
+        isPlaying={isPlaying}
+        // projectData={projectData}
+        // trackData={tracksData[index]}
+        // barWidth={barWidth}
+        progress={progress}
+        convertBeatsToMs={convertBeatsToMs}
+        convertMsToBeats={convertMsToBeats}
+      />
       <PianoRoll
         projectId={projectId}
         projectData={projectData}

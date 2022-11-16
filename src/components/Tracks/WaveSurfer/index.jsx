@@ -59,48 +59,48 @@ const WaveSurfer = (props) => {
     };
   }, [props.trackData.clips]);
 
-  useEffect(() => {
-    if (
-      wavesurfer.current &&
-      wavesurfer.current.isPlaying() &&
-      !props.isPlaying
-    ) {
-      wavesurfer.current.pause();
-    } else if (
-      wavesurfer.current &&
-      !wavesurfer.current.isPlaying() &&
-      props.isPlaying &&
-      props.progress < startMillisecond
-    ) {
-      setTimeout(() => {
-        wavesurfer.current.play(0, duration);
-      }, (startMillisecond - props.progress) * 1000);
-    } else if (
-      wavesurfer.current &&
-      !wavesurfer.current.isPlaying() &&
-      props.isPlaying &&
-      props.progress > startMillisecond
-    ) {
-      wavesurfer.current.play(
-        props.progress - startMillisecond,
-        startMillisecond + duration
-      );
-    }
-  }, [
-    duration,
-    props.isPlaying,
-    props.progress,
-    props.trackData.trackName,
-    startMillisecond,
-  ]);
+  // useEffect(() => {
+  //   if (
+  //     wavesurfer.current &&
+  //     wavesurfer.current.isPlaying() &&
+  //     !props.isPlaying
+  //   ) {
+  //     wavesurfer.current.pause();
+  //   } else if (
+  //     wavesurfer.current &&
+  //     !wavesurfer.current.isPlaying() &&
+  //     props.isPlaying &&
+  //     props.progress < startMillisecond
+  //   ) {
+  //     setTimeout(() => {
+  //       wavesurfer.current.play(0, duration);
+  //     }, (startMillisecond - props.progress) * 1000);
+  //   } else if (
+  //     wavesurfer.current &&
+  //     !wavesurfer.current.isPlaying() &&
+  //     props.isPlaying &&
+  //     props.progress > startMillisecond
+  //   ) {
+  //     wavesurfer.current.play(
+  //       props.progress - startMillisecond,
+  //       startMillisecond + duration
+  //     );
+  //   }
+  // }, [
+  //   duration,
+  //   props.isPlaying,
+  //   props.progress,
+  //   props.trackData.trackName,
+  //   startMillisecond,
+  // ]);
 
-  useEffect(() => {
-    if (wavesurfer.current) {
-      console.log(wavesurfer.current.isMuted);
-      console.log(wavesurfer.current);
-      wavesurfer.current.setMute(props.trackData.isMuted);
-    }
-  }, [props.trackData.isMuted]);
+  // useEffect(() => {
+  //   if (wavesurfer.current) {
+  //     console.log(wavesurfer.current.isMuted);
+  //     console.log(wavesurfer.current);
+  //     wavesurfer.current.setMute(props.trackData.isMuted);
+  //   }
+  // }, [props.trackData.isMuted]);
 
   return (
     <>

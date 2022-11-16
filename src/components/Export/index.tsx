@@ -7,71 +7,71 @@ import {
   selectedTrackIndexState,
   TrackData,
 } from "../../../lib/atoms";
+import useRecorder from "../Record/useRecorder";
 
-const Export = () => {
+const Export = (props: any) => {
+  // const [recordFile, recordURL, isRecording, startRecording, stopRecording] =
+  //   useRecorder();
   const tracksData = useRecoilValue(tracksDataState);
 
   const exportAudio = () => {
-    // const OutgoingAudioMediaStream = new MediaStream();
-    // OutgoingAudioMediaStream.addTrack(OutgoingStream.getAudioTracks()[0]);
-
-    // if (tracksData) {
-    //   console.log(tracksData[0].clips[0].url);
-
-    //   const url = tracksData[0].clips[0].url;
-    //   const audio = new Audio(url);
-    //   const ctx = new window.AudioContext();
-    //   const source = ctx.createMediaElementSource(audio);
-    //   const streamDest = ctx.createMediaStreamDestination();
-    //   const audioNode = source.connect(streamDest);
-
-    //   const dest = ctx.createMediaStreamDestination();
-    //   dest.connect(audioNode);
-
-    //   const finalStream = dest.stream;
-    // }
     if (tracksData) {
-      // console.log(tracksData[0].clips[0].url);
+      const audioContext = new window.AudioContext();
+      const url1 = tracksData[0].clips[0].url;
+      const url2 = tracksData[3].clips[0].url;
+      const audio1 = new Audio(url1);
+      const audio2 = new Audio(url2);
+      audio1.crossOrigin = "anonymous";
+      audio2.crossOrigin = "anonymous";
+      const source1 = audioContext.createMediaElementSource(audio1);
+      const source2 = audioContext.createMediaElementSource(audio2);
+      console.log("source1", source1);
+      console.log("source2", source2);
+      const dest = audioContext.createMediaStreamDestination();
 
-      const url = tracksData[0].clips[0].url;
-      const audio = new Audio(url);
-      audio.crossOrigin = "anonymous";
-      const ctx = new window.AudioContext();
-      const source = ctx.createMediaElementSource(audio);
-      // console.log("source", source);
-      // const streamDest = ctx.createMediaStreamDestination();
-      // console.log("streamDest", streamDest);
-      const dest = ctx.createMediaStreamDestination();
-      const finalDest = source.connect(dest);
-      // console.log("finalDest", finalDest);
+      source1.connect(dest);
+      source2.connect(dest);
 
-      // console.log("dest", dest);
-      // audioNode.connect(dest);
+      console.log("dest", dest);
 
-      const finalStream = dest.stream;
-      // console.log(finalStream);
-
-      const recorder = new MediaRecorder(finalStream);
-      console.log("recorder", recorder);
+      const recorder = new MediaRecorder(dest.stream);
 
       let audioChunks: any[] = [];
-      const handleData = (e: any) => {
-        console.log("handleData");
-        audioChunks.push(e.data);
-        console.log("e.data", e.data);
-        let blob = new Blob(audioChunks, { type: "audio/mp3" });
-        console.log("blob", blob);
-      };
 
       recorder.start();
-      recorder.addEventListener("dataavailable", handleData);
-      // recorder.addEventListener("dataavailable", function (e) {
-      //   console.log("file");
-      //   const file = new File([e.data], "fileName", {
-      //     type: "audio/mp3",
-      //   });
-      //   console.log(file);
-      // });
+
+      recorder.onstart = async (event) => {
+        console.log("onstart");
+        // your code here
+      };
+
+      recorder.ondataavailable = (e) => {
+        audioChunks.push(e.data);
+        let blob = new Blob(audioChunks, { type: "audio/mp3" });
+        console.log("blob", blob);
+        props.handleUploadAudio(blob);
+      };
+
+      // recorder.onstop = async (event) => {
+      //   console.log("onstop");
+      //   // your code here
+      // };
+
+      recorder.addEventListener("error", (event) => {
+        console.log("error", event.error);
+      });
+
+      recorder.addEventListener("stop", (event) => {
+        console.log("stop", event);
+      });
+
+      // setTimeout(() => {
+      //   source2.connect(dest);
+      // }, 3000);
+
+      setTimeout(() => {
+        recorder.stop();
+      }, 6000);
     }
   };
   return <button onClick={exportAudio}>export</button>;

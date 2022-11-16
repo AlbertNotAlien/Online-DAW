@@ -30,7 +30,7 @@ export default function App(props: any) {
     "A#",
     "B",
   ];
-  const BARS: number = 20;
+  const BARS: number = 4;
 
   return (
     <Container>

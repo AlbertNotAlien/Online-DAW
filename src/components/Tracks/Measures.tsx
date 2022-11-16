@@ -1,4 +1,7 @@
 import styled from "styled-components";
+import { useRecoilState, useRecoilValue } from "recoil";
+
+import { barWidthState, projectDataState, NoteData } from "../../../lib/atoms";
 
 interface StyleProps {
   width: number;
@@ -38,14 +41,12 @@ const BarDark = styled(Bar)<StyleProps>`
   background-color: #141414;
 `;
 
-const Bars = (props: {
-  projectData: {
-    name: string;
-    tempo: number;
-  };
-}) => {
+const Measures = (props: any) => {
   const barWidthCoefficient = 9.5; // 一個bar長9.5px 9.5:58
   const barQuantities = 500;
+
+  const projectData = useRecoilValue(projectDataState);
+
   return (
     <Container>
       {new Array(Math.floor(barQuantities / 8)).fill(0).map((_, index) => {
@@ -55,9 +56,7 @@ const Bars = (props: {
               return (
                 <div key={index}>
                   <BarLight
-                    width={
-                      (120 / props.projectData.tempo) * barWidthCoefficient
-                    }
+                    width={(120 / projectData.tempo) * barWidthCoefficient}
                   />
                 </div>
               );
@@ -66,9 +65,7 @@ const Bars = (props: {
               return (
                 <div key={index}>
                   <BarDark
-                    width={
-                      (120 / props.projectData.tempo) * barWidthCoefficient
-                    }
+                    width={(120 / projectData.tempo) * barWidthCoefficient}
                   />
                 </div>
               );
@@ -80,4 +77,4 @@ const Bars = (props: {
   );
 };
 
-export default Bars;
+export default Measures;

@@ -70,7 +70,7 @@ const Notes = (props: any) => {
 
   // const tracksData = useRecoilValue(tracksDataState);
 
-  console.log(selectedTrackIndex);
+  // console.log(selectedTrackIndex);
 
   const handleDeleteNote = (
     notationIndex: number,
@@ -323,7 +323,6 @@ const Notes = (props: any) => {
 
   return (
     <>
-      {console.log(selectedTrackIndex)}
       {tracksData &&
         selectedTrackIndex &&
         tracksData[selectedTrackIndex].type === "midi" &&

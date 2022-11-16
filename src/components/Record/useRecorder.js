@@ -36,6 +36,7 @@ const useRecorder = () => {
   }, [recorder, isRecording]);
 
   const startRecording = () => {
+    console.log("startRecording");
     setIsRecording(true);
   };
 
