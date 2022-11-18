@@ -23,7 +23,6 @@ export interface NoteData {
     quarters: number;
     sixteenths: number;
   };
-  abc: number;
 }
 
 export interface MidiData {
@@ -46,8 +45,10 @@ export interface AudioData {
   url: string;
 }
 
+interface Clicp extends MidiData, AudioData {}
+
 export interface TrackData {
-  clips: AudioData[] | MidiData[];
+  clips: Clicp[];
   id: string;
   isMuted: boolean;
   isSelected: boolean;
@@ -83,6 +84,15 @@ export const tracksDataState = atom({
   default: null as TrackData[] | null,
 });
 
+export const progressState = atom({
+  key: "progressState",
+  default: {
+    bars: 0,
+    quarters: 0,
+    sixteenths: 0,
+  },
+});
+
 export const playingNoteState = atom({
   key: "playingNoteState",
   default: null as PlayingNoteData | null,
@@ -106,6 +116,11 @@ export const barWidthState = atom({
 export const selectedTrackIdState = atom({
   key: "selectedTrackIdState",
   default: "",
+});
+
+export const isMetronomeState = atom({
+  key: "isMetronomeState",
+  default: false,
 });
 
 // const uploadTrackData = async (tracksData: boolean, trackId: string) => {

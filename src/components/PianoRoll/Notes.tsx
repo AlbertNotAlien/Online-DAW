@@ -32,6 +32,13 @@ interface NoteBarProps {
   lengthSixteenths: number;
 }
 
+const Container = styled.div`
+  display: flex;
+  flex-direction: column-reverse;
+  height: 720px;
+  position: relative;
+`;
+
 const NoteBar = styled.div<NoteBarProps>`
   width: ${(props) =>
     (props.lengthBars * 16 +
@@ -41,13 +48,15 @@ const NoteBar = styled.div<NoteBarProps>`
   height: 10px;
   background: none;
   position: absolute;
+  /* margin-left: 25px; */
   z-index: 1;
   display: flex;
   justify-content: space-between;
+  /* border: 1px solid black; */
 `;
 
 const NoteBarCenter = styled.div`
-  background-color: red;
+  background-color: #f6ddcd;
   width: 100%;
   cursor: move;
 `;
@@ -55,7 +64,7 @@ const NoteBarCenter = styled.div`
 const NoteBarSide = styled.div`
   width: 5px;
   height: 10px;
-  background-color: blue;
+  background-color: #f6ddcd;
   cursor: col-resize;
   z-index: 2;
 `;
@@ -69,8 +78,6 @@ const Notes = (props: any) => {
   const prevNoteStartIndexRef = useRef(0);
 
   // const tracksData = useRecoilValue(tracksDataState);
-
-  // console.log(selectedTrackIndex);
 
   const handleDeleteNote = (
     notationIndex: number,
@@ -125,9 +132,9 @@ const Notes = (props: any) => {
 
       // console.log("sixteenthsIndex", sixteenthsIndex);
 
-      const newSixteenths = (sixteenthsIndex % 4) + 1;
-      const newQuarters = Math.floor((sixteenthsIndex % 16) / 4) + 1;
-      const newBars = Math.floor(sixteenthsIndex / 16) + 1;
+      const newSixteenths = sixteenthsIndex % 4;
+      const newQuarters = Math.floor((sixteenthsIndex % 16) / 4);
+      const newBars = Math.floor(sixteenthsIndex / 16);
 
       const newNotationIndex = pitchIndex % 12;
       const newOctave = Math.floor(pitchIndex / 12) + 1;
@@ -220,9 +227,9 @@ const Notes = (props: any) => {
         prevNote.length.quarters * 4 +
         prevNote.length.sixteenths;
       prevNoteStartIndexRef.current =
-        (prevNote.start.bars - 1) * 16 +
-        (prevNote.start.quarters - 1) * 4 +
-        (prevNote.start.sixteenths - 1);
+        prevNote.start.bars * 16 +
+        prevNote.start.quarters * 4 +
+        prevNote.start.sixteenths;
     }
     console.log("prevNoteLengthRef.current", prevNoteLengthRef.current);
     console.log("prevNoteStartIndexRef.current", prevNoteStartIndexRef.current);
@@ -308,10 +315,9 @@ const Notes = (props: any) => {
             ? 0
             : prevNoteStartIndexRef.current - offsetSixteenths;
 
-        const newStartSixteenths = (newStartSixteenthsIndex % 4) + 1;
-        const newStartQuarters =
-          Math.floor((newStartSixteenthsIndex % 16) / 4) + 1;
-        const newStartBars = Math.floor(newStartSixteenthsIndex / 16) + 1;
+        const newStartSixteenths = newStartSixteenthsIndex % 4;
+        const newStartQuarters = Math.floor((newStartSixteenthsIndex % 16) / 4);
+        const newStartBars = Math.floor(newStartSixteenthsIndex / 16);
 
         draftNotes.start.bars = newStartBars;
         draftNotes.start.quarters = newStartQuarters;
@@ -322,7 +328,7 @@ const Notes = (props: any) => {
   };
 
   return (
-    <>
+    <Container>
       {tracksData &&
         selectedTrackIndex &&
         tracksData[selectedTrackIndex].type === "midi" &&
@@ -373,12 +379,14 @@ const Notes = (props: any) => {
                 grid={[25, 10]}
                 position={{
                   x:
-                    ((note.start.bars - 1) * 16 +
-                      (note.start.quarters - 1) * 4 +
-                      (note.start.sixteenths - 1) +
-                      1) *
+                    (note.start.bars * 16 +
+                      note.start.quarters * 4 +
+                      note.start.sixteenths) *
+                      25 +
                     25,
                   y: ((note.octave - 1) * 12 + note.notationIndex) * -10,
+                  // x: 0,
+                  // y: 0,
                 }}
                 handle=".handle-NoteBar"
                 key={`NoteBar-${note.notation}-${note.octave}-${note.start.bars}-${note.start.quarters}-${note.start.sixteenths}`}
@@ -490,7 +498,7 @@ const Notes = (props: any) => {
             );
           }
         )}
-    </>
+    </Container>
   );
 };
 

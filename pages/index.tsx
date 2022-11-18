@@ -1,6 +1,5 @@
 import Head from "next/head";
 import Image from "next/image";
-import styles from "../styles/Home.module.css";
 import { forwardRef, useRef, useImperativeHandle, useState } from "react";
 
 import Timeline from "../src/components/Timeline";

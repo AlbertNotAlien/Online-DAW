@@ -25,21 +25,22 @@ interface SixteenthBlockProps {
 }
 
 const Container = styled.div`
-  display: flex;
-`;
-
-const PianoRoll = styled.div`
+  min-height: 720px;
+  /* height: 100%; */
+  /* max-width: 100%; */
+  /* overflow: scroll; */
   display: flex;
   flex-direction: column-reverse;
-  position: relative;
+  /* top: 0; */
 `;
 
 const PianoKey = styled.button<PianoKeysProps>`
-  width: 25px;
+  min-width: 25px;
   height: 10px;
-  border: none;
-  border-right: 1px solid black;
   border-top: 1px solid black;
+  border-right: 1px solid black;
+  border-bottom: none;
+  border-left: 1px solid black;
   background-color: ${(props) =>
     // props.notation.length > 1 ? "black" : "white"};
     (props.isOnClick === true && "red") ||
@@ -100,6 +101,8 @@ const SixteenthBlock = styled(MidiBlock)<SixteenthBlockProps>`
 `;
 
 const NotesPanel = (props: any) => {
+  const BARS: number = 8;
+
   const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
   const selectedTrackIndex = useRecoilValue(selectedTrackIndexState);
 
@@ -149,7 +152,7 @@ const NotesPanel = (props: any) => {
   };
 
   return (
-    <>
+    <Container>
       {new Array(props.OCTAVES).fill(0).map((_, octaveIndex) => (
         <OctaveWrapper key={octaveIndex}>
           {props.NOTATIONS.map((notation: string, notationIndex: number) => (
@@ -179,7 +182,7 @@ const NotesPanel = (props: any) => {
                   isMouseDownPianoRoll === true
                 }
               />
-              {new Array(props.BARS).fill(0).map((_, barsIndex) => (
+              {new Array(BARS).fill(0).map((_, barsIndex) => (
                 <BarsWrapper key={barsIndex}>
                   {new Array(4).fill(0).map((_, quartersIndex) => (
                     <QuartersWrapper key={quartersIndex}>
@@ -191,9 +194,9 @@ const NotesPanel = (props: any) => {
                               notation,
                               notationIndex,
                               octaveIndex + 1,
-                              barsIndex + 1,
-                              quartersIndex + 1,
-                              sixteenthsIndex + 1
+                              barsIndex,
+                              quartersIndex,
+                              sixteenthsIndex
                             );
                           }}
                           onMouseOver={() => {
@@ -213,9 +216,9 @@ const NotesPanel = (props: any) => {
                           notationIndex={notationIndex}
                           octaveIndex={octaveIndex + 1}
                           key={`
-                                ${notation}-${octaveIndex + 1}-${
-                            barsIndex + 1
-                          }-${quartersIndex + 1}-${sixteenthsIndex + 1}`}
+                                ${notation}-${
+                            octaveIndex + 1
+                          }-${barsIndex}-${quartersIndex}-${sixteenthsIndex}`}
                         />
                       ))}
                     </QuartersWrapper>
@@ -226,7 +229,7 @@ const NotesPanel = (props: any) => {
           ))}
         </OctaveWrapper>
       ))}
-    </>
+    </Container>
   );
 };
 

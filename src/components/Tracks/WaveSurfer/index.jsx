@@ -3,7 +3,8 @@ import styled from "styled-components";
 
 const Clip = styled.div`
   position: relative;
-  z-index: 100;
+  z-index: 1;
+  pointer-events: none;
 `;
 
 const formWaveSurferOptions = (waveformRef) => ({

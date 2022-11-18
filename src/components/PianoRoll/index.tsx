@@ -6,13 +6,25 @@ import NotesPanel from "./NotesPanel";
 
 const Container = styled.div`
   display: flex;
+
+  /* width: 100vw; */
+
+  /* transition: box-shadow 0.2s ease-in-out;
+  &:hover {
+    box-shadow: 0 0 10px #00000050;
+    transition: box-shadow 0.2s ease-in-out;
+  } */
+  height: 100%;
+  position: relative;
+  overflow: auto;
 `;
 
-const PianoRoll = styled.div`
-  display: flex;
-  flex-direction: column-reverse;
-  position: relative;
-`;
+// const PianoRoll = styled.div`
+//   display: flex;
+//   flex-direction: column-reverse;
+//   position: relative;
+//   height: 100%;
+// `;
 
 export default function App(props: any) {
   const OCTAVES: number = 6;
@@ -30,18 +42,15 @@ export default function App(props: any) {
     "A#",
     "B",
   ];
-  const BARS: number = 4;
 
   return (
     <Container>
       {/* <NoteRuler /> */}
-      <PianoRoll>
-        <Notes
-          NOTATIONS={NOTATIONS}
-          selectedTrackIndex={props.selectedTrackIndex}
-        />
-        <NotesPanel OCTAVES={OCTAVES} NOTATIONS={NOTATIONS} BARS={BARS} />
-      </PianoRoll>
+      <Notes
+        NOTATIONS={NOTATIONS}
+        selectedTrackIndex={props.selectedTrackIndex}
+      />
+      <NotesPanel OCTAVES={OCTAVES} NOTATIONS={NOTATIONS} />
     </Container>
   );
 }

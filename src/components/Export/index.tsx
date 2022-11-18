@@ -1,81 +1,102 @@
+import Image from "next/image";
+
 import { useState, useEffect, useRef, MouseEvent } from "react";
 import styled from "styled-components";
-import { useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
+import produce from "immer";
 import * as Tone from "tone";
 
 import {
+  doc,
+  collection,
+  getDoc,
+  setDoc,
+  updateDoc,
+  onSnapshot,
+  DocumentData,
+  orderBy,
+} from "firebase/firestore";
+import { db } from "../../../lib/firebase";
+import { storage } from "../../../lib/firebase";
+import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+import {
   tracksDataState,
+  projectDataState,
+  playingNoteState,
+  selectedTrackIdState,
   selectedTrackIndexState,
+  barWidthState,
+  progressState,
   TrackData,
+  NoteData,
 } from "../../../lib/atoms";
-import useRecorder from "../Record/useRecorder";
+
+const ExportButton = styled.a`
+  color: black;
+  cursor: pointer;
+`;
 
 const Export = (props: any) => {
-  // const [recordFile, recordURL, isRecording, startRecording, stopRecording] =
-  //   useRecorder();
-  const tracksData = useRecoilValue(tracksDataState);
+  const projectData = useRecoilValue(projectDataState);
+  const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
+  const [isExporting, setIsExporting] = useState(false);
 
   const exportAudio = () => {
-    if (tracksData) {
-      const audioContext = new window.AudioContext();
-      const url1 = tracksData[0].clips[0].url;
-      const url2 = tracksData[3].clips[0].url;
-      const audio1 = new Audio(url1);
-      const audio2 = new Audio(url2);
-      audio1.crossOrigin = "anonymous";
-      audio2.crossOrigin = "anonymous";
-      const source1 = audioContext.createMediaElementSource(audio1);
-      const source2 = audioContext.createMediaElementSource(audio2);
-      console.log("source1", source1);
-      console.log("source2", source2);
-      const dest = audioContext.createMediaStreamDestination();
+    const audio = document.querySelector("audio");
+    const synth = new Tone.Synth();
+    const audioContext = Tone.context;
+    const dest = audioContext.createMediaStreamDestination();
+    const recorder = new MediaRecorder(dest.stream);
 
-      source1.connect(dest);
-      source2.connect(dest);
+    synth.connect(dest);
+    synth.toDestination();
 
-      console.log("dest", dest);
+    const url1: string = tracksData[3].clips[0].url;
+    const player = new Tone.Player(url1).toDestination();
+    player.connect(dest);
+    Tone.loaded().then(() => {
+      player.start();
+      setIsExporting(true);
+    });
 
-      const recorder = new MediaRecorder(dest.stream);
+    const chunks: any[] = [];
 
-      let audioChunks: any[] = [];
-
-      recorder.start();
-
-      recorder.onstart = async (event) => {
-        console.log("onstart");
-        // your code here
-      };
-
-      recorder.ondataavailable = (e) => {
-        audioChunks.push(e.data);
-        let blob = new Blob(audioChunks, { type: "audio/mp3" });
-        console.log("blob", blob);
-        props.handleUploadAudio(blob);
-      };
-
-      // recorder.onstop = async (event) => {
-      //   console.log("onstop");
-      //   // your code here
-      // };
-
-      recorder.addEventListener("error", (event) => {
-        console.log("error", event.error);
-      });
-
-      recorder.addEventListener("stop", (event) => {
-        console.log("stop", event);
-      });
-
-      // setTimeout(() => {
-      //   source2.connect(dest);
-      // }, 3000);
-
-      setTimeout(() => {
+    const notes = "CDEFGAB".split("").map((notation) => `${notation}4`);
+    let note = 0;
+    Tone.Transport.scheduleRepeat((time) => {
+      if (note === 0) recorder.start();
+      if (note > notes.length) {
+        synth.triggerRelease(time);
         recorder.stop();
-      }, 6000);
-    }
+        Tone.Transport.stop();
+        player.stop();
+        setIsExporting(false);
+      } else synth.triggerAttack(notes[note], time);
+      note++;
+    }, "4n");
+
+    recorder.ondataavailable = (event) => chunks.push(event.data);
+    recorder.onstop = (event) => {
+      let blob = new Blob(chunks, { type: "audio/mp3" });
+      console.log(URL.createObjectURL(blob));
+      if (audio) {
+        audio.src = URL.createObjectURL(blob);
+      }
+    };
+
+    Tone.Transport.start();
   };
-  return <button onClick={exportAudio}>export</button>;
+
+  return (
+    <>
+      <ExportButton onClick={exportAudio}>
+        <Image src="/export-button.svg" alt={""} width={20} height={20} />
+      </ExportButton>
+      {isExporting && <p>converting</p>}
+    </>
+  );
 };
 
 export default Export;
