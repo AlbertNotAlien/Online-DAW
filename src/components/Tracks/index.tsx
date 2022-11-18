@@ -15,8 +15,8 @@ import {
   DocumentData,
   orderBy,
 } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
-import { storage } from "../../../lib/firebase";
+import { db } from "../../lib/firebase";
+import { storage } from "../../lib/firebase";
 import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import {
@@ -30,7 +30,7 @@ import {
   isMetronomeState,
   TrackData,
   NoteData,
-} from "../../../lib/atoms";
+} from "../../lib/atoms";
 import Measures from "./Measures";
 import WaveSurfer from "./WaveSurfer";
 import MidiBar from "./MidiBar";
@@ -95,7 +95,8 @@ const ProgressLine = styled.div<ProgresslineProps>`
   width: 1px;
   background-color: #c08a1e;
   /* height: 100%; */
-  height: 500px;
+  height: calc(100vh - 50px - 200px - 87px);
+  /* height: 500px; */
   position: absolute;
   left: ${(props) =>
     props.progress.bars * props.barWidth +

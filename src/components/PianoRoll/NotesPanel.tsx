@@ -8,7 +8,7 @@ import {
   playingNoteState,
   hoverMidiInfoState,
   selectedTrackIndexState,
-} from "../../../lib/atoms";
+} from "../../lib/atoms";
 
 interface PianoKeysProps {
   notation: string;

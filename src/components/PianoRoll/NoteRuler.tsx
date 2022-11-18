@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useRecoilValue } from "recoil";
 
-import { hoverMidiInfoState } from "../../../lib/atoms";
+import { hoverMidiInfoState } from "../../lib/atoms";
 
 interface NoteRulerInfoProps {
   // notation: string;

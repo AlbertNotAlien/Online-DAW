@@ -8,7 +8,7 @@ import {
   projectDataState,
   NoteData,
   progressState,
-} from "../../../lib/atoms";
+} from "../../lib/atoms";
 
 interface StyleProps {
   width: number;

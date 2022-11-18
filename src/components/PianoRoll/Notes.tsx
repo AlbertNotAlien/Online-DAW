@@ -8,7 +8,7 @@ import {
   tracksDataState,
   playingNoteState,
   selectedTrackIndexState,
-} from "../../../lib/atoms";
+} from "../../lib/atoms";
 
 interface DraggableData {
   node: HTMLElement;

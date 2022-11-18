@@ -17,8 +17,8 @@ import {
   DocumentData,
   orderBy,
 } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
-import { storage } from "../../../lib/firebase";
+import { db } from "../../lib/firebase";
+import { storage } from "../../lib/firebase";
 import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import {
@@ -31,7 +31,7 @@ import {
   progressState,
   TrackData,
   NoteData,
-} from "../../../lib/atoms";
+} from "../../lib/atoms";
 
 const ExportButton = styled.a`
   color: black;

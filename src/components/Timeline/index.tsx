@@ -14,8 +14,8 @@ import {
   DocumentData,
   orderBy,
 } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
-import { storage } from "../../../lib/firebase";
+import { db } from "../../lib/firebase";
+import { storage } from "../../lib/firebase";
 import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import {
@@ -27,7 +27,7 @@ import {
   progressState,
   isMetronomeState,
   TrackData,
-} from "../../../lib/atoms";
+} from "../../lib/atoms";
 // import TrackBars from "../Tracks/TrackBars/TrackNotes";
 import WaveSurfer from "../Tracks/WaveSurfer";
 
