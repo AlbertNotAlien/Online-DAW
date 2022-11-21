@@ -53,19 +53,15 @@ const Record = (props: any) => {
     console.log("isRecording", isRecording);
     if (!isRecording && typeof startRecording === "function") {
       startRecording();
-      // props.handlePlay();
       setPlayerStatus("recording");
     } else if (isRecording && typeof stopRecording === "function") {
       stopRecording();
-      // props.handlePause();
     }
   };
 
   return (
     <>
-      {/* <audio src={recordURL} controls /> */}
       <Button onClick={handleRecord}>
-        {/* <Image src="/record-button.svg" alt={""} width={20} height={20} /> */}
         <Image
           src={
             playerStatus === "recording"

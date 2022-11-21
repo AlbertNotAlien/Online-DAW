@@ -6,6 +6,7 @@ import {
   projectDataState,
   selectedTrackIdState,
   selectedTrackIndexState,
+  playerStatusState,
   barWidthState,
   progressState,
   isPlayingState,
@@ -20,6 +21,7 @@ const useRecorder = () => {
   const [recordFile, setRecordFile] = useState(null);
   const [recorder, setRecorder] = useState(null);
   const [isRecording, setIsRecording] = useRecoilState(isRecordingState);
+  const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
 
   let audioChunks = [];
   useEffect(() => {
@@ -31,10 +33,14 @@ const useRecorder = () => {
       return;
     }
 
+    console.log(recorder.state);
     // Manage recorder state.
+    // if (recorder.state === "inactive") {
+    console.log("isRecording", isRecording);
+
     if (isRecording) {
       recorder.start();
-    } else {
+    } else if (!isRecording) {
       recorder.stop();
     }
 
@@ -53,10 +59,13 @@ const useRecorder = () => {
   const startRecording = () => {
     console.log("startRecording");
     setIsRecording(true);
+    setPlayerStatus("recording");
   };
 
   const stopRecording = () => {
+    console.log("stopRecording");
     setIsRecording(false);
+    setPlayerStatus("paused");
   };
 
   return [recordFile, recordURL, isRecording, startRecording, stopRecording];

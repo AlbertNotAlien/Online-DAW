@@ -176,10 +176,13 @@ const Export = (props: any) => {
     const dest = audioContext.createMediaStreamDestination();
     const recorder = new MediaRecorder(dest.stream);
 
-    // const recorder = new Tone.Recorder();
-
     const startPlaying = async () => {
-      Tone.Transport.position = `${progress.bars}:${progress.quarters}:${progress.sixteenths}`;
+      const exportStartPoint = {
+        bars: 0,
+        quarters: 0,
+        sixteenths: 0,
+      };
+      Tone.Transport.position = `${exportStartPoint.bars}:${exportStartPoint.quarters}:${exportStartPoint.sixteenths}`;
 
       setIsLoading(true);
 
@@ -219,26 +222,30 @@ const Export = (props: any) => {
       sixteenths: 0,
     };
 
+    // console.log(recorder.state);
+
     Tone.Transport.schedule(function (time) {
-      console.log("stop exporting");
-      recorder.stop();
-      Tone.Transport.stop();
-      setPlayerStatus("paused");
-      setIsExporting(false);
+      if (recorder.state === "recording") {
+        console.log("stop exporting");
+        recorder.stop();
+        Tone.Transport.stop();
+        setPlayerStatus("paused");
+        setIsExporting(false);
 
-      const chunks: any[] = [];
-      recorder.ondataavailable = (event) => chunks.push(event.data);
-      recorder.onstop = (event) => {
-        const blob = new Blob(chunks, { type: "audio/mp3" });
-        const blobUrl = window.URL.createObjectURL(blob);
-        console.log(blob);
-        // window.open(blobUrl);
+        const chunks: any[] = [];
+        recorder.ondataavailable = (event) => chunks.push(event.data);
+        recorder.onstop = (event) => {
+          const blob = new Blob(chunks, { type: "audio/mp3" });
+          const blobUrl = window.URL.createObjectURL(blob);
+          console.log(blob);
+          // window.open(blobUrl);
 
-        const tempLink = document.createElement("a");
-        tempLink.href = blobUrl;
-        tempLink.setAttribute("download", "filename.mp3");
-        tempLink.click();
-      };
+          const tempLink = document.createElement("a");
+          tempLink.href = blobUrl;
+          tempLink.setAttribute("download", "filename.mp3");
+          tempLink.click();
+        };
+      }
     }, `${exportEndPoint.bars}:${exportEndPoint.quarters}:${exportEndPoint.sixteenths}`);
   };
 
