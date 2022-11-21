@@ -27,13 +27,20 @@ import {
   selectedTrackIndexState,
   barWidthState,
   progressState,
+  isPlayingState,
   isMetronomeState,
+  isLoadingState,
+  playerStatusState,
   TrackData,
   NoteData,
+  AudioData,
+  ClipData,
 } from "../../lib/atoms";
 import Measures from "./Measures";
 import WaveSurfer from "./WaveSurfer";
 import MidiBar from "./MidiBar";
+import TrackControls from "./TrackControls";
+import TimeRuler from "./TimeRuler";
 import { style } from "wavesurfer.js/src/util";
 
 interface ProjectData {
@@ -42,14 +49,6 @@ interface ProjectData {
   id: string;
   name: string;
   tempo: number;
-}
-
-interface IsSoloButtonProps {
-  isSolo: boolean;
-}
-
-interface IsMutedButtonProps {
-  isMuted: boolean;
 }
 
 interface TrackLineProps {
@@ -73,17 +72,17 @@ const Container = styled.div`
   height: 100%;
 `;
 
-const TimeRuler = styled.div`
-  height: 30px;
-  width: 100%;
-  border-radius: 10px;
-  background-color: gray;
-  display: flex;
-  align-items: center;
-  padding-left: 10px;
-  font-size: 20px;
-  line-height: 20px;
-`;
+// const TimeRuler = styled.div`
+//   min-height: 30px;
+//   width: 100%;
+//   border-radius: 10px;
+//   background-color: gray;
+//   display: flex;
+//   align-items: center;
+//   padding-left: 10px;
+//   font-size: 20px;
+//   line-height: 20px;
+// `;
 
 const TracksPanel = styled.div`
   display: flex;
@@ -94,14 +93,13 @@ const TracksPanel = styled.div`
 const ProgressLine = styled.div<ProgresslineProps>`
   width: 1px;
   background-color: #c08a1e;
-  /* height: 100%; */
-  height: calc(100vh - 50px - 200px - 87px);
+  height: calc(100vh - 50px - 200px - 70px);
   /* height: 500px; */
   position: absolute;
   left: ${(props) =>
-    props.progress.bars * props.barWidth +
-    (props.progress.quarters * props.barWidth) / 4 +
-    (props.progress.sixteenths * props.barWidth) / 16}px;
+    props.progress.bars * props.barWidth * 4 +
+    props.progress.quarters * props.barWidth +
+    (props.progress.sixteenths * props.barWidth) / 4}px;
   margin-left: 420px;
   z-index: 100;
 `;
@@ -115,42 +113,12 @@ const Track = styled.div<TrackLineProps>`
   background-color: ${(props) => props.selectedColor};
 `;
 
-const TrackControls = styled.div`
-  min-width: 200px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: left;
-  padding-left: 20px;
-  row-gap: 10px;
-`;
-
-const TrackTitle = styled.p`
-  font-size: 15px;
-`;
-
-const TrackButtons = styled.div`
-  display: flex;
-  column-gap: 10px;
-`;
-
-const TrackButton = styled.button`
-  height: 20px;
-  border: none;
-  border-radius: 5px;
-`;
-
-const IsSoloButton = styled(TrackButton)<IsSoloButtonProps>`
-  background-color: ${(props) => (props.isSolo ? "#2F302F" : "#7c7c7c")};
-`;
-
-const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
-  background-color: ${(props) => (props.isMuted ? "#2F302F" : "#7c7c7c")};
+const Timeline = styled.div`
+  position: relative;
 `;
 
 const Clip = styled.div`
-  /* margin-left: 200px; */
-  position: relative;
+  position: absolute;
 `;
 
 const ClipTitle = styled.div`
@@ -179,15 +147,11 @@ const Tracks = (props: any) => {
 
   const projectId = "5BbhQTKKkFcM9nCjMG3I";
 
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState);
+  const [isLoading, setIsLoading] = useRecoilState(isLoadingState);
+  const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
+
   const [progress, setProgress] = useRecoilState(progressState);
-
-  console.log(progress);
-
-  const [trackPosition, setTrackPosition] = useState({ x: 0, y: 0 });
-
-  // const secondsRef = useRef<number>(0);
-  // const intervalRef = useRef<any>(null);
 
   const [selectedTrackId, setSelectedTrackId] = useState("");
   const [selectedTrackIndex, setSelectedTrackIndex] = useRecoilState(
@@ -195,32 +159,6 @@ const Tracks = (props: any) => {
   );
 
   const isMetronome = useRecoilValue(isMetronomeState);
-
-  const handleTrackMute = async (isMuted: boolean, trackId: string) => {
-    try {
-      const trackRef = doc(db, "projects", projectId, "tracks", trackId);
-      const newData = {
-        isMuted: isMuted,
-      };
-      await updateDoc(trackRef, newData);
-      console.log("info updated");
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const handleTrackSolo = async (isSolo: boolean, trackId: string) => {
-    try {
-      const trackRef = doc(db, "projects", projectId, "tracks", trackId);
-      const newData = {
-        isSolo: isSolo,
-      };
-      await updateDoc(trackRef, newData);
-      console.log("info updated");
-    } catch (err) {
-      console.log(err);
-    }
-  };
 
   const handleSelectTrack = (trackId: string, trackIndex: number) => {
     if (tracksData) {
@@ -234,26 +172,49 @@ const Tracks = (props: any) => {
     }
   };
 
-  const handleClipDraggable = (
-    event: any,
-    dragElement: { x: number; y: number },
-    index: number
-  ) => {
-    console.log("dragElement", dragElement.x, dragElement.y);
-    const positionX = Math.abs(dragElement.x) < barWidth ? 0 : dragElement.x;
-    const currentBar = Math.floor(positionX / barWidth) + 1;
-    if (tracksData && tracksData[index].clips) {
-      setTrackPosition({ x: currentBar, y: 0 });
-      setTracksdata(
-        produce(tracksData, (draft) => {
-          draft[index].clips[0].startPoint.bars =
-            props.convertBeatsToMs(currentBar);
-        })
-      );
+  const updateClipsPosition = async (clips: ClipData[], trackId: string) => {
+    try {
+      const trackRef = doc(db, "projects", projectId, "tracks", trackId);
+      const newData = {
+        clips: clips,
+      };
+      await updateDoc(trackRef, newData);
+      console.log("info updated");
+    } catch (err) {
+      console.log(err);
     }
   };
 
-  const [instrument, setInstrument] = useState<any>(null);
+  const handleClipDraggable = (
+    event: DraggableEvent,
+    dragElement: { x: number; y: number },
+    trackIndex: number,
+    trackId: string
+  ) => {
+    // console.log("dragElementX", dragElement.x);
+    const currentBar = Math.floor(dragElement.x / barWidth);
+
+    const newBars = Math.floor(currentBar / 4);
+    const newQuarters = currentBar % 4;
+
+    // console.log("newBars", newBars);
+    // console.log("newQuarters", newQuarters);
+
+    if (tracksData && tracksData[trackIndex].clips) {
+      const newTracksData = produce(tracksData, (draft) => {
+        draft[trackIndex].clips[0].startPoint.bars = newBars;
+        draft[trackIndex].clips[0].startPoint.quarters = newQuarters;
+      });
+      setTracksdata(newTracksData);
+      const newClipsData = produce(tracksData[trackIndex].clips, (draft) => {
+        draft[0].startPoint.bars = newBars;
+        draft[0].startPoint.quarters = newQuarters;
+      });
+      updateClipsPosition(newClipsData, trackId);
+    }
+  };
+
+  const [instrument, setInstrument] = useState<Tone.Synth>();
   const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
 
   const now = Tone.now();
@@ -263,6 +224,7 @@ const Tracks = (props: any) => {
     const vol = new Tone.Volume(-50).toDestination();
     const newSynth = new Tone.Synth().connect(vol).toDestination();
     setInstrument(newSynth);
+    Tone.Transport.bpm.value = 58; //////////////////////////////////////////////////////////
   }, []);
 
   const playNote = (notation: string, octave: number) => {
@@ -277,13 +239,15 @@ const Tracks = (props: any) => {
     }
   }, [playingNote]);
 
+  // const soloTrack = (track: TrackData) => {
+  //   const soloTrack = new Tone.Solo().toDestination();
+  //   track
+  //   soloTrack.solo = true;
+  // };
+
   const handlePlayMidi = (note: NoteData) => {
-    console.log("handlePlayMidi");
     if (instrument) {
       Tone.Transport.schedule(function (time) {
-        console.log("getSecondsAtTime", Tone.Transport.getSecondsAtTime(time));
-        console.log("position", Tone.Transport.position);
-
         instrument.triggerAttackRelease(
           `${note.notation}${note.octave}`,
           `${note.length.bars}:${note.length.quarters}:${note.length.sixteenths}`
@@ -292,24 +256,19 @@ const Tracks = (props: any) => {
     }
   };
 
-  const handlePlayAudio = (url: string) => {
-    const player = new Tone.Player(url).toDestination();
-    Tone.loaded().then(() => {
+  const handlePlayAudio = (clip: AudioData) => {
+    const player = new Tone.Player(clip.url).toDestination();
+    Tone.Transport.schedule(function (time) {
       player.sync().start();
-    });
+    }, `${clip.startPoint.bars}:${clip.startPoint.quarters}:${clip.startPoint.sixteenths}`);
   };
 
-  // useEffect(() => {
-  //   Tone.Transport.position = `${progress.bars - 1}:${progress.quarters - 1}:${
-  //     progress.sixteenths - 1
-  //   }`;
-  // }, [progress]);
-
   useEffect(() => {
-    Tone.Transport.bpm.value = 58; //////////////////////////////////////////////////////////
-    if (instrument && props.isPlaying) {
+    if (
+      instrument &&
+      (playerStatus === "playing" || playerStatus === "recording")
+    ) {
       const timer = setInterval(() => {
-        // console.log(Tone.now());
         const transportPosition = Tone.Transport.position
           .toString()
           .split(":")
@@ -321,13 +280,9 @@ const Tracks = (props: any) => {
           sixteenths: transportPosition[2],
         });
       }, 100);
+
       const startPlaying = async () => {
-        Tone.Transport.stop();
-        Tone.Transport.cancel();
-        // Tone.Transport.position = `${progress.bars - 1}:${
-        //   progress.quarters - 1
-        // }:${progress.sixteenths - 1}`;
-        console.log("Tone.Transport.position", Tone.Transport.position);
+        Tone.Transport.position = `${progress.bars}:${progress.quarters}:${progress.sixteenths}`;
 
         tracksData
           ?.filter((track) => track.type === "midi")
@@ -339,146 +294,103 @@ const Tracks = (props: any) => {
 
         tracksData
           ?.filter((track) => track.type === "audio")
-          .forEach((track) => handlePlayAudio(track.clips[0].url));
+          .forEach((track) => handlePlayAudio(track.clips[0]));
 
-        // if (isMetronome) {
-        //   const synth = new Tone.Synth().toDestination();
-        //   Tone.Transport.scheduleRepeat((time) => {
-        //     synth.triggerAttackRelease("C6", 0.01);
-        //   }, "4n");
-        // }
+        setIsLoading(true);
 
-        Tone.Transport.start();
-
-        // console.log(Tone.TransportTime);
-
-        await Tone.start(); /////////////////////////////////
+        Tone.loaded().then(() => {
+          Tone.Transport.start();
+          setIsLoading(false);
+        });
+        await Tone.start();
       };
+
       startPlaying();
-      return () => clearInterval(timer);
-    } else if (instrument && !props.isPlaying) {
-      console.log("Tone.Transport.pause()");
+
+      return () => {
+        Tone.Transport.stop();
+        Tone.Transport.cancel();
+        clearInterval(timer);
+      };
+    } else if (instrument && playerStatus === "paused") {
       Tone.Transport.pause();
     }
-  }, [instrument, props.isPlaying, isMetronome]);
+  }, [instrument, playerStatus, isMetronome]);
 
   useEffect(() => {
-    if (props.isPlaying && isMetronome) {
+    if (
+      (playerStatus === "playing" || playerStatus === "recording") &&
+      isMetronome
+    ) {
       const synth = new Tone.Synth().toDestination();
       Tone.Transport.scheduleRepeat((time) => {
         synth.triggerAttackRelease("C6", 0.01);
       }, "4n");
     }
-  }, [props.isPlaying, isMetronome]);
-
-  // const exportAudio = () => {
-  //   const audio = document.querySelector("audio");
-  //   const synth = new Tone.Synth();
-  //   const audioContext = Tone.context;
-  //   const dest = audioContext.createMediaStreamDestination();
-  //   const recorder = new MediaRecorder(dest.stream);
-
-  //   synth.connect(dest);
-  //   synth.toDestination();
-
-  //   const url1: string = tracksData[3].clips[0].url;
-  //   const player = new Tone.Player(url1).toDestination();
-  //   player.connect(dest);
-  //   Tone.loaded().then(() => {
-  //     player.start();
-  //   });
-
-  //   const chunks: any[] = [];
-
-  //   const notes = "CDEFGAB".split("").map((notation) => `${notation}4`);
-  //   let note = 0;
-  //   Tone.Transport.scheduleRepeat((time) => {
-  //     if (note === 0) recorder.start();
-  //     if (note > notes.length) {
-  //       synth.triggerRelease(time);
-  //       recorder.stop();
-  //       Tone.Transport.stop();
-  //       player.stop();
-  //     } else synth.triggerAttack(notes[note], time);
-  //     note++;
-  //   }, "4n");
-
-  //   recorder.ondataavailable = (event) => chunks.push(event.data);
-  //   recorder.onstop = (event) => {
-  //     let blob = new Blob(chunks, { type: "audio/mp3" });
-  //     console.log(URL.createObjectURL(blob));
-  //     if (audio) {
-  //       audio.src = URL.createObjectURL(blob);
-  //     }
-  //   };
-
-  //   Tone.Transport.start();
-  // };
+  }, [playerStatus, isMetronome]);
 
   return (
     <Container>
-      {/* <audio controls></audio>
-      <button onClick={exportAudio}>export</button> */}
-      <TimeRuler>+</TimeRuler>
+      <TimeRuler handleUploadAudio={props.handleUploadAudio} />
       <TracksPanel>
         <ProgressLine progress={progress} barWidth={barWidth} />
         {tracksData &&
           tracksData.length > 0 &&
-          tracksData.map((track, index) => {
+          tracksData.map((track, trackIndex) => {
             return (
               <Track
-                key={`${track.trackName}-${index}`}
+                key={`${track.trackName}-${trackIndex}`}
                 onClick={() => {
-                  handleSelectTrack(track.id, index);
+                  handleSelectTrack(track.id, trackIndex);
                 }}
                 selectedColor={
                   selectedTrackId === track.id ? "#2F302F" : "#606060"
                 }
                 trackHeight={projectData.trackHeight}
               >
-                <TrackControls>
-                  <TrackTitle>{track.trackName}</TrackTitle>
-                  <TrackButtons>
-                    <IsSoloButton
-                      onClick={() => {
-                        handleTrackSolo(!track.isSolo, track.id);
-                      }}
-                      isSolo={track.isSolo}
-                    >
-                      Solo
-                    </IsSoloButton>
-                    <IsMutedButton
-                      onClick={() => {
-                        handleTrackMute(!track.isMuted, track.id);
-                      }}
-                      isMuted={track.isMuted}
-                    >
-                      Mute
-                    </IsMutedButton>
-                  </TrackButtons>
-                </TrackControls>
-                <Clip>
-                  {track.type === "audio" ? (
+                <TrackControls track={track} />
+                <Timeline>
+                  <Clip>
                     <Draggable
                       axis="both"
                       onDrag={(
                         event: DraggableEvent,
                         dragElement: DraggableData
-                      ) => handleClipDraggable(event, dragElement, index)}
+                      ) => {
+                        handleClipDraggable(
+                          event,
+                          dragElement,
+                          trackIndex,
+                          track.id
+                        );
+                        // console.log("onDrag", dragElement.x, dragElement.y);
+                      }}
+                      // onStart={(
+                      //   event: DraggableEvent,
+                      //   dragElement: DraggableData
+                      // ) => {
+                      //   console.log(
+                      //     "onStart",
+                      //     dragElement.lastX,
+                      //     dragElement.lastY
+                      //   );
+                      // }}
                       grid={[barWidth, 0]}
                       position={{
                         x:
-                          tracksData[index]?.clips[0].startPoint.bars * 16 +
-                          tracksData[index]?.clips[0].startPoint.quarters * 4 +
-                          tracksData[index]?.clips[0].startPoint.sixteenths *
-                            barWidth,
+                          (tracksData[trackIndex].clips[0].startPoint.bars * 4 +
+                            tracksData[trackIndex].clips[0].startPoint
+                              .quarters +
+                            tracksData[trackIndex].clips[0].startPoint
+                              .sixteenths /
+                              4) *
+                          barWidth,
                         y: 0,
                       }}
-                      // defaultPosition={{ x: 0, y: 0 }}
                       handle=".handle"
                       bounds={{ left: 0 }}
                     >
-                      <>
+                      <div>
                         <ClipTitle
                           onClick={() => {
                             console.log("!");
@@ -487,38 +399,28 @@ const Tracks = (props: any) => {
                         >
                           {track.clips[0].clipName}
                         </ClipTitle>
-                        <WaveSurfer
-                          key={index}
-                          index={index}
-                          projectData={projectData}
-                          trackData={tracksData[index]}
-                          convertMsToBeats={props.convertMsToBeats}
-                          convertBeatsToMs={props.convertBeatsToMs}
-                          // isPlaying={isPlaying}
-                          // progress={progress}
-                        />
-                      </>
+                        {track.type === "audio" ? (
+                          <WaveSurfer
+                            key={trackIndex}
+                            index={trackIndex}
+                            projectData={projectData}
+                            trackData={tracksData[trackIndex]}
+                            convertMsToBeats={props.convertMsToBeats}
+                            convertBeatsToMs={props.convertBeatsToMs}
+                          />
+                        ) : (
+                          <MidiBar
+                            isPlaying={isPlaying}
+                            projectData={projectData}
+                            trackData={tracksData[trackIndex]}
+                            barWidth={barWidth}
+                          />
+                        )}
+                      </div>
                     </Draggable>
-                  ) : (
-                    <>
-                      <ClipTitle />
-                      <MidiBar
-                        isPlaying={isPlaying}
-                        projectData={projectData}
-                        trackData={tracksData[index]}
-                        barWidth={barWidth}
-                        // progress={progress}
-                      />
-                    </>
-                  )}
-
-                  <Measures
-                    projectData={projectData}
-                    // onClick={(event) => {
-                    //   handleSetProgressLine(event);
-                    // }}
-                  />
-                </Clip>
+                  </Clip>
+                  <Measures projectData={projectData} />
+                </Timeline>
               </Track>
             );
           })}

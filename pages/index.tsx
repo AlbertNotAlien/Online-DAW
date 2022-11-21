@@ -2,7 +2,7 @@ import Head from "next/head";
 import Image from "next/image";
 import { forwardRef, useRef, useImperativeHandle, useState } from "react";
 
-import Timeline from "../src/components/Timeline";
+import Timeline from "../src/components/Project";
 
 import { Provider } from "react-redux";
 

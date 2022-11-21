@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { useState, useEffect, useRef, MouseEvent } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import produce from "immer";
 
@@ -25,7 +25,12 @@ import {
   selectedTrackIndexState,
   barWidthState,
   progressState,
+  isPlayingState,
+  isPausedState,
+  isRecordingState,
   isMetronomeState,
+  playerStatusState,
+  isLoadingState,
   TrackData,
 } from "../../lib/atoms";
 // import TrackBars from "../Tracks/TrackBars/TrackNotes";
@@ -75,11 +80,32 @@ const Container = styled.div`
   height: 100vh;
 `;
 
+const LoaderKeyframes = keyframes`
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+`;
+
+const Loader = styled.div`
+  border: 5px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 5px solid #3498db;
+  width: 25px;
+  height: 25px;
+  animation-name: ${LoaderKeyframes};
+  animation-duration: 1.5s;
+  animation-iteration-count: infinite;
+`;
+
 const HeadBarPanel = styled.div`
   display: flex;
   justify-content: space-between;
+  width: 100%;
   background-color: gray;
-  padding: 10px;
+  padding: 10px 10px;
   align-items: center;
   column-gap: 10px;
   border-radius: 10px;
@@ -107,15 +133,42 @@ const Button = styled.button`
   background: none;
   border: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  height: 100%;
   &:hover {
     transform: scale(110%);
+  }
+  &:focus {
+    outline: none;
   }
 `;
 
 // const Record = styled(Button)``;
 
-const PlayControls = styled.div`
+const PlayerControls = styled.div`
   display: flex;
+  align-items: center;
+  height: 100%;
+  left: 50%;
+`;
+
+const PlayerButtons = styled.div`
+  display: flex;
+  align-items: center;
+  height: 100%;
+`;
+
+const TempoControls = styled.div`
+  display: flex;
+  align-items: center;
+  height: 100%;
+`;
+
+const ExportControls = styled.div`
+  display: flex;
+  align-items: center;
+  height: 100%;
 `;
 
 const TempoInput = styled.input`
@@ -126,9 +179,12 @@ const TempoInput = styled.input`
   height: 100%;
   background-color: #323232;
   border-radius: 10px;
+  &:focus {
+    outline: none;
+  }
 `;
 
-const ProgressControls = styled.div`
+const ProgressInputs = styled.div`
   display: flex;
   /* column-gap: 10px; */
   height: 100%;
@@ -166,9 +222,11 @@ const Timeline = () => {
   const projectId = "5BbhQTKKkFcM9nCjMG3I";
   const [barWidth, setBarWidth] = useRecoilState(barWidthState);
 
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState);
+  const [isPaused, setIsPaused] = useRecoilState(isPausedState);
+  const [isLoading, setIsLoading] = useRecoilState(isLoadingState);
+  const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
 
-  const uploadRef = useRef<HTMLInputElement>(null);
   const [audioList, setAudioList] = useState<string[]>([]);
 
   const [selectedTrackId, setSelectedTrackId] =
@@ -177,7 +235,7 @@ const Timeline = () => {
     selectedTrackIndexState
   );
   const [progress, setProgress] = useRecoilState(progressState);
-  console.log("progress", progress);
+  // console.log("progress", progress);
   // const [selectedTrack, setSelectedTrack] = useState(null);
 
   const [recordFile, recordURL, isRecording, startRecording, stopRecording] =
@@ -251,36 +309,30 @@ const Timeline = () => {
   //   }
   // }, [tracksData[selectedTrackIndex]]);
 
-  const convertMsToBeats = (sec: number) => {
-    const bars = (sec * projectData.tempo) / 60 + 1;
-    return bars;
-  };
+  // const convertMsToBeats = (sec: number) => {
+  //   const bars = (sec * projectData.tempo) / 60 + 1;
+  //   return bars;
+  // };
 
-  const convertBeatsToMs = (bars: number) => {
-    const millisecond = (bars * 60) / projectData.tempo;
-    // console.log("convertBeatsToMs", millisecond);
-    return millisecond;
-  };
+  // const convertBeatsToMs = (bars: number) => {
+  //   const millisecond = (bars * 60) / projectData.tempo;
+  //   // console.log("convertBeatsToMs", millisecond);
+  //   return millisecond;
+  // };
 
   const handlePlay = () => {
-    if (!isPlaying) {
-      setIsPlaying(true);
-      // startTimer(progress);
-    }
+    setPlayerStatus("playing");
   };
 
   const handlePause = () => {
-    if (isPlaying) {
-      setIsPlaying(false);
-      // pauseTimer();
+    setPlayerStatus("paused");
+    if (playerStatus === "paused") {
+      setProgress({
+        bars: 0,
+        quarters: 0,
+        sixteenths: 0,
+      });
     }
-    // } else if (!isPlaying) {
-    //   setProgress({
-    //     bars: 0,
-    //     quarters: 0,
-    //     sixteenths: 0,
-    //   });
-    // }
   };
 
   const appendToFilename = (filename: string) => {
@@ -341,41 +393,60 @@ const Timeline = () => {
   };
 
   const handleUploadAudio = (file: any) => {
+    setIsLoading(true);
     console.log("handleUploadAudio");
     console.log("file", file);
 
     if (file && tracksData) {
       const newTrackName = `Audio ${tracksData.length + 1}`;
       const newFileName = appendToFilename(file.name || "record");
-      const newStartPoint = { bars: 1, quarters: 1, sixteenths: 1 };
+      const newStartPoint = { bars: 0, quarters: 0, sixteenths: 0 };
 
       const audioRef = ref(
         storage,
         `projects/${projectId}/audios/${newFileName}`
       );
 
-      // const audioRef = ref(storage, `audios/${file.name + v4()}`);
+      uploadBytes(audioRef, file)
+        .then((snapshot) => {
+          getDownloadURL(snapshot.ref).then((url) => {
+            setAudioList((prev) => [...prev, url]);
+            console.log("url", url);
 
-      // console.log("file", file);
-
-      uploadBytes(audioRef, file).then((snapshot) => {
-        getDownloadURL(snapshot.ref).then((url) => {
-          setAudioList((prev) => [...prev, url]);
-          console.log("url", url);
-
-          uploadFileInfo(
-            newTrackName,
-            "audio",
-            newFileName,
-            newStartPoint,
-            url,
-            false,
-            false,
-            ""
-          );
-          console.log("uploadBytes");
+            uploadFileInfo(
+              newTrackName,
+              "audio",
+              newFileName,
+              newStartPoint,
+              url,
+              false,
+              false,
+              ""
+            );
+            console.log("uploadBytes");
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
-      });
+    }
+  };
+
+  const handleTempoChange = async (
+    event: React.FormEvent<HTMLInputElement>
+  ) => {
+    try {
+      const trackRef = doc(db, "projects", projectId);
+      const newData = {
+        tempo: parseInt(event.currentTarget.value),
+      };
+      await updateDoc(trackRef, newData);
+      console.log("info updated");
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -403,89 +474,92 @@ const Timeline = () => {
   return (
     <Container>
       <HeadBarPanel>
-        <TempoInput
-          type="text"
-          inputMode="numeric"
-          value={projectData.tempo}
-          min={1}
-          required
-          onChange={(event) => {
-            setProjectData((prev) => ({
-              ...prev,
-              tempo: parseInt(event.target.value),
-            }));
-          }}
-        />
-        <Button>
-          <Image
-            src={
-              isMetronome
-                ? "/metronome-button-activated.svg"
-                : "/metronome-button.svg"
-            }
-            alt={""}
-            width={20}
-            height={20}
-            onClick={() => {
-              setIsMetronome(!isMetronome);
+        <TempoControls>
+          <TempoInput
+            type="number"
+            // inputMode="numeric"
+            value={projectData.tempo}
+            min={1}
+            required
+            onChange={(event) => {
+              // setProjectData((prev) => ({
+              //   ...prev,
+              //   tempo: parseInt(event.target.value),
+              // }));
+              handleTempoChange(event);
             }}
           />
-        </Button>
-        <ProgressControls>
-          <ProgressInput value={`${progress.bars + 1}`} />
-          <ProgressInput value={`${progress.quarters + 1}`} />
-          <ProgressInput value={`${Math.floor(progress.sixteenths + 1)}`} />
-        </ProgressControls>
-        <PlayControls>
-          <Button onClick={handlePlay}>
+          <Button>
             <Image
               src={
-                isPlaying && !isRecording
-                  ? "/play-button-activated.svg"
-                  : "/play-button.svg"
+                isMetronome
+                  ? "/metronome-button-activated.svg"
+                  : "/metronome-button.svg"
               }
               alt={""}
               width={20}
               height={20}
+              onClick={() => {
+                setIsMetronome(!isMetronome);
+              }}
             />
           </Button>
-          <Button onClick={handlePause}>
-            <Image src="/stop-button.svg" alt={""} width={20} height={20} />
+        </TempoControls>
+        <PlayerControls>
+          <ProgressInputs>
+            <ProgressInput value={`${progress.bars + 1}`} onChange={() => {}} />
+            <ProgressInput
+              value={`${progress.quarters + 1}`}
+              onChange={() => {}}
+            />
+            <ProgressInput
+              value={`${Math.floor(progress.sixteenths + 1)}`}
+              onChange={() => {}}
+            />
+          </ProgressInputs>
+          <PlayerButtons>
+            <Button onClick={handlePlay}>
+              <Image
+                src={
+                  playerStatus === "playing"
+                    ? "/play-button-activated.svg"
+                    : "/play-button.svg"
+                }
+                alt={""}
+                width={20}
+                height={20}
+              />
+            </Button>
+            <Button onClick={handlePause}>
+              <Image src="/pause-button.svg" alt={""} width={20} height={20} />
+            </Button>
+            <Record
+              handlePlay={handlePlay}
+              handlePause={handlePause}
+              handleUploadAudio={handleUploadAudio}
+            />
+          </PlayerButtons>
+        </PlayerControls>
+
+        <ExportControls>
+          {isLoading && <Loader />}
+
+          <Button>
+            <Export />
           </Button>
-          <Record
-            handlePlay={handlePlay}
-            handlePause={handlePause}
-            handleUploadAudio={handleUploadAudio}
-          />
-        </PlayControls>
-
-        <input
-          type="file"
-          accept=".mp3,audio/*"
-          multiple={false}
-          ref={uploadRef}
-          onInput={() => {
-            if (uploadRef.current?.files) {
-              handleUploadAudio(uploadRef.current?.files[0]);
-            }
-          }}
-        />
-
-        <Button>
-          <Export />
-        </Button>
+        </ExportControls>
       </HeadBarPanel>
       <MainEditPanel>
         <Library />
         <TracksPanel>
           <Tracks
-            isPlaying={isPlaying}
+            // isPlaying={isPlaying}
             // projectData={projectData}
             // trackData={tracksData[index]}
             // barWidth={barWidth}
             progress={progress}
-            convertBeatsToMs={convertBeatsToMs}
-            convertMsToBeats={convertMsToBeats}
+            // convertBeatsToMs={convertBeatsToMs}
+            // convertMsToBeats={convertMsToBeats}
             handleUploadAudio={handleUploadAudio}
           />
         </TracksPanel>

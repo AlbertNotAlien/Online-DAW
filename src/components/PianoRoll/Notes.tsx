@@ -106,7 +106,7 @@ const Notes = (props: any) => {
     }
   };
 
-  const handleDragNote = (
+  const handleSetNote = (
     event: DraggableEvent,
     dragElement: { x: number; y: number },
     notationIndex: number,
@@ -115,7 +115,7 @@ const Notes = (props: any) => {
     startQuarters: number,
     startSixteenths: number
   ) => {
-    console.log("handleDragNote");
+    console.log("handleSetNote");
     if (tracksData && selectedTrackIndex) {
       const sixteenthsIndex = (dragElement.x - 25) / 25;
       const pitchIndex = -dragElement.y / 10;
@@ -155,7 +155,7 @@ const Notes = (props: any) => {
     }
   };
 
-  const handleMoveNote = (
+  const handleDragNote = (
     event: DraggableEvent,
     dragElement: { x: number; y: number },
     notationIndex: number,
@@ -167,7 +167,7 @@ const Notes = (props: any) => {
     lengthQuarters: number,
     lengthSixteenths: number
   ) => {
-    // console.log("handleMoveNote");
+    // console.log("handleDragNote");
     if (tracksData && selectedTrackIndex) {
       const pitchIndex = -dragElement.y / 10;
       const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
@@ -352,7 +352,7 @@ const Notes = (props: any) => {
               <Draggable
                 axis="both"
                 onStop={(event: DraggableEvent, dragElement: DraggableData) =>
-                  handleDragNote(
+                  handleSetNote(
                     event,
                     dragElement,
                     note.notationIndex,
@@ -363,7 +363,7 @@ const Notes = (props: any) => {
                   )
                 }
                 onDrag={(event: DraggableEvent, dragElement: DraggableData) =>
-                  handleMoveNote(
+                  handleDragNote(
                     event,
                     dragElement,
                     note.notationIndex,
@@ -385,8 +385,6 @@ const Notes = (props: any) => {
                       25 +
                     25,
                   y: ((note.octave - 1) * 12 + note.notationIndex) * -10,
-                  // x: 0,
-                  // y: 0,
                 }}
                 handle=".handle-NoteBar"
                 key={`NoteBar-${note.notation}-${note.octave}-${note.start.bars}-${note.start.quarters}-${note.start.sixteenths}`}

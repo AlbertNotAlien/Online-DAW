@@ -1,10 +1,25 @@
 import { useEffect, useState } from "react";
+import { useRecoilState, useSetRecoilState } from "recoil";
+
+import {
+  tracksDataState,
+  projectDataState,
+  selectedTrackIdState,
+  selectedTrackIndexState,
+  barWidthState,
+  progressState,
+  isPlayingState,
+  isPausedState,
+  isRecordingState,
+  isMetronomeState,
+  TrackData,
+} from "../../lib/atoms";
 
 const useRecorder = () => {
   const [recordURL, setRecordURL] = useState("");
   const [recordFile, setRecordFile] = useState(null);
-  const [isRecording, setIsRecording] = useState(false);
   const [recorder, setRecorder] = useState(null);
+  const [isRecording, setIsRecording] = useRecoilState(isRecordingState);
 
   let audioChunks = [];
   useEffect(() => {

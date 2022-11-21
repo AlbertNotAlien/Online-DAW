@@ -45,10 +45,10 @@ export interface AudioData {
   url: string;
 }
 
-interface Clicp extends MidiData, AudioData {}
+export interface ClipData extends MidiData, AudioData {}
 
 export interface TrackData {
-  clips: Clicp[];
+  clips: ClipData[];
   id: string;
   isMuted: boolean;
   isSelected: boolean;
@@ -71,7 +71,7 @@ export interface NoteRulerInfo {
 export const projectDataState = atom({
   key: "projectDataState",
   default: {
-    barWidthCoefficient: 9.5,
+    barWidthCoefficient: 10,
     id: "",
     name: "",
     tempo: 60,
@@ -118,9 +118,29 @@ export const selectedTrackIdState = atom({
   default: "",
 });
 
+export const isPlayingState = atom({
+  key: "isPlayingState",
+  default: false,
+});
+export const isPausedState = atom({
+  key: "isPausedState",
+  default: false,
+});
+export const isRecordingState = atom({
+  key: "isRecordingState",
+  default: false,
+});
 export const isMetronomeState = atom({
   key: "isMetronomeState",
   default: false,
+});
+export const isLoadingState = atom({
+  key: "isLoadingState",
+  default: false,
+});
+export const playerStatusState = atom({
+  key: "playerStatusState",
+  default: "paused", // "playing/paused/recording"
 });
 
 // const uploadTrackData = async (tracksData: boolean, trackId: string) => {

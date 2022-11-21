@@ -8,29 +8,19 @@ import {
   projectDataState,
   NoteData,
   progressState,
-} from "../../lib/atoms";
-
-interface StyleProps {
-  width: number;
-}
+} from "../../../lib/atoms";
 
 const Container = styled.div`
   display: flex;
   flex-direction: row;
-  position: absolute;
   z-index: 0;
   top: 0;
   left: 0;
 `;
 
-const FlexBars = styled.div`
-  display: flex;
-  flex-direction: row;
-`;
-
 interface BarProps {
   barWidth: number;
-  barsIndex: number;
+  quartersIndex: number;
 }
 
 const Bar = styled.div<BarProps>`
@@ -42,7 +32,7 @@ const Bar = styled.div<BarProps>`
     border-left: 0.1px solid white;
   }
   background-color: ${(props) =>
-    props.barsIndex % 8 <= 3 ? "#141414" : "#2d2d2d"};
+    props.quartersIndex % 8 <= 3 ? "#141414" : "#2d2d2d"};
 `;
 
 // const BarLight = styled(Bar)<StyleProps>`
@@ -60,25 +50,26 @@ const Measures = (props: any) => {
 
   const [progress, setProgress] = useRecoilState(progressState);
 
-  const handleSetProgressLine = (barsIndex: number) => {
-    const currentBar = barsIndex;
+  const handleSetProgressLine = (quartersIndex: number) => {
+    const currentBars = Math.floor(quartersIndex / 4);
+    const currentQuarters = quartersIndex % 4;
     setProgress({
-      bars: currentBar,
-      quarters: 0,
+      bars: currentBars,
+      quarters: currentQuarters,
       sixteenths: 0,
     });
   };
 
   return (
     <Container>
-      {new Array(300).fill(0).map((_, barsIndex) => {
+      {new Array(300).fill(0).map((_, quartersIndex) => {
         return (
-          <div key={barsIndex}>
+          <div key={quartersIndex}>
             <Bar
               barWidth={barWidth}
-              barsIndex={barsIndex}
+              quartersIndex={quartersIndex}
               onClick={() => {
-                handleSetProgressLine(barsIndex);
+                handleSetProgressLine(quartersIndex);
               }}
             />
           </div>
