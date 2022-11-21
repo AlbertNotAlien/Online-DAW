@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import * as Tone from "tone";
 
 import {
   tracksDataState,

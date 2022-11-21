@@ -159,6 +159,10 @@ const Tracks = (props: any) => {
     selectedTrackIndexState
   );
 
+  const channelsRef = useRef(); // [channel, channel]
+  const playersRef = useRef(); // optional
+  const synthsRef = useRef(); // optional
+
   const isMetronome = useRecoilValue(isMetronomeState);
 
   const handleSelectTrack = (trackId: string, trackIndex: number) => {
@@ -216,14 +220,21 @@ const Tracks = (props: any) => {
   };
 
   const [instrument, setInstrument] = useState<Tone.Synth>();
+
   const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
+
+  const channelRef = useRef<Tone.Channel>();
 
   const now = Tone.now();
 
   // cause Tone.js can't run in SSR
   useEffect(() => {
-    const vol = new Tone.Volume(-50).toDestination();
-    const newSynth = new Tone.Synth().connect(vol).toDestination();
+    const vol = new Tone.Volume(-12);
+    const newSynth = new Tone.Synth().connect(vol);
+    // const dest = Tone.getDestination();
+    // newSynth.connect(dest);
+    channelRef.current = new Tone.Channel(-0.25, 1).toDestination();
+    newSynth?.connect(channelRef.current);
     setInstrument(newSynth);
     Tone.Transport.bpm.value = 58; //////////////////////////////////////////////////////////
   }, []);
@@ -246,7 +257,7 @@ const Tracks = (props: any) => {
   //   soloTrack.solo = true;
   // };
 
-  const handlePlayMidi = (note: NoteData) => {
+  const handlePlayMidi = (note: NoteData, track: TrackData) => {
     if (instrument) {
       Tone.Transport.schedule(function (time) {
         instrument.triggerAttackRelease(
@@ -254,11 +265,22 @@ const Tracks = (props: any) => {
           `${note.length.bars}:${note.length.quarters}:${note.length.sixteenths}`
         );
       }, `${note.start.bars}:${note.start.quarters}:${note.start.sixteenths}`);
+
+      // const soloA = new Tone.Solo().toDestination();
+      // if (track.isSolo) {
+      //   console.log("connect solo", track.trackName);
+      //   instrument.connect(soloA);
+      // }
     }
   };
 
-  const handlePlayAudio = (clip: AudioData) => {
-    const player = new Tone.Player(clip.url).toDestination();
+  const handlePlayAudio = (clip: AudioData, trackName: string) => {
+    console.log(trackName);
+    const channel0 = new Tone.Channel().toDestination();
+    const player = new Tone.Player(clip.url).connect(channel0);
+    if (trackName === "Audio 3") {
+      // channel0.solo = true;
+    }
     Tone.Transport.schedule(function (time) {
       player.sync().start();
     }, `${clip.startPoint.bars}:${clip.startPoint.quarters}:${clip.startPoint.sixteenths}`);
@@ -270,6 +292,11 @@ const Tracks = (props: any) => {
       await deleteDoc(doc(db, "projects", projectId, "tracks", trackId));
     }
   };
+
+  useEffect(() => {
+    // setup all channels
+    // player connect channels
+  });
 
   useEffect(() => {
     if (
@@ -294,15 +321,26 @@ const Tracks = (props: any) => {
 
         tracksData
           ?.filter((track) => track.type === "midi")
-          .forEach((track) =>
+          .forEach((track) => {
             track.clips[0].notes.forEach((note: NoteData, index: number) => {
-              handlePlayMidi(note);
-            })
-          );
+              handlePlayMidi(note, track);
+            });
+            // const soloA = new Tone.Solo().toDestination();
+            if (track.isSolo) {
+              console.log("connect solo", track.trackName);
+              if (channelRef.current) {
+                channelRef.current.solo = true;
+              }
+              // instrument.connect(soloA);
+              // soloA.solo = true;
+            }
+          });
 
         tracksData
           ?.filter((track) => track.type === "audio")
-          .forEach((track) => handlePlayAudio(track.clips[0]));
+          .forEach((track) => {
+            handlePlayAudio(track.clips[0], track.trackName);
+          });
 
         setIsLoading(true);
 

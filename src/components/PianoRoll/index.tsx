@@ -50,7 +50,12 @@ export default function App(props: any) {
         NOTATIONS={NOTATIONS}
         selectedTrackIndex={props.selectedTrackIndex}
       />
-      <NotesPanel OCTAVES={OCTAVES} NOTATIONS={NOTATIONS} />
+      <NotesPanel
+        OCTAVES={OCTAVES}
+        NOTATIONS={NOTATIONS}
+        selectedTrackIndex={props.selectedTrackIndex}
+        // selectedTrackId={props.selectedTrackId}
+      />
     </Container>
   );
 }

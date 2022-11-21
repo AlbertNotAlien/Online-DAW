@@ -145,7 +145,7 @@ const TrackControls = (props: any) => {
     try {
       const trackRef = doc(db, "projects", projectId, "tracks", trackId);
       const newData = {
-        isMuted: isMuted,
+        isMuted: !isMuted,
       };
       await updateDoc(trackRef, newData);
       console.log("info updated");
@@ -158,7 +158,7 @@ const TrackControls = (props: any) => {
     try {
       const trackRef = doc(db, "projects", projectId, "tracks", trackId);
       const newData = {
-        isSolo: isSolo,
+        isSolo: !isSolo,
       };
       await updateDoc(trackRef, newData);
       console.log("info updated");
@@ -182,7 +182,7 @@ const TrackControls = (props: any) => {
         <TrackButtons>
           <IsSoloButton
             onClick={() => {
-              handleTrackSolo(!props.track.isSolo, props.track.id);
+              handleTrackSolo(props.track.isSolo, props.track.id);
             }}
             isSolo={props.track.isSolo}
           >
@@ -190,7 +190,7 @@ const TrackControls = (props: any) => {
           </IsSoloButton>
           <IsMutedButton
             onClick={() => {
-              handleTrackMute(!props.track.isMuted, props.track.id);
+              handleTrackMute(props.track.isMuted, props.track.id);
             }}
             isMuted={props.track.isMuted}
           >

@@ -5,10 +5,39 @@ import produce from "immer";
 
 import {
   tracksDataState,
-  playingNoteState,
-  hoverMidiInfoState,
+  projectDataState,
+  selectedTrackIdState,
   selectedTrackIndexState,
+  barWidthState,
+  progressState,
+  isPlayingState,
+  isPausedState,
+  isRecordingState,
+  isMetronomeState,
+  playerStatusState,
+  hoverMidiInfoState,
+  playingNoteState,
+  isLoadingState,
+  TrackData,
+  ProjectData,
+  NoteData,
 } from "../../lib/atoms";
+
+import {
+  doc,
+  collection,
+  getDoc,
+  setDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  onSnapshot,
+  DocumentData,
+  orderBy,
+} from "firebase/firestore";
+import { db } from "../../lib/firebase";
+import { storage } from "../../lib/firebase";
+import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 interface PianoKeysProps {
   notation: string;
@@ -103,51 +132,70 @@ const SixteenthBlock = styled(MidiBlock)<SixteenthBlockProps>`
 const NotesPanel = (props: any) => {
   const BARS: number = 8;
 
-  const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
   const selectedTrackIndex = useRecoilValue(selectedTrackIndexState);
 
   const setHoverMidiInfo = useSetRecoilState(hoverMidiInfoState);
   const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
   const [isMouseDownPianoRoll, setIsMouseDownPianoRoll] = useState(false);
 
-  const handleAddNote = (
+  const [projectData, setProjectData] =
+    useRecoilState<ProjectData>(projectDataState);
+  const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
+
+  const handleAddNote = async (
     notation: string,
     notationIndex: number,
     octave: number,
     startBars: number,
     startQuarters: number,
-    startSixteenths: number
+    startSixteenths: number,
+    selectedTrackIndex: number
   ) => {
     console.log("handleAddNote");
-    if (tracksData && selectedTrackIndex) {
-      const newNote = {
-        notation: notation,
-        notationIndex: notationIndex,
-        octave: octave,
-        start: {
-          bars: startBars,
-          quarters: startQuarters,
-          sixteenths: startSixteenths,
-        },
-        length: {
-          bars: 0,
-          quarters: 0,
-          sixteenths: 1,
-        },
-      };
-      console.log("newNote", newNote);
 
-      const newTracksData = produce(tracksData, (draft) => {
-        draft[selectedTrackIndex].clips[0].notes.push(newNote);
-      });
-      // console.log("newTracksData", newTracksData);
-      setTracksdata(newTracksData);
+    if (tracksData) {
+      console.log("projectData", projectData.id);
+      console.log("selectedTrackIndex", selectedTrackIndex);
+      console.log("selectedTrackID", tracksData[selectedTrackIndex].id);
 
-      const newPlayingNote = {
-        notation: notation,
-        octave: octave,
-      };
-      setPlayingNote(newPlayingNote);
+      try {
+        const trackRef = doc(
+          db,
+          "projects",
+          projectData.id,
+          "tracks",
+          tracksData[selectedTrackIndex].id
+        );
+
+        const newNote = {
+          notation: notation,
+          notationIndex: notationIndex,
+          octave: octave,
+          start: {
+            bars: startBars,
+            quarters: startQuarters,
+            sixteenths: startSixteenths,
+          },
+          length: {
+            bars: 0,
+            quarters: 0,
+            sixteenths: 1,
+          },
+        };
+
+        const newClips = produce(
+          tracksData[selectedTrackIndex].clips,
+          (draft) => {
+            draft[0].notes.push(newNote);
+          }
+        );
+        console.log("newNote", newNote);
+        console.log("newClips", newClips);
+        await updateDoc(trackRef, { clips: newClips });
+        console.log("info uploaded");
+      } catch (err) {
+        console.log(err);
+      }
     }
   };
 
@@ -196,7 +244,8 @@ const NotesPanel = (props: any) => {
                               octaveIndex + 1,
                               barsIndex,
                               quartersIndex,
-                              sixteenthsIndex
+                              sixteenthsIndex,
+                              props.selectedTrackIndex
                             );
                           }}
                           onMouseOver={() => {

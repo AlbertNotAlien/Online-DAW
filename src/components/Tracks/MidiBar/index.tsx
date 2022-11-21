@@ -63,18 +63,21 @@ const TrackNotes = (props: any) => {
   return (
     <>
       <Clip barWidth={barWidth} length={100}>
-        {props.trackData.clips[0].notes.map((note: NoteData, index: number) => {
-          return (
-            <MidiNote
-              key={`${note.notation}-${note.octave}-${note.start.bars}-${note.start.quarters}-${note.start.sixteenths}`}
-              start={note.start}
-              length={note.length}
-              barWidth={barWidth}
-              pitch={(note.octave - 1) * 12 + note.notationIndex}
-              trackHeight={projectData?.trackHeight}
-            />
-          );
-        })}
+        {props.trackData.clips[0].notes.length > 0 &&
+          props.trackData.clips[0].notes.map(
+            (note: NoteData, index: number) => {
+              return (
+                <MidiNote
+                  key={`${note.notation}-${note.octave}-${note.start.bars}-${note.start.quarters}-${note.start.sixteenths}`}
+                  start={note.start}
+                  length={note.length}
+                  barWidth={barWidth}
+                  pitch={(note.octave - 1) * 12 + note.notationIndex}
+                  trackHeight={projectData?.trackHeight}
+                />
+              );
+            }
+          )}
       </Clip>
     </>
   );

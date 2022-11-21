@@ -330,8 +330,8 @@ const Notes = (props: any) => {
   return (
     <Container>
       {tracksData &&
-        selectedTrackIndex &&
-        tracksData[selectedTrackIndex].type === "midi" &&
+        selectedTrackIndex !== null &&
+        tracksData[selectedTrackIndex]?.type === "midi" &&
         tracksData[selectedTrackIndex].clips[0].notes.map(
           (note: {
             notation: string;

@@ -53,7 +53,39 @@ const UploadButton = styled.p`
 
 const TimeRuler = (props: any) => {
   const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
+  const [projectData, setProjectData] = useRecoilState(projectDataState);
   const uploadRef = useRef<HTMLInputElement>(null);
+
+  const addMidiTrack = async () => {
+    try {
+      const trackRef = doc(
+        collection(db, "projects", projectData.id, "tracks")
+      );
+      const newData = {
+        id: trackRef.id,
+        trackName: "Midi",
+        type: "midi",
+        isMuted: false,
+        isSolo: false,
+        clips: [
+          {
+            clipName: "",
+            notes: [],
+            startPoint: {
+              bars: 0,
+              quarters: 0,
+              sixteenths: 0,
+            },
+          },
+        ],
+        selectedBy: "",
+      };
+      await setDoc(trackRef, newData);
+      console.log("info uploaded");
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
     <>
@@ -71,6 +103,13 @@ const TimeRuler = (props: any) => {
         />
         <UploadButton>+</UploadButton>
       </label>
+      <p
+        onDoubleClick={() => {
+          addMidiTrack();
+        }}
+      >
+        ++
+      </p>
     </>
   );
 };
