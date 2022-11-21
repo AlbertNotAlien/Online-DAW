@@ -164,26 +164,27 @@ const Export = (props: any) => {
     console.log("handlePlayAudio");
     const player = new Tone.Player(clip.url).toDestination();
     player.connect(dest);
-    Tone.Transport.schedule(function (time) {
-      player.sync().start();
-    }, `${clip.startPoint.bars}:${clip.startPoint.quarters}:${clip.startPoint.sixteenths}`);
+    Tone.loaded().then(() => {
+      Tone.Transport.schedule(function (time) {
+        player.sync().start();
+      }, `${clip.startPoint.bars}:${clip.startPoint.quarters}:${clip.startPoint.sixteenths}`);
+    });
   };
 
   const exportAudio = () => {
     setPlayerStatus("exporting");
+    const exportStartPoint = {
+      bars: 0,
+      quarters: 0,
+      sixteenths: 0,
+    };
+    Tone.Transport.position = `${exportStartPoint.bars}:${exportStartPoint.quarters}:${exportStartPoint.sixteenths}`;
 
     const audioContext = Tone.context;
     const dest = audioContext.createMediaStreamDestination();
     const recorder = new MediaRecorder(dest.stream);
 
     const startPlaying = async () => {
-      const exportStartPoint = {
-        bars: 0,
-        quarters: 0,
-        sixteenths: 0,
-      };
-      Tone.Transport.position = `${exportStartPoint.bars}:${exportStartPoint.quarters}:${exportStartPoint.sixteenths}`;
-
       setIsLoading(true);
 
       tracksData

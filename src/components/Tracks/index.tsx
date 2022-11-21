@@ -11,6 +11,7 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  deleteDoc,
   onSnapshot,
   DocumentData,
   orderBy,
@@ -263,6 +264,13 @@ const Tracks = (props: any) => {
     }, `${clip.startPoint.bars}:${clip.startPoint.quarters}:${clip.startPoint.sixteenths}`);
   };
 
+  const handleDeleteTrack = async (trackId: string) => {
+    if (selectedTrackId) {
+      console.log(trackId);
+      await deleteDoc(doc(db, "projects", projectId, "tracks", trackId));
+    }
+  };
+
   useEffect(() => {
     if (
       instrument &&
@@ -347,6 +355,10 @@ const Tracks = (props: any) => {
                   selectedTrackId === track.id ? "#2F302F" : "#606060"
                 }
                 trackHeight={projectData.trackHeight}
+                onDoubleClick={() => {
+                  console.log("onDoubleClick");
+                  handleDeleteTrack(track.id);
+                }}
               >
                 <TrackControls track={track} />
                 <Timeline>

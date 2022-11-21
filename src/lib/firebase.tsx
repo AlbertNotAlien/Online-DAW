@@ -4,12 +4,13 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 export const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_AUTHDOMAIN,
-  projectId: process.env.NEXT_PUBLIC_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_STORAGEBUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_APP_ID,
+  apiKey: "AIzaSyC2IfR_PbWwIhosCj1gCN5RqD2lmbzIfoI",
+  authDomain: "online-daw-backup2.firebaseapp.com",
+  projectId: "online-daw-backup2",
+  storageBucket: "online-daw-backup2.appspot.com",
+  messagingSenderId: "758641612786",
+  appId: "1:758641612786:web:6485af2b3cf39c72b37d6b",
+  databaseURL: "gs://online-daw-backup2.appspot.com",
 };
 
 const app = initializeApp(firebaseConfig);
