@@ -16,5 +16,6 @@ exports.onUserStatusChanged = functions.database
       return null;
     }
     eventStatus.last_changed = new Date(eventStatus.last_changed);
-    return userStatusFirestoreRef.set(eventStatus, { merge: true });
+    return userStatusFirestoreRef.update(eventStatus, { merge: true });
+    // return userStatusFirestoreRef.set(eventStatus, { merge: true });
   });

@@ -1,12 +1,14 @@
+import { Timestamp } from "firebase/firestore";
 import { useState, useEffect, useRef, MouseEvent } from "react";
 import { atom, selector } from "recoil";
 
 export interface ProjectData {
-  barWidthCoefficient: number;
   id: string;
   name: string;
   tempo: number;
-  trackHeight: number;
+  ownerId: string;
+  ownerName: string;
+  createdTime: Timestamp | null;
 }
 
 export interface NoteData {
@@ -53,8 +55,9 @@ export interface TrackData {
   isMuted: boolean;
   isSelected: boolean;
   isSolo: boolean;
-  trackName: string;
+  name: string;
   type: string;
+  selectedBy: string;
 }
 
 export interface PlayingNoteData {
@@ -68,14 +71,20 @@ export interface NoteRulerInfo {
   octaveIndex: number;
 }
 
+// export const projectIdState = atom({
+//   key: "projectIdState",
+//   default: "",
+// });
+
 export const projectDataState = atom({
   key: "projectDataState",
   default: {
-    barWidthCoefficient: 10,
+    createdTime: null,
     id: "",
     name: "",
+    ownerId: "",
+    ownerName: "",
     tempo: 60,
-    trackHeight: 150,
   } as ProjectData,
 });
 

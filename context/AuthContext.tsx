@@ -59,20 +59,20 @@ export const AuthContextProvider = ({
     const res = await createUserWithEmailAndPassword(auth, email, password);
     if (auth.currentUser) {
       await updateProfile(auth.currentUser, {
-        displayName: res.user.displayName,
+        displayName: displayName,
       });
     }
     const docRef = doc(db, "users", res.user.uid);
     await setDoc(docRef, {
       id: res.user.uid,
-      displayName: res.user.displayName,
+      displayName: displayName,
       email: email,
-      state: "online",
+      state: "offline",
     });
     await router.push("/profile");
   };
 
-  const signin = async (email: string, password: string) => {
+  const login = async (email: string, password: string) => {
     const res = await signInWithEmailAndPassword(auth, email, password);
     await router.push("/profile");
     const docRef = doc(db, "users", res.user.uid);
@@ -96,20 +96,20 @@ export const AuthContextProvider = ({
     const db = getDatabase(app);
     const userStatusDatabaseRef = ref(db, "/status/" + user.uid);
 
-    var isOfflineForDatabase = {
+    const isOfflineForDatabase = {
       state: "offline",
       last_changed: serverTimestamp(),
     };
 
-    var isOnlineForDatabase = {
+    const isOnlineForDatabase = {
       state: "online",
       last_changed: serverTimestamp(),
     };
 
-    console.log(user?.uid);
+    // console.log(user?.uid);
     const connectedRef = ref(db, ".info/connected");
     onValue(connectedRef, (snap) => {
-      console.log(snap);
+      // console.log(snap);
       if (snap.val() === true) {
         onDisconnect(userStatusDatabaseRef)
           .set(isOfflineForDatabase)
@@ -121,7 +121,7 @@ export const AuthContextProvider = ({
   }, [user?.uid]);
 
   return (
-    <AuthContext.Provider value={{ user, signin, signup, logout }}>
+    <AuthContext.Provider value={{ user, login, signup, logout }}>
       {loading ? null : children}
     </AuthContext.Provider>
   );

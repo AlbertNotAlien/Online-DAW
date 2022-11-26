@@ -77,7 +77,7 @@ const TrackNotes = (props: any) => {
                   length={note.length}
                   barWidth={barWidth}
                   pitch={(note.octave - 1) * 12 + note.notationIndex}
-                  trackHeight={projectData?.trackHeight}
+                  trackHeight={150}
                 />
               );
             }

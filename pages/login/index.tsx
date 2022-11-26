@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Login() {
-  const router = useRouter();
+  // const router = useRouter();
   const { login } = useAuth();
 
   const [data, setData] = useState({

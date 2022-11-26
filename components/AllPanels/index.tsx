@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, MouseEvent } from "react";
 import styled, { keyframes } from "styled-components";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import produce from "immer";
+const { v4: uuidv4 } = require("uuid");
 
 import {
   doc,
@@ -30,8 +31,10 @@ import {
   isRecordingState,
   isMetronomeState,
   playerStatusState,
+  // projectIdState,
   isLoadingState,
   TrackData,
+  ProjectData,
 } from "../../context/atoms";
 // import TrackBars from "../Tracks/TrackBars/TrackNotes";
 import WaveSurfer from "../Tracks/WaveSurfer";
@@ -44,27 +47,6 @@ import PianoRoll from "../PianoRoll";
 import Library from "../Library";
 import Export from "../Export";
 import Record from "../Record";
-
-interface ProgresslineProps {
-  progress: {
-    bars: number;
-    quarters: number;
-    sixteenths: number;
-  };
-  barWidth: number;
-}
-
-interface ProjectData {
-  trackHeight: number;
-  barWidthCoefficient: number;
-  id: string;
-  name: string;
-  tempo: number;
-}
-
-interface RecordProps {
-  isRecording: boolean;
-}
 
 // interface IsSoloButtonProps {
 //   isSolo: string;
@@ -225,11 +207,11 @@ const TracksPanel = styled.div`
   overflow: hidden;
 `;
 
-const Timeline = () => {
-  const [projectData, setProjectData] =
-    useRecoilState<ProjectData>(projectDataState);
+const AllPanels = (props: any) => {
+  // const [projectId, setProjectId] = useRecoilState(projectIdState);
+  const [projectData, setProjectData] = useRecoilState(projectDataState);
   const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
-  const projectId = "5BbhQTKKkFcM9nCjMG3I";
+  const projectId = props.projectId;
   const [barWidth, setBarWidth] = useRecoilState(barWidthState);
 
   const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState);
@@ -247,18 +229,24 @@ const Timeline = () => {
   const [progress, setProgress] = useRecoilState(progressState);
   // console.log("progress", progress);
   // const [selectedTrack, setSelectedTrack] = useState(null);
+  const [tempo, setTempo] = useState<number>(projectData?.tempo);
+  // const tempoRef = useRef(60);
 
   const [recordFile, recordURL, isRecording, startRecording, stopRecording] =
     useRecorder();
 
   const [isMetronome, setIsMetronome] = useRecoilState(isMetronomeState);
 
+  console.log("projectId", projectId);
   useEffect(() => {
     const docRef = doc(db, "projects", projectId);
     const unsubscribe = onSnapshot(docRef, (snapshot) => {
       const newData = snapshot.data() as ProjectData;
+      console.log(newData);
       setProjectData(newData);
     });
+
+    console.log("unsubscribe");
 
     return () => {
       unsubscribe();
@@ -276,14 +264,12 @@ const Timeline = () => {
       setTracksdata(newData);
     });
 
+    console.log("unsubscribe");
+
     return () => {
       unsubscribe();
     };
-  }, []);
-
-  useEffect(() => {
-    setBarWidth((120 / projectData.tempo) * projectData.barWidthCoefficient);
-  }, []);
+  }, [projectId, setTracksdata]);
 
   useEffect(() => {
     if (recordFile) {
@@ -291,44 +277,6 @@ const Timeline = () => {
       handleUploadAudio(recordFile);
     }
   }, [recordFile]);
-
-  // useEffect(() => {
-  //   if (tracksData && selectedTrackIndex) {
-  //     // const uploadTracksData = async () => {
-  //     //   try {
-  //     //     const trackRef = doc(
-  //     //       db,
-  //     //       "projects",
-  //     //       projectId,
-  //     //       "tracks",
-  //     //       selectedTrackId
-  //     //     );
-  //     //     await updateDoc(trackRef, tracksData[selectedTrackIndex]);
-  //     //     console.log("info updated");
-  //     //   } catch (err) {
-  //     //     console.log(err);
-  //     //   }
-  //     // };
-  //     const uploadTracksData = () => {
-  //       console.log("coool");
-  //     };
-  //     setTimeout(() => {
-  //       uploadTracksData();
-  //       console.log("upload selected trackData");
-  //     }, 3000);
-  //   }
-  // }, [tracksData[selectedTrackIndex]]);
-
-  // const convertMsToBeats = (sec: number) => {
-  //   const bars = (sec * projectData.tempo) / 60 + 1;
-  //   return bars;
-  // };
-
-  // const convertBeatsToMs = (bars: number) => {
-  //   const millisecond = (bars * 60) / projectData.tempo;
-  //   // console.log("convertBeatsToMs", millisecond);
-  //   return millisecond;
-  // };
 
   const handlePlay = () => {
     setPlayerStatus("playing");
@@ -370,7 +318,7 @@ const Timeline = () => {
   };
 
   const uploadFileInfo = async (
-    trackName: string,
+    name: string,
     type: string,
     clipName: string,
     startPoint: { bars: number; quarters: number; sixteenths: number },
@@ -380,10 +328,11 @@ const Timeline = () => {
     selectedBy: string
   ) => {
     try {
-      const trackRef = doc(collection(db, "projects", projectId, "tracks"));
+      const trackId = uuidv4().split("-")[0];
+      const docRef = doc(db, "projects", projectId, "tracks", trackId);
       const newData = {
-        id: trackRef.id,
-        trackName: trackName,
+        id: trackId,
+        name: name,
         type: type,
         isMuted: isMuted,
         isSolo: isSolo,
@@ -396,7 +345,7 @@ const Timeline = () => {
         ],
         selectedBy: selectedBy,
       };
-      await setDoc(trackRef, newData);
+      await setDoc(docRef, newData);
       console.log("info uploaded");
     } catch (err) {
       console.log(err);
@@ -446,13 +395,14 @@ const Timeline = () => {
     }
   };
 
-  const handleTempoChange = async (
-    event: React.FormEvent<HTMLInputElement>
-  ) => {
+  const handleTempoChange = async (newTempo: number) => {
+    setTempo(newTempo);
+    setBarWidth((120 / newTempo) * 10); // projectData.barWidthCoefficient
+
     try {
       const trackRef = doc(db, "projects", projectId);
       const newData = {
-        tempo: parseInt(event.currentTarget.value),
+        tempo: newTempo,
       };
       await updateDoc(trackRef, newData);
       console.log("info updated");
@@ -460,6 +410,12 @@ const Timeline = () => {
       console.log(err);
     }
   };
+
+  useEffect(() => {
+    setBarWidth((120 / projectData.tempo) * 10);
+    setTempo(projectData.tempo);
+    console.log("useEffect");
+  }, []);
 
   // useEffect(() => {
   //   if (tracksData && selectedTrackIndex) {
@@ -489,15 +445,12 @@ const Timeline = () => {
           <TempoInput
             type="number"
             // inputMode="numeric"
-            value={projectData.tempo}
+            value={tempo}
             min={1}
             required
+            // ref={tempoRef}
             onChange={(event) => {
-              // setProjectData((prev) => ({
-              //   ...prev,
-              //   tempo: parseInt(event.target.value),
-              // }));
-              handleTempoChange(event);
+              handleTempoChange(Number(event.currentTarget.value));
             }}
           />
           <Button>
@@ -569,6 +522,7 @@ const Timeline = () => {
             // trackData={tracksData[index]}
             // barWidth={barWidth}
             progress={progress}
+            projectId={projectId}
             // convertBeatsToMs={convertBeatsToMs}
             // convertMsToBeats={convertMsToBeats}
             handleUploadAudio={handleUploadAudio}
@@ -588,4 +542,4 @@ const Timeline = () => {
   );
 };
 
-export default Timeline;
+export default AllPanels;

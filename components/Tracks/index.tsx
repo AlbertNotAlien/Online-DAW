@@ -15,10 +15,13 @@ import {
   onSnapshot,
   DocumentData,
   orderBy,
+  arrayUnion,
 } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { storage } from "../../config/firebase";
 import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useAuth } from "../../context/AuthContext";
+// import { useOnClickOutside } from "./useOnClickOutside";
 
 import {
   tracksDataState,
@@ -45,17 +48,10 @@ import TimeRuler from "./TimeRuler";
 import { style } from "wavesurfer.js/src/util";
 import { Channel, PanVol, Volume } from "tone";
 
-interface ProjectData {
+interface TrackProps {
   trackHeight: number;
-  barWidthCoefficient: number;
-  id: string;
-  name: string;
-  tempo: number;
-}
-
-interface TrackLineProps {
-  trackHeight: number;
-  selectedColor: string;
+  selectedBySelf: boolean;
+  selectedByOthers: boolean;
 }
 
 interface ProgresslineProps {
@@ -106,13 +102,19 @@ const ProgressLine = styled.div<ProgresslineProps>`
   z-index: 100;
 `;
 
-const Track = styled.div<TrackLineProps>`
+const Track = styled.div<TrackProps>`
   display: flex;
   width: 100%;
   margin-bottom: 10px;
   border-radius: 10px;
   height: ${(props) => props.trackHeight}px;
-  background-color: ${(props) => props.selectedColor};
+
+  pointer-events: ${(props) => (props.selectedByOthers ? "none" : "inherit")};
+  background-color: ${(props) =>
+    (props.selectedByOthers && "#2F302F") ||
+    (props.selectedBySelf && "#2F302F") ||
+    "#606060"};
+  opacity: ${(props) => (props.selectedByOthers ? 0.3 : 1)};
 `;
 
 const Timeline = styled.div`
@@ -147,7 +149,7 @@ const Tracks = (props: any) => {
   const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
   const barWidth = useRecoilValue(barWidthState);
 
-  const projectId = "5BbhQTKKkFcM9nCjMG3I";
+  const projectId = props.projectId;
 
   const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState);
   const [isLoading, setIsLoading] = useRecoilState(isLoadingState);
@@ -159,8 +161,9 @@ const Tracks = (props: any) => {
   const [selectedTrackIndex, setSelectedTrackIndex] = useRecoilState(
     selectedTrackIndexState
   );
+  const { user, logout } = useAuth();
+  // const { ref } = useOnClickOutside();
 
-  // const channelsRef = useRef<Channel[] | undefined>([]);
   const channelsRef = useRef<Channel[] | undefined>([]);
   // const panVolsRef = useRef<PanVol[] | undefined>([]);
   const tracksRef = useRef<
@@ -201,25 +204,12 @@ const Tracks = (props: any) => {
       }
     });
 
-    if (channelsRef.current) {
-      channelsRef.current[0].mute = true;
-      // channelsRef.current[2].volume.value = 20;
-      // channelsRef.current[2].pan.value = -1;
-    }
+    // if (channelsRef.current) {
+    // channelsRef.current[0].mute = true;
+    // channelsRef.current[2].volume.value = 20;
+    // channelsRef.current[2].pan.value = -1;
+    // }
   }, [tracksData]);
-
-  // useEffect(() => {
-  //   if (channelsRef.current && tracksData) {
-  //     channelsRef.current[0].solo = tracksData[0].isSolo ? true : false;
-  //     channelsRef.current[0].mute = tracksData[0].isMuted ? true : false;
-  //   }
-  // }, [tracksData]);
-
-  // useEffect(() => {
-  //   if (channelsRef.current) {
-  //     console.log(channelsRef.current[0].mute);
-  //   }
-  // }, [channelsRef]);
 
   const playAllTracks = () => {
     if (tracksRef.current) {
@@ -300,8 +290,10 @@ const Tracks = (props: any) => {
     }
   }, [playerStatus]);
 
-  const handleSelectTrack = (trackId: string, trackIndex: number) => {
+  const handleSelectTrack = async (trackId: string, trackIndex: number) => {
     if (tracksData) {
+      console.log("handleSelectTrack");
+      console.log("trackId", trackId);
       setTracksdata(
         produce(tracksData, (draft) => {
           draft[trackIndex].isSelected = true;
@@ -309,6 +301,20 @@ const Tracks = (props: any) => {
       );
       setSelectedTrackId(trackId);
       setSelectedTrackIndex(trackIndex);
+    }
+
+    // console.log("projectId", projectId);
+    console.log("trackId", trackId);
+
+    try {
+      const docRef = doc(db, "projects", projectId, "tracks", trackId);
+      const newData = {
+        selectedBy: user.uid,
+      };
+      await updateDoc(docRef, newData);
+      console.log("info updated");
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -393,28 +399,44 @@ const Tracks = (props: any) => {
     }
   }, [playerStatus, isMetronome]);
 
+  // console.log("tracksData", tracksData);
+
+  // useEffect(() => {
+  //   if (tracksData) {
+  //     tracksData.forEach((track) => {
+  //       console.log("track.selectedBy", track.selectedBy);
+  //       console.log("user.id", user.id);
+  //       if (track.selectedBy !== user.id) {
+  //         console.log("track.name", track.name);
+  //       }
+  //     });
+  //   }
+  // }, [tracksData]);
+
   return (
     <Container>
       <TimeRuler handleUploadAudio={props.handleUploadAudio} />
       <TracksPanel>
         <ProgressLine progress={progress} barWidth={barWidth} />
-        {tracksData &&
+        {projectData &&
+          tracksData &&
           tracksData.length > 0 &&
           tracksData.map((track, trackIndex) => {
             return (
               <Track
-                key={`${track.trackName}-${trackIndex}`}
+                key={`${track.name}-${trackIndex}`}
                 onClick={() => {
                   handleSelectTrack(track.id, trackIndex);
                 }}
-                selectedColor={
-                  selectedTrackId === track.id ? "#2F302F" : "#606060"
-                }
-                trackHeight={projectData.trackHeight}
+                trackHeight={150}
                 onDoubleClick={() => {
                   console.log("onDoubleClick");
                   handleDeleteTrack(track.id);
                 }}
+                selectedBySelf={selectedTrackId === track.id}
+                selectedByOthers={
+                  track.selectedBy.length > 0 && track.selectedBy !== user.uid
+                }
               >
                 <TrackControls
                   channelsRef={channelsRef}

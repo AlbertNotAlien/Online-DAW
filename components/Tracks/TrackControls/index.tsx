@@ -150,30 +150,28 @@ const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
 `;
 
 const TrackControls = (props: any) => {
-  const projectId = "5BbhQTKKkFcM9nCjMG3I";
+  const projectId = props.projectId;
 
   const handleTrackMute = async (
     isMuted: boolean,
     trackId: string,
     trackIndex: number
   ) => {
-    // try {
-    //   const trackRef = doc(db, "projects", projectId, "tracks", trackId);
-    //   const newData = {
-    //     isMuted: !isMuted,
-    //   };
-    //   await updateDoc(trackRef, newData);
-    //   console.log("info updated");
-    // } catch (err) {
-    //   console.log(err);
-    // }
-    // console.log(props.channelsRef.current[trackIndex]);
+    try {
+      const trackRef = doc(db, "projects", projectId, "tracks", trackId);
+      const newData = {
+        isMuted: !isMuted,
+      };
+      await updateDoc(trackRef, newData);
+      console.log("info updated");
+    } catch (err) {
+      console.log(err);
+    }
 
     props.channelsRef.current[trackIndex].mute =
       !props.channelsRef.current[trackIndex].mute;
 
     props.channelsRef.current.forEach((channel: any, index: number) => {
-      console.log(`solo-${index}`, channel.solo);
       console.log(`mute-${index}`, channel.mute);
     });
     console.log("-----");
@@ -207,30 +205,15 @@ const TrackControls = (props: any) => {
     console.log("-----");
   };
 
-  const handleVolumeChange = (event: MouseEvent) => {
-    console.log(event.clientY);
-  };
-
-  console.log("props.channelsRef", props.channelsRef);
-  console.log("props.channelsRef.current", props.channelsRef.current);
-  console.log(
-    "props.channelsRef.current[0].volume.value",
-    props.channelsRef.current?.[0].volume.value
-  );
-  console.log(
-    "props.channelsRef.current[1].volume.value",
-    props.channelsRef.current?.[1].volume.value
-  );
-
   const [volume, setVolume] = useState(0);
   const [pan, setPan] = useState(0);
 
   return (
     <>
       <Container>
-        <TrackTitle>{props.track.trackName}</TrackTitle>
+        <TrackTitle>{props.track.name}</TrackTitle>
         <TrackButtons>
-          <IsSoloButton
+          {/* <IsSoloButton
             onClick={() => {
               handleTrackSolo(
                 props.track.isSolo,
@@ -241,7 +224,7 @@ const TrackControls = (props: any) => {
             isSolo={props.track.isSolo}
           >
             Solo
-          </IsSoloButton>
+          </IsSoloButton> */}
           <IsMutedButton
             onClick={() => {
               handleTrackMute(
@@ -268,7 +251,10 @@ const TrackControls = (props: any) => {
                 value={volume}
                 onChange={(event) => {
                   console.log(event.target.value);
-                  const value = Math.floor(Number(event.target.value));
+                  const value =
+                    event.target.value === null
+                      ? 0
+                      : Math.floor(Number(event.target.value));
                   setVolume(value);
                   props.channelsRef.current[props.trackIndex].volume.value =
                     value;

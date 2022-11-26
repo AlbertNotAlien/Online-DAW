@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 
 export default function Signup() {
-  const router = useRouter();
+  //   const router = useRouter();
   const { user, signup } = useAuth();
   const [data, setData] = useState({
     email: "",

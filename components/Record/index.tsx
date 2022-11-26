@@ -6,7 +6,7 @@ import { useRecoilState, useSetRecoilState } from "recoil";
 
 import Image from "next/image";
 import useRecorder from "./useRecorder";
-import Timeline from "../Project";
+import Timeline from "../AllPanels";
 
 import {
   tracksDataState,
