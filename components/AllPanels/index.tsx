@@ -18,6 +18,7 @@ import {
 import { db } from "../../config/firebase";
 import { storage } from "../../config/firebase";
 import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useAuth } from "../../context/AuthContext";
 
 import {
   tracksDataState,
@@ -36,21 +37,16 @@ import {
   TrackData,
   ProjectData,
 } from "../../context/atoms";
-// import TrackBars from "../Tracks/TrackBars/TrackNotes";
 import WaveSurfer from "../Tracks/WaveSurfer";
 
 import useRecorder from "../Record/useRecorder";
-// import Record from "../Record";
-// import Export from "../Export";
 import Tracks from "../Tracks";
 import PianoRoll from "../PianoRoll";
 import Library from "../Library";
 import Export from "../Export";
 import Record from "../Record";
-
-// interface IsSoloButtonProps {
-//   isSolo: string;
-// }
+import Link from "next/link";
+import Avatar from "boring-avatars";
 
 const Container = styled.div`
   background-color: hsl(0, 0%, 30%);
@@ -87,52 +83,42 @@ const HeadBarPanel = styled.div`
   justify-content: space-between;
   width: 100%;
   background-color: gray;
-  padding: 10px 10px;
+  padding: 10px 20px;
   align-items: center;
-  column-gap: 10px;
   border-radius: 10px;
   height: 50px;
+  position: relative;
 `;
 
-const MainEditPanel = styled.div`
-  display: flex;
-  column-gap: 10px;
-  height: calc(100vh - 50px - 200px - 10 * 4px);
-  /* flex-grow: 1; */
-  /* flex-shrink: 0; */
-`;
-
-const PianoRollPanel = styled.div`
-  display: flex;
-  padding: 10px;
-  background-color: gray;
-  border-radius: 10px;
-  height: 200px;
-  /* overflow: auto; */
-`;
-
-const Button = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
+const HeadBarPanelPart = styled.div`
+  height: 100%;
   display: flex;
   align-items: center;
-  height: 100%;
-  &:hover {
-    transform: scale(110%);
-  }
-  &:focus {
-    outline: none;
-  }
 `;
 
-// const Record = styled(Button)``;
+const Logo = styled.div`
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: calc(200px - 20px + 10px);
+`;
+
+const Profile = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+interface MainEditPanelProps {
+  isMidiTrack: boolean;
+}
 
 const PlayerControls = styled.div`
+  height: 30px;
   display: flex;
   align-items: center;
-  height: 100%;
+  position: absolute;
   left: 50%;
+  transform: translateX(-50%);
 `;
 
 const PlayerButtons = styled.div`
@@ -198,12 +184,46 @@ const ProgressInput = styled.input`
   }
 `;
 
+const MainEditPanel = styled.div<MainEditPanelProps>`
+  display: flex;
+  column-gap: 10px;
+  ${(props) =>
+    props.isMidiTrack
+      ? `height: calc(100vh - 50px - 200px - 10 * 4px);`
+      : `height: calc(100vh - 50px - 30px - 10 * 4px);`};
+`;
+
+interface PianoRollPanelProps {
+  isMidiTrack: boolean;
+}
+
+const PianoRollPanel = styled.div<PianoRollPanelProps>`
+  display: flex;
+  padding: 10px;
+  background-color: gray;
+  border-radius: 10px;
+  height: ${(props) => (props.isMidiTrack ? "200px" : "30px")};
+`;
+
+const Button = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  &:hover {
+    transform: scale(110%);
+  }
+  &:focus {
+    outline: none;
+  }
+`;
+
 const TracksPanel = styled.div`
   display: flex;
   flex-direction: column;
   row-gap: 10px;
-  /* width: 100%; */
-  /* flex-grow: 1; */
   overflow: hidden;
 `;
 
@@ -227,31 +247,31 @@ const AllPanels = (props: any) => {
     selectedTrackIndexState
   );
   const [progress, setProgress] = useRecoilState(progressState);
-  // console.log("progress", progress);
-  // const [selectedTrack, setSelectedTrack] = useState(null);
   const [tempo, setTempo] = useState<number>(projectData?.tempo);
-  // const tempoRef = useRef(60);
 
   const [recordFile, recordURL, isRecording, startRecording, stopRecording] =
     useRecorder();
 
   const [isMetronome, setIsMetronome] = useRecoilState(isMetronomeState);
+  const { user, logout } = useAuth();
 
   console.log("projectId", projectId);
   useEffect(() => {
-    const docRef = doc(db, "projects", projectId);
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      const newData = snapshot.data() as ProjectData;
-      console.log(newData);
-      setProjectData(newData);
-    });
+    if (projectId) {
+      const docRef = doc(db, "projects", projectId);
+      const unsubscribe = onSnapshot(docRef, (snapshot) => {
+        const newData = snapshot.data() as ProjectData;
+        console.log(newData);
+        setProjectData(newData);
+      });
 
-    console.log("unsubscribe");
+      console.log("unsubscribe");
 
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+      return () => {
+        unsubscribe();
+      };
+    }
+  }, [projectId]);
 
   useEffect(() => {
     const colRef = collection(db, "projects", projectId, "tracks");
@@ -352,6 +372,8 @@ const AllPanels = (props: any) => {
     }
   };
 
+  console.log("selectedTrackId", selectedTrackId);
+
   const handleUploadAudio = (file: any) => {
     setIsLoading(true);
     console.log("handleUploadAudio");
@@ -386,14 +408,24 @@ const AllPanels = (props: any) => {
             console.log("uploadBytes");
           });
         })
+
         .catch((err) => {
           console.log(err);
         })
         .finally(() => {
           setIsLoading(false);
+          if (selectedTrackIndex !== null) {
+            const newSelectedTrackIndex = tracksData.findIndex(
+              (track) => track.id === selectedTrackId
+            );
+            setSelectedTrackIndex(newSelectedTrackIndex);
+            console.log("newSelectedTrackIndex", newSelectedTrackIndex);
+          }
         });
     }
   };
+
+  console.log("selectedTrackIndex", selectedTrackIndex);
 
   const handleTempoChange = async (newTempo: number) => {
     setTempo(newTempo);
@@ -441,34 +473,46 @@ const AllPanels = (props: any) => {
   return (
     <Container>
       <HeadBarPanel>
-        <TempoControls>
-          <TempoInput
-            type="number"
-            // inputMode="numeric"
-            value={tempo}
-            min={1}
-            required
-            // ref={tempoRef}
-            onChange={(event) => {
-              handleTempoChange(Number(event.currentTarget.value));
-            }}
-          />
-          <Button>
-            <Image
-              src={
-                isMetronome
-                  ? "/metronome-button-activated.svg"
-                  : "/metronome-button.svg"
-              }
-              alt={""}
-              width={20}
-              height={20}
-              onClick={() => {
-                setIsMetronome(!isMetronome);
+        <HeadBarPanelPart>
+          <Link href={"/"}>
+            <Logo>
+              <Image
+                src="/logo-combine.svg"
+                alt="logo"
+                width={84.084 * 1.5}
+                height={22.555 * 1.5}
+              />
+            </Logo>
+          </Link>
+          <TempoControls>
+            <TempoInput
+              type="number"
+              // inputMode="numeric"
+              value={tempo}
+              min={1}
+              required
+              // ref={tempoRef}
+              onChange={(event) => {
+                handleTempoChange(Number(event.currentTarget.value));
               }}
             />
-          </Button>
-        </TempoControls>
+            <Button>
+              <Image
+                src={
+                  isMetronome
+                    ? "/metronome-button-activated.svg"
+                    : "/metronome-button.svg"
+                }
+                alt={""}
+                width={20}
+                height={20}
+                onClick={() => {
+                  setIsMetronome(!isMetronome);
+                }}
+              />
+            </Button>
+          </TempoControls>
+        </HeadBarPanelPart>
         <PlayerControls>
           <ProgressInputs>
             <ProgressInput value={`${progress.bars + 1}`} onChange={() => {}} />
@@ -504,16 +548,47 @@ const AllPanels = (props: any) => {
             />
           </PlayerButtons>
         </PlayerControls>
+        <HeadBarPanelPart>
+          <ExportControls>
+            {isLoading && <Loader />}
+            <Button>
+              <Export />
+            </Button>
+          </ExportControls>
 
-        <ExportControls>
-          {isLoading && <Loader />}
-
-          <Button>
-            <Export />
-          </Button>
-        </ExportControls>
+          <Link href={"/profile"}>
+            <Profile>
+              {user ? (
+                <Avatar
+                  size={30}
+                  name="Maria Mitchell"
+                  variant="beam"
+                  colors={[
+                    "#92A1C6",
+                    "#146A7C",
+                    "#F0AB3D",
+                    "#C271B4",
+                    "#C20D90",
+                  ]}
+                />
+              ) : (
+                <Image
+                  src="/profile.svg"
+                  alt="profile"
+                  width={30}
+                  height={30}
+                />
+              )}
+            </Profile>
+          </Link>
+        </HeadBarPanelPart>
       </HeadBarPanel>
-      <MainEditPanel>
+      <MainEditPanel
+        isMidiTrack={
+          selectedTrackIndex !== null &&
+          tracksData?.[selectedTrackIndex].type === "midi"
+        }
+      >
         <Library />
         <TracksPanel>
           <Tracks
@@ -529,14 +604,23 @@ const AllPanels = (props: any) => {
           />
         </TracksPanel>
       </MainEditPanel>
-      <PianoRollPanel>
-        <PianoRoll
-          projectId={projectId}
-          projectData={projectData}
-          tracksData={tracksData}
-          selectedTrackId={selectedTrackId}
-          selectedTrackIndex={selectedTrackIndex}
-        />
+      <PianoRollPanel
+        isMidiTrack={
+          selectedTrackIndex !== null &&
+          tracksData?.[selectedTrackIndex].type === "midi"
+        }
+      >
+        {tracksData &&
+          selectedTrackIndex !== null &&
+          tracksData[selectedTrackIndex].type === "midi" && (
+            <PianoRoll
+              projectId={projectId}
+              projectData={projectData}
+              tracksData={tracksData}
+              selectedTrackId={selectedTrackId}
+              selectedTrackIndex={selectedTrackIndex}
+            />
+          )}
       </PianoRollPanel>
     </Container>
   );

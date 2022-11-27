@@ -154,9 +154,9 @@ const NotesPanel = (props: any) => {
     console.log("handleAddNote");
 
     if (tracksData) {
-      console.log("projectData", projectData.id);
-      console.log("selectedTrackIndex", selectedTrackIndex);
-      console.log("selectedTrackID", tracksData[selectedTrackIndex].id);
+      // console.log("projectData", projectData.id);
+      // console.log("selectedTrackIndex", selectedTrackIndex);
+      // console.log("selectedTrackID", tracksData[selectedTrackIndex].id);
 
       try {
         const trackRef = doc(
@@ -189,8 +189,8 @@ const NotesPanel = (props: any) => {
             draft[0].notes.push(newNote);
           }
         );
-        console.log("newNote", newNote);
-        console.log("newClips", newClips);
+        // console.log("newNote", newNote);
+        // console.log("newClips", newClips);
         await updateDoc(trackRef, { clips: newClips });
         console.log("info uploaded");
       } catch (err) {
@@ -247,6 +247,11 @@ const NotesPanel = (props: any) => {
                               sixteenthsIndex,
                               props.selectedTrackIndex
                             );
+                            const newPlayingNote = {
+                              notation: notation,
+                              octave: octaveIndex + 1,
+                            };
+                            setPlayingNote(newPlayingNote);
                           }}
                           onMouseOver={() => {
                             setHoverMidiInfo(() => {

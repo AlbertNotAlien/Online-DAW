@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { useState, useEffect, useRef, MouseEvent } from "react";
 import styled from "styled-components";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
@@ -103,6 +104,7 @@ const ProgressLine = styled.div<ProgresslineProps>`
 `;
 
 const Track = styled.div<TrackProps>`
+  position: relative;
   display: flex;
   width: 100%;
   margin-bottom: 10px;
@@ -143,6 +145,13 @@ const ClipTitle = styled.div`
   }
 `;
 
+const Lock = styled.div`
+  position: absolute;
+  top: 50%;
+  left: calc((100vw - 200px) / 2);
+  z-index: 2;
+`;
+
 const Tracks = (props: any) => {
   const projectData = useRecoilValue(projectDataState);
 
@@ -157,34 +166,23 @@ const Tracks = (props: any) => {
 
   const [progress, setProgress] = useRecoilState(progressState);
 
-  const [selectedTrackId, setSelectedTrackId] = useState("");
+  const [selectedTrackId, setSelectedTrackId] =
+    useRecoilState(selectedTrackIdState);
   const [selectedTrackIndex, setSelectedTrackIndex] = useRecoilState(
     selectedTrackIndexState
   );
   const { user, logout } = useAuth();
-  // const { ref } = useOnClickOutside();
 
   const channelsRef = useRef<Channel[] | undefined>([]);
-  // const panVolsRef = useRef<PanVol[] | undefined>([]);
   const tracksRef = useRef<
-    (Tone.Synth<Tone.SynthOptions> | Tone.Player | undefined)[] | undefined
+    (Tone.Synth | Tone.Player | undefined)[] | undefined
   >();
 
   useEffect(() => {
     channelsRef.current = tracksData?.map((_, index) => {
       const channel = new Tone.Channel().toDestination();
-      // const panVol = new Tone.PanVol(-1, 0);
-      // const solo = new Tone.Solo();
-      // channel.connect(panVol);
-      // channel.connect(solo);
       return channel;
     });
-    // console.log(channelsRef.current);
-
-    // panVolsRef.current = tracksData?.map((_, index) => {
-    //   const pnaVol = new Tone.PanVol(-1, 0);
-    //   return pnaVol;
-    // });
 
     tracksRef.current = tracksData?.map((track, index) => {
       if (track.type === "midi" && channelsRef.current) {
@@ -198,9 +196,7 @@ const Tracks = (props: any) => {
 
     tracksRef.current?.forEach((trackRef, index) => {
       if (trackRef && channelsRef.current) {
-        // trackRef.connect(panVolsRef.current[index]);
         trackRef.connect(channelsRef.current[index]);
-        // console.log()
       }
     });
 
@@ -221,10 +217,7 @@ const Tracks = (props: any) => {
             .sync()
             .start(
               `${tracksData[index].clips[0].startPoint.bars}:${tracksData[index].clips[0].startPoint.quarters}:${tracksData[index].clips[0].startPoint.sixteenths}`
-            ); // time?
-          // Tone.Transport.schedule(function (time) {
-          // trackRef.sync().start(); // time?
-          // }, `${tracksData[index].clips[0].startPoint.bars}:${tracksData[index].clips[0].startPoint.quarters}:${tracksData[index].clips[0].startPoint.sixteenths}`);
+            );
         } else if (trackRef?.name === "Synth" && tracksData) {
           console.log(trackRef);
           const notes = tracksData[index].clips[0].notes;
@@ -268,8 +261,6 @@ const Tracks = (props: any) => {
           .toString()
           .split(":")
           .map((element) => Number(element));
-        // console.log("transportPosition", transportPosition);
-        // console.log(Tone.Time().toSeconds());
         setProgress({
           bars: transportPosition[0],
           quarters: transportPosition[1],
@@ -291,20 +282,41 @@ const Tracks = (props: any) => {
   }, [playerStatus]);
 
   const handleSelectTrack = async (trackId: string, trackIndex: number) => {
-    if (tracksData) {
-      console.log("handleSelectTrack");
-      console.log("trackId", trackId);
+    console.log(selectedTrackId);
+    if (tracksData && selectedTrackId !== null) {
+      try {
+        const docRef = doc(
+          db,
+          "projects",
+          projectId,
+          "tracks",
+          selectedTrackId // previous selectedTrackId
+        );
+        const newData = {
+          selectedBy: "",
+        };
+        await updateDoc(docRef, newData);
+        console.log("info updated");
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setTracksdata(
+          produce(tracksData, (draft) => {
+            draft[trackIndex].selectedBy = user.uid;
+          })
+        );
+        setSelectedTrackId(trackId);
+        setSelectedTrackIndex(trackIndex);
+      }
+    } else if (tracksData && selectedTrackId === null) {
       setTracksdata(
         produce(tracksData, (draft) => {
-          draft[trackIndex].isSelected = true;
+          draft[trackIndex].selectedBy = user.uid;
         })
       );
       setSelectedTrackId(trackId);
       setSelectedTrackIndex(trackIndex);
     }
-
-    // console.log("projectId", projectId);
-    console.log("trackId", trackId);
 
     try {
       const docRef = doc(db, "projects", projectId, "tracks", trackId);
@@ -337,14 +349,10 @@ const Tracks = (props: any) => {
     trackIndex: number,
     trackId: string
   ) => {
-    // console.log("dragElementX", dragElement.x);
     const currentBar = Math.floor(dragElement.x / barWidth);
 
     const newBars = Math.floor(currentBar / 4);
     const newQuarters = currentBar % 4;
-
-    // console.log("newBars", newBars);
-    // console.log("newQuarters", newQuarters);
 
     if (tracksData && tracksData[trackIndex].clips) {
       const newTracksData = produce(tracksData, (draft) => {
@@ -360,21 +368,24 @@ const Tracks = (props: any) => {
     }
   };
 
-  const [instrument, setInstrument] = useState<Tone.Synth>();
-
   const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
 
   const now = Tone.now();
 
-  const playNote = (notation: string, octave: number) => {
-    if (instrument) {
-      instrument.triggerAttackRelease(`${notation}${octave}`, "8n", now);
+  const playNote = (trackRef: Tone.Synth, notation: string, octave: number) => {
+    if (trackRef) {
+      trackRef.triggerAttackRelease(`${notation}${octave}`, "8n", now);
+      console.log("playNote");
     }
   };
 
   useEffect(() => {
-    if (playingNote) {
-      playNote(playingNote.notation, playingNote.octave);
+    if (playingNote && tracksRef.current && selectedTrackIndex !== null) {
+      playNote(
+        tracksRef.current[selectedTrackIndex],
+        playingNote.notation,
+        playingNote.octave
+      );
     }
   }, [playingNote]);
 
@@ -438,6 +449,11 @@ const Tracks = (props: any) => {
                   track.selectedBy.length > 0 && track.selectedBy !== user.uid
                 }
               >
+                {track.selectedBy.length > 0 && track.selectedBy !== user.uid && (
+                  <Lock>
+                    <Image src="/lock.svg" alt="lock" width={25} height={25} />
+                  </Lock>
+                )}
                 <TrackControls
                   channelsRef={channelsRef}
                   track={track}

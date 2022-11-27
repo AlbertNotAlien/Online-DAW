@@ -53,7 +53,6 @@ export interface TrackData {
   clips: ClipData[];
   id: string;
   isMuted: boolean;
-  isSelected: boolean;
   isSolo: boolean;
   name: string;
   type: string;

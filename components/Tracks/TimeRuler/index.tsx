@@ -41,7 +41,7 @@ const Container = styled.div`
   width: 100%;
   align-items: center;
   padding-left: 10px;
-  background-color: #183248;
+  background-color: gray;
   border-radius: 10px;
   column-gap: 10px;
 `;
@@ -61,6 +61,11 @@ const Button = styled.p`
 const TimeRuler = (props: any) => {
   const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
   const [projectData, setProjectData] = useRecoilState(projectDataState);
+  const [selectedTrackIndex, setSelectedTrackIndex] = useRecoilState(
+    selectedTrackIndexState
+  );
+  const [selectedTrackId, setSelectedTrackId] =
+    useRecoilState(selectedTrackIdState);
   const uploadRef = useRef<HTMLInputElement>(null);
 
   const addMidiTrack = async (projectId: string) => {
@@ -89,6 +94,14 @@ const TimeRuler = (props: any) => {
       await setDoc(docRef, newData);
     } catch (err) {
       console.log(err);
+    } finally {
+      if (tracksData && selectedTrackIndex !== null) {
+        const newSelectedTrackIndex = tracksData.findIndex(
+          (track) => track.id === selectedTrackId
+        );
+        setSelectedTrackIndex(newSelectedTrackIndex);
+        console.log("newSelectedTrackIndex", newSelectedTrackIndex);
+      }
     }
   };
 
@@ -110,7 +123,7 @@ const TimeRuler = (props: any) => {
           <Button>upload audio</Button>
         </label>
         <Button
-          onDoubleClick={() => {
+          onClick={() => {
             addMidiTrack(projectData.id);
           }}
         >

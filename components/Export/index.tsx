@@ -42,6 +42,8 @@ import { buffer } from "stream/consumers";
 const ExportButton = styled.a`
   color: black;
   cursor: pointer;
+  display: flex;
+  align-items: center;
 `;
 
 const Export = (props: any) => {
@@ -280,7 +282,7 @@ const Export = (props: any) => {
       {/* <audio controls></audio>
       <button onClick={exportAudio}>export</button> */}
       <ExportButton onClick={exportAudio}>
-        <Image src="/export-button.svg" alt={""} width={20} height={20} />
+        <Image src="/export-button.svg" alt={""} width={25} height={25} />
       </ExportButton>
       {isExporting && <p>converting</p>}
     </>

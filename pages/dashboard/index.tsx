@@ -1,7 +1,8 @@
 import { useRouter } from "next/router";
-import { useState, useEffect, ReactNode } from "react";
-const { v4: uuidv4 } = require("uuid");
+import { useState, useEffect, ReactNode, useCallback } from "react";
 import styled from "styled-components";
+const { v4: uuidv4 } = require("uuid");
+const { CopyToClipboard } = require("react-copy-to-clipboard");
 
 import { useAuth } from "../../context/AuthContext";
 import { db, auth } from "../../config/firebase";
@@ -26,6 +27,8 @@ import Link from "next/link";
 import { set } from "firebase/database";
 import produce from "immer";
 
+import Header from "../../components/Header";
+
 interface ProjectInfo {
   id: string;
   name: string;
@@ -36,17 +39,39 @@ interface ProjectInfo {
 }
 
 const Container = styled.div`
-  max-width: 1280px;
   max-height: 80%;
-  padding: 100px 0;
-  margin: 0px auto;
+  display: flex;
+  padding-top: 30px;
+  /* margin: 0px auto; */
+`;
+
+const SidebarWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  row-gap: 20px;
+  width: 200px;
+  height: 100%;
+  background-color: rebeccapurple;
+  margin-top: 80px;
+  padding-left: 20px;
+`;
+
+const SidebarOption = styled.div`
+  cursor: pointer;
+`;
+
+const ProjectsWrapper = styled.div`
+  /* max-width: 960px; */
+  /* margin: 0px auto; */
+  padding: 0px 20px;
   display: flex;
   flex-direction: column;
 `;
 
 const Title = styled.h1`
   font-size: 40px;
-  margin-bottom: 30px;
+  /* margin-bottom: 30px; */
+  height: 80px;
 `;
 
 const Projects = styled.div`
@@ -61,7 +86,9 @@ const Projects = styled.div`
 const Project = styled.div`
   width: calc((100% - 30px) / 3);
   height: 150px;
-  position: relative;
+  &:hover {
+    filter: brightness(110%);
+  }
 `;
 
 const ProjectWrapper = styled.div`
@@ -86,6 +113,9 @@ const NewProject = styled.div`
   align-items: center;
   font-size: 36px;
   cursor: pointer;
+  &:hover {
+    filter: brightness(110%);
+  }
 `;
 
 const ProjectBanner = styled.div`
@@ -121,7 +151,7 @@ const ProjectMenuIcon = styled.button`
   background-color: #6e6e6e;
   border: none;
   cursor: default;
-  z-index: 1;
+  /* z-index: 1; */
   &:hover {
     filter: brightness(110%);
   }
@@ -142,6 +172,7 @@ const ProjectModal = styled.div<ProjectModalProps>`
   top: 110px;
   border-radius: 10px;
   overflow: hidden;
+  z-index: 20;
   /* padding: 10px 10px; */
   /* row-gap: 10px; */
 `;
@@ -162,8 +193,10 @@ const ProjectInfos = styled.p`
 `;
 
 const Dashboard = () => {
-  const [projectsList, setProjectsList] = useState<ProjectInfo[]>([]);
+  const [userProjectList, setUserProjectList] = useState<ProjectInfo[]>([]);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean[]>([]);
+  const [copied, setCopied] = useState(false);
+
   const { user, logout } = useAuth();
 
   console.log("isProjectModalOpen", isProjectModalOpen);
@@ -172,13 +205,18 @@ const Dashboard = () => {
   // const { userId } = router.query;
   // console.log(userId);
 
+  console.log(window.location.host);
   console.log(user);
+
+  const onCopy = useCallback(() => {
+    setCopied(true);
+  }, []);
 
   const getProjectsData = async () => {
     const docRef = doc(db, "users", user.uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      setProjectsList(docSnap.data().projects);
+      setUserProjectList(docSnap.data().projects);
     } else {
       console.log("No such document!");
     }
@@ -189,10 +227,10 @@ const Dashboard = () => {
   }, [user.uid]);
 
   useEffect(() => {
-    if (projectsList) {
-      setIsProjectModalOpen(projectsList.map((project) => false));
+    if (userProjectList) {
+      setIsProjectModalOpen(userProjectList.map((project) => false));
     }
-  }, [projectsList]);
+  }, [userProjectList]);
 
   const addMidiTrack = async (projectId: string) => {
     try {
@@ -364,56 +402,72 @@ const Dashboard = () => {
 
   return (
     <>
+      <Header />
       <Container>
-        <Title>recent</Title>
-        <Projects>
-          <NewProject onClick={addNewProject}>+</NewProject>
-          {projectsList?.length > 0 &&
-            projectsList.map((project, projectIndex) => (
-              <Project key={project.id}>
-                <ProjectModal
-                  isProjectModalOpen={isProjectModalOpen[projectIndex]}
-                >
-                  <ProjectModalOption>rename</ProjectModalOption>
-                  <ProjectModalOption>copy link</ProjectModalOption>
-                  <ProjectModalOption
+        <SidebarWrapper>
+          <div>Sort By</div>
+          <div>Recent</div>
+          <div>Project Name</div>
+          <div>Owner</div>
+        </SidebarWrapper>
+        <ProjectsWrapper>
+          <Title>Recent</Title>
+          <Projects>
+            <NewProject onClick={addNewProject}>+</NewProject>
+            {userProjectList?.length > 0 &&
+              userProjectList.map((project, projectIndex) => (
+                <Project key={project.id}>
+                  <ProjectModal
+                    isProjectModalOpen={isProjectModalOpen[projectIndex]}
                     onClick={() => {
-                      removeUserProject(
-                        project.id,
-                        project.name,
-                        project.tempo,
-                        project.ownerId,
-                        project.ownerName,
-                        project.createdTime
-                      );
+                      handleProjectMenuIcon(projectIndex);
                     }}
                   >
-                    delete
-                  </ProjectModalOption>
-                </ProjectModal>
-                <ProjectWrapper>
-                  <Link href={`/project/${project.id}`}>
-                    <ProjectBanner />
-                  </Link>
-                  <ProjectContent>
-                    <ProjectTitle>
-                      <Link href={`/project/${project.id}`}>
-                        <ProjectName>{project.name}</ProjectName>
-                      </Link>
-                      <ProjectMenuIcon
-                        onClick={() => {
-                          handleProjectMenuIcon(projectIndex);
-                        }}
-                      >
-                        ⋯
-                      </ProjectMenuIcon>
-                    </ProjectTitle>
-                    <ProjectInfos>{`by ${project.ownerName} / bpm ${
-                      project.tempo
-                    } / ${convertTimeStamp(
-                      project.createdTime
-                    )}`}</ProjectInfos>
-                    {/* <button
+                    <ProjectModalOption>rename</ProjectModalOption>
+                    <CopyToClipboard
+                      onCopy={onCopy}
+                      text={`${window.location.host}/project/${project.id}`}
+                    >
+                      <ProjectModalOption>copy link</ProjectModalOption>
+                    </CopyToClipboard>
+                    <ProjectModalOption
+                      onClick={() => {
+                        removeUserProject(
+                          project.id,
+                          project.name,
+                          project.tempo,
+                          project.ownerId,
+                          project.ownerName,
+                          project.createdTime
+                        );
+                      }}
+                    >
+                      delete
+                    </ProjectModalOption>
+                  </ProjectModal>
+                  <ProjectWrapper>
+                    <Link href={`/project/${project.id}`}>
+                      <ProjectBanner />
+                    </Link>
+                    <ProjectContent>
+                      <ProjectTitle>
+                        <Link href={`/project/${project.id}`}>
+                          <ProjectName>{project.name}</ProjectName>
+                        </Link>
+                        <ProjectMenuIcon
+                          onClick={() => {
+                            handleProjectMenuIcon(projectIndex);
+                          }}
+                        >
+                          ⋯
+                        </ProjectMenuIcon>
+                      </ProjectTitle>
+                      <ProjectInfos>{`by ${project.ownerName} / bpm ${
+                        project.tempo
+                      } / ${convertTimeStamp(
+                        project.createdTime
+                      )}`}</ProjectInfos>
+                      {/* <button
                       onClick={() => {
                         removeUserProject(
                           project.id,
@@ -427,11 +481,12 @@ const Dashboard = () => {
                         >
                         delete
                       </button> */}
-                  </ProjectContent>
-                </ProjectWrapper>
-              </Project>
-            ))}
-        </Projects>
+                    </ProjectContent>
+                  </ProjectWrapper>
+                </Project>
+              ))}
+          </Projects>
+        </ProjectsWrapper>
       </Container>
     </>
   );

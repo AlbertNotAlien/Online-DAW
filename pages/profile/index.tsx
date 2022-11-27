@@ -12,6 +12,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import Avatar from "boring-avatars";
+import Header from "../../components/Header";
 
 export default function Profile() {
   const router = useRouter();
@@ -78,45 +79,35 @@ export default function Profile() {
 
   return (
     <>
-      <div className="min-h-full flex flex-col justify-center items-center">
-        <h1 className="font-bold text-3xl">Profile</h1>
-        <div className="my-5">
+      <Header />
+
+      <Avatar
+        size={100}
+        name="Maria Mitchell"
+        variant="beam"
+        colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
+      />
+      <div>{user?.displayName}</div>
+      <div>{user?.email}</div>
+      <button
+        onClick={handleLogout}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-5"
+      >
+        登出
+      </button>
+
+      {members.map((member, index) => (
+        <div key={`${member}-${index}`}>
           <Avatar
-            size={100}
+            size={40}
             name="Maria Mitchell"
             variant="beam"
             colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
           />
+          <div>{member.email}</div>
+          <div>{member.state}</div>
         </div>
-        <div>{user?.displayName}</div>
-        <div>{user?.email}</div>
-        {/* <div>{`${points} ${points > 1 ? "points" : "point"}`}</div> */}
-        <button
-          onClick={handleLogout}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-5"
-        >
-          登出
-        </button>
-      </div>
-
-      <div className="flex flex-col items-center">
-        {members.map((member, index) => (
-          <div
-            className="h-[5rem] w-[30rem] rounded-[10rem] bg-slate-700 flex items-center justify-between my-2 px-10"
-            key={`${member}-${index}`}
-          >
-            <div>{`# ${index + 1}`}</div>
-            <Avatar
-              size={40}
-              name="Maria Mitchell"
-              variant="beam"
-              colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
-            />
-            <div>{member.email}</div>
-            <div>{member.state}</div>
-          </div>
-        ))}
-      </div>
+      ))}
     </>
   );
 }
