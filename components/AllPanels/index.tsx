@@ -73,8 +73,8 @@ const Loader = styled.div`
   border: 5px solid #f3f3f3;
   border-radius: 50%;
   border-top: 5px solid #3498db;
-  width: 25px;
-  height: 25px;
+  width: 50px;
+  height: 50px;
   animation-name: ${LoaderKeyframes};
   animation-duration: 1.5s;
   animation-iteration-count: infinite;
@@ -463,6 +463,8 @@ const AllPanels = (props: any) => {
     console.log("useEffect");
   }, []);
 
+  const tempoRef = useRef(60);
+
   return (
     <Container>
       <HeadBarPanel>
@@ -481,10 +483,10 @@ const AllPanels = (props: any) => {
             <TempoInput
               type="number"
               // inputMode="numeric"
+              // ref={tempoRef}
               value={tempo}
               min={1}
               required
-              // ref={tempoRef}
               onChange={(event) => {
                 handleTempoChange(Number(event.currentTarget.value));
               }}
@@ -543,7 +545,11 @@ const AllPanels = (props: any) => {
         </PlayerControls>
         <HeadBarPanelPart>
           <ExportControls>
-            {isLoading && <Loader />}
+            {isLoading && (
+              <Modal setIsModalOpen={setIsModalOpen}>
+                <Loader />
+              </Modal>
+            )}
             <Button>
               <Export />
             </Button>

@@ -38,6 +38,7 @@ import {
   AudioData,
 } from "../../context/atoms";
 import { buffer } from "stream/consumers";
+import Modal from "../Modal";
 
 const ExportButton = styled.a`
   color: black;
@@ -60,22 +61,7 @@ const Export = (props: any) => {
   const [progress, setProgress] = useRecoilState(progressState);
   const [isLoading, setIsLoading] = useRecoilState(isLoadingState);
 
-  const [volume, setVolume] = useState<Tone.Volume>();
-
-  // const getInstrument = () => {
-  //   const vol = new Tone.Volume(-50).toDestination();
-  //   const newSynth = new Tone.Synth().connect(vol).toDestination();
-  //   return newSynth;
-  // };
-
-  // const [instrument, setInstrument] = useState<Tone.Synth>(() => {
-  //   // const vol = new Tone.Volume(-50).toDestination();
-  //   // const newSynth = new Tone.Synth().connect(vol).toDestination();
-  //   // return newSynth;
-  //   const initialState = getInstrument();
-  //   return initialState;
-  // });
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [instrument, setInstrument] = useState<Tone.Synth>();
 
   useEffect(() => {
@@ -173,7 +159,11 @@ const Export = (props: any) => {
     });
   };
 
-  const exportAudio = () => {
+  const exportAudio = (
+    endBars: number,
+    endQuarters: number,
+    endSixteenths: number
+  ) => {
     setPlayerStatus("exporting");
     const exportStartPoint = {
       bars: 0,
@@ -220,9 +210,9 @@ const Export = (props: any) => {
     startPlaying();
 
     const exportEndPoint = {
-      bars: 1,
-      quarters: 0,
-      sixteenths: 0,
+      bars: endBars,
+      quarters: endQuarters,
+      sixteenths: endSixteenths,
     };
 
     // console.log(recorder.state);
@@ -245,7 +235,7 @@ const Export = (props: any) => {
 
           const tempLink = document.createElement("a");
           tempLink.href = blobUrl;
-          tempLink.setAttribute("download", "filename.mp3");
+          tempLink.setAttribute("download", "music.mp3");
           tempLink.click();
         };
       }
@@ -277,11 +267,136 @@ const Export = (props: any) => {
     }
   }, [instrument, playerStatus, isMetronome]);
 
+  const ModalWrapper = styled.div`
+    display: flex;
+    flex-direction: column;
+    row-gap: 10px;
+    width: 300px;
+  `;
+
+  const EndPointTitle = styled.h2`
+    font-size: 24px;
+    font-weight: bold;
+  `;
+
+  const EndPointInputs = styled.div`
+    display: flex;
+    justify-content: space-between;
+    column-gap: 10px;
+  `;
+
+  const EndPointInput = styled.input`
+    font-size: 16px;
+    text-align: center;
+    width: 100%;
+    height: 36px;
+    border-radius: 10px;
+    border: none;
+    &:focus {
+      outline: none;
+    }
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  `;
+
+  const endBarsRef = useRef<HTMLInputElement | null>(null);
+  const endQuartersRef = useRef<HTMLInputElement | null>(null);
+  const endSixteenthsRef = useRef<HTMLInputElement | null>(null);
+
+  const Buttons = styled.div`
+    height: 36px;
+
+    display: flex;
+    column-gap: 10px;
+  `;
+  const Button = styled.button`
+    font-size: 16px;
+    line-height: 18px;
+    width: 50%;
+    background-color: #6e6e6e;
+    border: none;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    &:hover {
+      filter: brightness(110%);
+    }
+  `;
+
   return (
     <>
-      {/* <audio controls></audio>
-      <button onClick={exportAudio}>export</button> */}
-      <ExportButton onClick={exportAudio}>
+      {isModalOpen && (
+        <Modal setIsModalOpen={setIsModalOpen}>
+          <ModalWrapper>
+            <EndPointTitle>Export Range</EndPointTitle>
+            <EndPointInputs>
+              <EndPointInput
+                type="number"
+                placeholder="bars"
+                min={2}
+                max={300}
+                ref={endBarsRef}
+              />
+              <EndPointInput
+                type="number"
+                placeholder="quarters"
+                min={1}
+                max={4}
+                ref={endQuartersRef}
+              />
+              <EndPointInput
+                type="number"
+                placeholder="sixteenths"
+                min={1}
+                max={4}
+                ref={endSixteenthsRef}
+              />
+            </EndPointInputs>
+            <div>
+              <Buttons>
+                <Button
+                  onClick={() => {
+                    if (
+                      endBarsRef.current !== null &&
+                      endQuartersRef.current !== null &&
+                      endSixteenthsRef.current !== null
+                    ) {
+                      console.log(endBarsRef.current.value);
+                      exportAudio(
+                        Math.floor(Number(endBarsRef.current.value) - 1),
+                        Math.floor(Number(endQuartersRef.current.value) - 1),
+                        Math.floor(Number(endSixteenthsRef.current.value) - 1)
+                      );
+                      setIsModalOpen(false);
+                    }
+                  }}
+                >
+                  Confirm
+                </Button>
+                <Button
+                  onClick={() => {
+                    endBarsRef.current = null;
+                    endQuartersRef.current = null;
+                    endSixteenthsRef.current = null;
+                    setIsModalOpen(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </Buttons>
+            </div>
+          </ModalWrapper>
+        </Modal>
+      )}
+      <ExportButton
+        onClick={() => {
+          setIsModalOpen(true);
+          // exportAudio();
+        }}
+      >
         <Image src="/export-button.svg" alt={""} width={25} height={25} />
       </ExportButton>
       {isExporting && <p>converting</p>}

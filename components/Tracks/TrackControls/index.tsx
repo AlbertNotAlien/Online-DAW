@@ -63,18 +63,19 @@ const TrackButton = styled.button`
 `;
 
 const RangePanels = styled.div`
-  display: flex;
-  column-gap: 10px;
+  /* display: flex; */
+  /* column-gap: 10px; */
 `;
 
 const RangePanel = styled.div`
   height: 20px;
-  width: 100%;
+  width: 50%;
   border-radius: 5px;
-  background-color: #262626;
+  margin-left: 20px;
+  /* background-color: #262626; */
   position: relative;
   display: flex;
-  overflow: hidden;
+  /* overflow: hidden; */
   align-items: center;
   justify-content: center;
 `;
@@ -105,23 +106,20 @@ const VolumeControl = styled.div`
 //   }
 // `;
 
-const PanControl = styled.div`
-  height: 100%;
-  width: 80%;
-  background-color: #ccccbb;
-  position: absolute;
-  left: 0px;
-`;
+// const PanControl = styled.div`
+//   height: 100%;
+//   width: 80%;
+//   background-color: #ccccbb;
+//   position: absolute;
+//   left: 0px;
+// `;
 
 const RangeValue = styled.input`
   text-align: center;
   color: white;
-  /* background-color: red; */
   font-size: 10px;
   position: absolute;
   height: 100%;
-  /* pointer-events: none; */
-  /* z-index: ; */
   border: none;
   &:focus {
     outline: none;
@@ -147,7 +145,7 @@ interface IsMutedButtonProps {
 
 const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
   background-color: ${(props) =>
-    props.isMuted === true ? "#F6DDCD" : "#3b2a2a"};
+    props.isMuted === true ? "#F6DDCD" : "#7c7c7c"};
 `;
 
 const TrackControls = (props: any) => {
@@ -247,14 +245,16 @@ const TrackControls = (props: any) => {
         {props.channelsRef.current !== false && (
           <RangePanels>
             <RangePanel>
-              <VolumeControl
+              {/* <VolumeControl
               // onMouseDown={(event) => {
               //   handleVolumeChange(event);
               // }}
-              />
+              /> */}
               <RangeValue
-                type="number"
+                type="range"
                 value={volume}
+                min={-70}
+                max={10}
                 onChange={(event) => {
                   console.log(event.target.value);
                   const value =
@@ -265,16 +265,32 @@ const TrackControls = (props: any) => {
                   props.channelsRef.current[props.trackIndex].volume.value =
                     value;
                 }}
+                // type="number"
+                // value={volume}
+                // onChange={(event) => {
+                //   console.log(event.target.value);
+                //   const value =
+                //     event.target.value === null
+                //       ? 0
+                //       : Math.floor(Number(event.target.value));
+                //   setVolume(value);
+                //   props.channelsRef.current[props.trackIndex].volume.value =
+                //     value;
+                // }}
               />
             </RangePanel>
             <RangePanel>
-              <PanControl />
+              {/* <PanControl /> */}
               <RangeValue
-                type="number"
-                value={pan}
+                type="range"
+                value={pan * 100}
+                min={-100}
+                max={100}
+                step={0.1}
                 onChange={(event) => {
-                  console.log(event.target.value);
-                  const value = Math.floor(Number(event.target.value));
+                  // console.log(event.target.value);
+                  const value = Number(event.target.value) / 100;
+                  console.log(value);
                   setPan(value);
                   props.channelsRef.current[props.trackIndex].pan.value = value;
                 }}

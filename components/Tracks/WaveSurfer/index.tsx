@@ -64,7 +64,7 @@ const WaveSurfer = (props: any) => {
       wavesurfer.current.load(clipUrl);
     };
 
-    setTimeout(create, 1);
+    setTimeout(create, 10);
 
     return () => {
       if (wavesurfer.current) {

@@ -135,14 +135,15 @@ export default function Profile() {
       let newMembers: { email: string; displayName: string; state: string }[] =
         [];
       querySnapshot.forEach((doc) => {
-        // console.log(doc.data());
+        console.log(doc.data());
         const email = doc.data().email;
         const displayName = doc.data().displayName;
         const state = doc.data().state;
         newMembers.push({ email, displayName, state });
+        setMembers(newMembers);
       });
-      newMembers = newMembers.filter((member) => member.email !== user.email);
-      setMembers(newMembers);
+      // newMembers = newMembers.filter((member) => member.email !== user.email);
+      console.log("newMembers", newMembers);
     });
     return () => {
       unsubscribe();
