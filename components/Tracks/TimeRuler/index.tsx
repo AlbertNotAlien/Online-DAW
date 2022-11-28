@@ -153,14 +153,11 @@ const TimeRuler = (props: any) => {
                     if (uploadRef.current?.files) {
                       props.handleUploadAudio(uploadRef.current?.files[0]);
                       console.log("onInput2");
+                      props.setIsModalOpen(false);
                     }
                   }}
                 />
-                <ModalButton
-                  onClick={() => {
-                    props.setIsModalOpen(false);
-                  }}
-                >
+                <ModalButton onClick={() => {}}>
                   <Image
                     src="/sound.svg"
                     alt="upload audio"

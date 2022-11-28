@@ -318,6 +318,69 @@ const Tracks = (props: any) => {
     }
   };
 
+  // [x, x, x]
+  const [dragX, setDragX] = useState<number[]>(
+    tracksData?.map(
+      (track) =>
+        (track.clips[0].startPoint.bars * 4 +
+          track.clips[0].startPoint.quarters) *
+        barWidth
+    )
+  );
+
+  useEffect(() => {
+    setDragX(
+      tracksData?.map(
+        (track) =>
+          (track.clips[0].startPoint.bars * 4 +
+            track.clips[0].startPoint.quarters) *
+          barWidth
+      )
+    );
+  }, [tracksData]);
+
+  console.log(
+    tracksData?.map(
+      (track) =>
+        (track.clips[0].startPoint.bars * 4 +
+          track.clips[0].startPoint.quarters) *
+        barWidth
+    )
+  );
+  console.log("dragX", dragX);
+
+  const totalX = tracksData.reduce((acc, track) => {
+    return (
+      acc + track.clips[0].startPoint.bars + track.clips[0].startPoint.quarters
+    );
+  }, 0);
+
+  console.log(totalX);
+
+  useEffect(() => {
+    // update x state
+    tracksData?.map(
+      (track) =>
+        (track.clips[0].startPoint.bars * 4 +
+          track.clips[0].startPoint.quarters) *
+        barWidth
+    );
+  }, [totalX]);
+
+  const handleClipDraggable = (
+    event: DraggableEvent,
+    dragElement: { x: number; y: number },
+    trackIndex: number,
+    trackId: string
+  ) => {
+    console.log("dragElement.x", dragElement.x);
+    const newClipsPosition = produce(dragX, (draft) => {
+      draft[trackIndex] = dragElement.x;
+    });
+
+    setDragX(newClipsPosition);
+  };
+
   const updateClipsPosition = async (clips: ClipData[], trackId: string) => {
     try {
       const trackRef = doc(db, "projects", projectId, "tracks", trackId);
@@ -331,16 +394,23 @@ const Tracks = (props: any) => {
     }
   };
 
-  const handleClipDraggable = (
+  const handleClipDraggableStop = (
     event: DraggableEvent,
     dragElement: { x: number; y: number },
     trackIndex: number,
     trackId: string
   ) => {
-    const currentBar = Math.floor(dragElement.x / barWidth);
+    const currentQuarters = Math.floor(dragElement.x / barWidth);
 
-    const newBars = Math.floor(currentBar / 4);
-    const newQuarters = currentBar % 4;
+    const newBars = Math.floor(currentQuarters / 4);
+    const newQuarters = currentQuarters % 4;
+
+    console.log("dragElement.x", dragElement.x);
+    console.log("barWidth", barWidth);
+    console.log("currentQuarters", currentQuarters);
+    console.log("currentQuarters", currentQuarters);
+    console.log("newBars", newBars);
+    console.log("newQuarters", newQuarters);
 
     if (tracksData && tracksData[trackIndex].clips) {
       const newTracksData = produce(tracksData, (draft) => {
@@ -393,14 +463,11 @@ const Tracks = (props: any) => {
   useEffect(() => {
     console.log("selectedTrackId", selectedTrackId);
     if (selectedTrackId !== null) {
-      window.addEventListener("keydown", (event) => {
-        // console.log(event.key);
+      const handleKeydown = (event: any) => {
         handleDeleteTrack(selectedTrackId, event);
-      });
-      return () =>
-        window.removeEventListener("keydown", (event) => {
-          handleDeleteTrack(selectedTrackId, event);
-        });
+      };
+      window.addEventListener("keydown", handleKeydown);
+      return () => window.removeEventListener("keydown", handleKeydown);
     }
   });
 
@@ -415,6 +482,8 @@ const Tracks = (props: any) => {
       }, "4n");
     }
   }, [playerStatus, isMetronome]);
+
+  const [newDragX, setNewDragX] = useState(0);
 
   return (
     <Container>
@@ -452,8 +521,10 @@ const Tracks = (props: any) => {
                 )}
                 <TrackControls
                   channelsRef={channelsRef}
+                  projectId={props.projectId}
                   track={track}
                   trackIndex={trackIndex}
+                  isMuted={channelsRef?.current?.[trackIndex]?.mute ?? false}
                 />
                 <Timeline>
                   <Clip>
@@ -480,27 +551,20 @@ const Tracks = (props: any) => {
                           track.id
                         );
                       }}
-                      // onStop={(
-                      //   event: DraggableEvent,
-                      //   dragElement: DraggableData
-                      // ) => {
-                      //   handleClipDraggable(
-                      //     event,
-                      //     dragElement,
-                      //     trackIndex,
-                      //     track.id
-                      //   );
-                      // }}
+                      onStop={(
+                        event: DraggableEvent,
+                        dragElement: DraggableData
+                      ) => {
+                        handleClipDraggableStop(
+                          event,
+                          dragElement,
+                          trackIndex,
+                          track.id
+                        );
+                      }}
                       grid={[barWidth, 0]}
                       position={{
-                        x:
-                          (tracksData[trackIndex].clips[0].startPoint.bars * 4 +
-                            tracksData[trackIndex].clips[0].startPoint
-                              .quarters +
-                            tracksData[trackIndex].clips[0].startPoint
-                              .sixteenths /
-                              4) *
-                          barWidth,
+                        x: dragX[trackIndex] || 0,
                         y: 0,
                       }}
                       handle=".handle"

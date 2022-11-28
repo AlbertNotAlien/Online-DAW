@@ -49,6 +49,9 @@ const WaveSurfer = (props: any) => {
   //   (startPoint.bars - 1) * 8 + (startPoint.quarters - 1)
   // );
 
+  const clipUrl = props.trackData.clips[0].url;
+  // console.log("clipUrl", clipUrl);
+
   useEffect(() => {
     const create = async () => {
       const WaveSurfer = (await import("wavesurfer.js")).default;
@@ -57,10 +60,11 @@ const WaveSurfer = (props: any) => {
       // console.log("props.trackData", props.trackData.clips[0].url);
 
       wavesurfer.current = WaveSurfer.create(options);
-      wavesurfer.current.load(props.trackData.clips[0].url);
+      console.log("wavesurfer", wavesurfer.current);
+      wavesurfer.current.load(clipUrl);
     };
 
-    create();
+    setTimeout(create, 1);
 
     return () => {
       if (wavesurfer.current) {
@@ -68,7 +72,7 @@ const WaveSurfer = (props: any) => {
         wavesurfer.current.destroy();
       }
     };
-  }, [props.trackData.clips]);
+  }, [clipUrl]);
 
   return (
     <>

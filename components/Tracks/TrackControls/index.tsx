@@ -141,22 +141,31 @@ interface IsMutedButtonProps {
   isMuted: boolean;
 }
 
-const IsSoloButton = styled(TrackButton)<IsSoloButtonProps>`
-  background-color: ${(props) => (props.isSolo ? "#F6DDCD" : "#7c7c7c")};
-`;
+// const IsSoloButton = styled(TrackButton)<IsSoloButtonProps>`
+//   background-color: ${(props) => (props.isSolo ? "#F6DDCD" : "#7c7c7c")};
+// `;
 
 const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
-  background-color: ${(props) => (props.isMuted ? "#F6DDCD" : "#7c7c7c")};
+  background-color: ${(props) =>
+    props.isMuted === true ? "#F6DDCD" : "#3b2a2a"};
 `;
 
 const TrackControls = (props: any) => {
   const projectId = props.projectId;
+  const [isMuted, setIsMuted] = useState(props.isMuted);
+
+  useEffect(() => {
+    setIsMuted(props.isMuted);
+  }, [props.isMuted]);
 
   const handleTrackMute = async (
     isMuted: boolean,
     trackId: string,
     trackIndex: number
   ) => {
+    console.log("isMuted", isMuted);
+    console.log("projectId", projectId);
+    console.log("trackId", trackId);
     try {
       const trackRef = doc(db, "projects", projectId, "tracks", trackId);
       const newData = {
@@ -170,6 +179,7 @@ const TrackControls = (props: any) => {
 
     props.channelsRef.current[trackIndex].mute =
       !props.channelsRef.current[trackIndex].mute;
+    setIsMuted(props.channelsRef.current[trackIndex].mute);
 
     props.channelsRef.current.forEach((channel: any, index: number) => {
       console.log(`mute-${index}`, channel.mute);
@@ -227,13 +237,9 @@ const TrackControls = (props: any) => {
           </IsSoloButton> */}
           <IsMutedButton
             onClick={() => {
-              handleTrackMute(
-                props.track.isMuted,
-                props.track.id,
-                props.trackIndex
-              );
+              handleTrackMute(props.isMuted, props.track.id, props.trackIndex);
             }}
-            isMuted={props.track.isMuted}
+            isMuted={isMuted}
           >
             Mute
           </IsMutedButton>

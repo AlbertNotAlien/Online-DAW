@@ -89,7 +89,7 @@ export const projectDataState = atom({
 
 export const tracksDataState = atom({
   key: "tracksDataState",
-  default: null as TrackData[] | null,
+  default: [] as TrackData[],
 });
 
 export const progressState = atom({
