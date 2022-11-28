@@ -13,7 +13,7 @@ import {
 const Container = styled.div`
   display: flex;
   flex-direction: row;
-  z-index: 0;
+  z-index: 10;
   top: 0;
   left: 0;
 `;

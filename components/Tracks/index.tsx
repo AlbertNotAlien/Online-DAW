@@ -71,29 +71,16 @@ const Container = styled.div`
   height: 100%;
 `;
 
-// const TimeRuler = styled.div`
-//   min-height: 30px;
-//   width: 100%;
-//   border-radius: 10px;
-//   background-color: gray;
-//   display: flex;
-//   align-items: center;
-//   padding-left: 10px;
-//   font-size: 20px;
-//   line-height: 20px;
-// `;
-
 const TracksPanel = styled.div`
   display: flex;
   flex-direction: column;
-  overflow: scroll;
+  overflow: auto;
 `;
 
 const ProgressLine = styled.div<ProgresslineProps>`
   width: 1px;
   background-color: #c08a1e;
   height: calc(100vh - 50px - 200px - 70px);
-  /* height: 500px; */
   position: absolute;
   left: ${(props) =>
     props.progress.bars * props.barWidth * 4 +
@@ -283,8 +270,8 @@ const Tracks = (props: any) => {
   }, [playerStatus]);
 
   const handleSelectTrack = async (trackId: string, trackIndex: number) => {
-    console.log(selectedTrackId);
-    if (tracksData && selectedTrackId !== null) {
+    // console.log("trackId", trackId);
+    if (tracksData && selectedTrackId !== null && selectedTrackId !== trackId) {
       try {
         const docRef = doc(
           db,
@@ -395,25 +382,24 @@ const Tracks = (props: any) => {
   }, [playingNote, selectedTrackIndex]);
 
   const handleDeleteTrack = async (trackId: string, event: KeyboardEvent) => {
-    console.log("handleDeleteTrack");
-    setSelectedTrackIndex(null);
-    setSelectedTrackId(null);
-    console.log("trackId", trackId);
-    await deleteDoc(doc(db, "projects", projectId, "tracks", trackId));
+    if (event.key === "Backspace" || event.key === "Delete") {
+      console.log("handleDeleteTrack");
+      setSelectedTrackIndex(null);
+      setSelectedTrackId(null);
+      await deleteDoc(doc(db, "projects", projectId, "tracks", trackId));
+    }
   };
 
   useEffect(() => {
+    console.log("selectedTrackId", selectedTrackId);
     if (selectedTrackId !== null) {
       window.addEventListener("keydown", (event) => {
-        if (event.key === "Backspace" || event.key === "Delete") {
-          handleDeleteTrack(selectedTrackId, event);
-        }
+        // console.log(event.key);
+        handleDeleteTrack(selectedTrackId, event);
       });
       return () =>
         window.removeEventListener("keydown", (event) => {
-          if (event.key === "Backspace" || event.key === "Delete") {
-            handleDeleteTrack(selectedTrackId, event);
-          }
+          handleDeleteTrack(selectedTrackId, event);
         });
     }
   });
@@ -473,6 +459,16 @@ const Tracks = (props: any) => {
                   <Clip>
                     <Draggable
                       axis="both"
+                      // onStart={(
+                      //   event: DraggableEvent,
+                      //   dragElement: DraggableData
+                      // ) => {
+                      //   console.log(
+                      //     "onStart",
+                      //     dragElement.lastX,
+                      //     dragElement.lastY
+                      //   );
+                      // }}
                       onDrag={(
                         event: DraggableEvent,
                         dragElement: DraggableData
@@ -483,16 +479,16 @@ const Tracks = (props: any) => {
                           trackIndex,
                           track.id
                         );
-                        // console.log("onDrag", dragElement.x, dragElement.y);
                       }}
-                      // onStart={(
+                      // onStop={(
                       //   event: DraggableEvent,
                       //   dragElement: DraggableData
                       // ) => {
-                      //   console.log(
-                      //     "onStart",
-                      //     dragElement.lastX,
-                      //     dragElement.lastY
+                      //   handleClipDraggable(
+                      //     event,
+                      //     dragElement,
+                      //     trackIndex,
+                      //     track.id
                       //   );
                       // }}
                       grid={[barWidth, 0]}
@@ -511,12 +507,7 @@ const Tracks = (props: any) => {
                       bounds={{ left: 0 }}
                     >
                       <div>
-                        <ClipTitle
-                          onClick={() => {
-                            console.log("!");
-                          }}
-                          className="handle"
-                        >
+                        <ClipTitle className="handle">
                           {track.clips[0].clipName}
                         </ClipTitle>
                         {track.type === "audio" ? (

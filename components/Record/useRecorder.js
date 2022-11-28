@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import * as Tone from "tone";
 

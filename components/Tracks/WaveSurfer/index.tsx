@@ -58,11 +58,6 @@ const WaveSurfer = (props: any) => {
 
       wavesurfer.current = WaveSurfer.create(options);
       wavesurfer.current.load(props.trackData.clips[0].url);
-
-      // wavesurfer.current.on("ready", function () {
-      //   const audioDuration = wavesurfer.current.getDuration();
-      //   setDuration(audioDuration);
-      // });
     };
 
     create();

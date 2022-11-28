@@ -123,7 +123,7 @@ export const barWidthState = atom({
 
 export const selectedTrackIdState = atom({
   key: "selectedTrackIdState",
-  default: "",
+  default: null as string | null,
 });
 
 export const isPlayingState = atom({

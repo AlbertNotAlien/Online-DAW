@@ -1,5 +1,11 @@
 import { useRouter } from "next/router";
-import React, { useState, useEffect, ReactNode, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+  useRef,
+} from "react";
 import styled from "styled-components";
 
 const { v4: uuidv4 } = require("uuid");
@@ -29,6 +35,7 @@ import { set } from "firebase/database";
 import produce from "immer";
 
 import Header from "../../components/Header";
+import Modal from "../../components/Modal";
 
 interface ProjectInfo {
   id: string;
@@ -165,7 +172,7 @@ interface ProjectModalProps {
   isProjectModalOpen: boolean;
 }
 
-const ProjectModal = styled.div<ProjectModalProps>`
+const ProjectOptions = styled.div<ProjectModalProps>`
   display: ${(props) => (props.isProjectModalOpen ? "flex" : "none")};
   flex-direction: column;
   position: absolute;
@@ -178,7 +185,7 @@ const ProjectModal = styled.div<ProjectModalProps>`
   z-index: 20;
 `;
 
-const ProjectModalOption = styled.div`
+const ProjectOption = styled.div`
   cursor: pointer;
   background-color: gray;
   width: 100%;
@@ -191,6 +198,51 @@ const ProjectModalOption = styled.div`
 
 const ProjectInfos = styled.p`
   font-size: 12px;
+`;
+
+const ProjectModalWrapper = styled.div`
+  width: 300px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  row-gap: 10px;
+`;
+
+const ProjectModalTitle = styled.h2`
+  font-size: 24px;
+  font-weight: bold;
+`;
+
+const ProjectModalInput = styled.input`
+  width: 100%;
+  height: 30px;
+  padding-left: 10px;
+  border-radius: 10px;
+  border: none;
+  &:focus {
+    outline: none;
+  }
+`;
+
+const ProjectModalButtons = styled.div`
+  height: 30px;
+  display: flex;
+  column-gap: 10px;
+`;
+
+const ProjectModalButton = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50%;
+  border: none;
+  cursor: pointer;
+  background-color: #6e6e6e;
+  border-radius: 10px;
+  &:hover {
+    filter: brightness(110%);
+  }
 `;
 
 const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
@@ -208,6 +260,7 @@ const Dashboard = () => {
   const [userProjectList, setUserProjectList] = useState<ProjectInfo[]>([]);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean[]>([]);
   const [copied, setCopied] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { user, logout } = useAuth();
   const router = useRouter();
@@ -247,7 +300,7 @@ const Dashboard = () => {
     }
   }, [userProjectList]);
 
-  const addMidiTrack = async (projectId: string) => {
+  const addDefaultMidiTrack = async (projectId: string) => {
     try {
       const trackId = uuidv4().split("-")[0];
       const docRef = doc(db, "projects", projectId, "tracks", trackId);
@@ -276,7 +329,7 @@ const Dashboard = () => {
     }
   };
 
-  const addNewProject = async () => {
+  const addNewProject = async (projectName: string) => {
     let projectId = "";
     const createdTime = new Date();
 
@@ -286,7 +339,7 @@ const Dashboard = () => {
       console.log("docRef.id", docRef.id);
       const newData = {
         id: docRef.id,
-        name: "project",
+        name: projectName,
         tempo: 60,
         ownerId: user.uid,
         ownerName: user.displayName,
@@ -301,14 +354,14 @@ const Dashboard = () => {
     }
 
     // add subcollection "tracks"
-    addMidiTrack(projectId);
+    addDefaultMidiTrack(projectId);
 
     // add project-info to users collection
     try {
       const docRef = doc(db, "users", user.uid);
       const newData = {
         id: projectId,
-        name: "project",
+        name: projectName,
         tempo: 60,
         ownerId: user.uid,
         ownerName: user.displayName,
@@ -384,10 +437,46 @@ const Dashboard = () => {
     );
   };
 
+  const newProjectNameRef = useRef<HTMLInputElement | null>(null);
+
   return (
     <>
       <Header />
       <Container>
+        {isModalOpen && (
+          <Modal setIsModalOpen={setIsModalOpen}>
+            <ProjectModalWrapper>
+              <ProjectModalTitle>New Project Name</ProjectModalTitle>
+              <ProjectModalInput
+                type="text"
+                ref={newProjectNameRef}
+              ></ProjectModalInput>
+              <ProjectModalButtons>
+                <ProjectModalButton
+                  onClick={() => {
+                    if (newProjectNameRef.current) {
+                      console.log(newProjectNameRef.current.value);
+                      addNewProject(newProjectNameRef.current.value);
+                      setIsModalOpen(false);
+                    }
+                  }}
+                >
+                  confirm
+                </ProjectModalButton>
+                <ProjectModalButton
+                  onClick={() => {
+                    if (newProjectNameRef.current) {
+                      newProjectNameRef.current = null;
+                      setIsModalOpen(false);
+                    }
+                  }}
+                >
+                  cancel
+                </ProjectModalButton>
+              </ProjectModalButtons>
+            </ProjectModalWrapper>
+          </Modal>
+        )}
         <SidebarWrapper>
           <SidebarTitle>Sort By</SidebarTitle>
           <SidebarOption>Recent</SidebarOption>
@@ -397,24 +486,30 @@ const Dashboard = () => {
         <ProjectsWrapper>
           <Title>Recent</Title>
           <Projects>
-            <NewProject onClick={addNewProject}>+</NewProject>
+            <NewProject
+              onClick={() => {
+                setIsModalOpen(true);
+              }}
+            >
+              +
+            </NewProject>
             {userProjectList?.length > 0 &&
               userProjectList.map((project, projectIndex) => (
                 <Project key={project.id}>
-                  <ProjectModal
+                  <ProjectOptions
                     isProjectModalOpen={isProjectModalOpen[projectIndex]}
                     onClick={() => {
                       handleProjectMenuIcon(projectIndex);
                     }}
                   >
-                    <ProjectModalOption>rename</ProjectModalOption>
+                    <ProjectOption>rename</ProjectOption>
                     <CopyToClipboard
                       onCopy={onCopy}
                       text={`${window.location.host}/project/${project.id}`}
                     >
-                      <ProjectModalOption>copy link</ProjectModalOption>
+                      <ProjectOption>copy link</ProjectOption>
                     </CopyToClipboard>
-                    <ProjectModalOption
+                    <ProjectOption
                       onClick={() => {
                         removeUserProject(
                           project.id,
@@ -427,8 +522,8 @@ const Dashboard = () => {
                       }}
                     >
                       delete
-                    </ProjectModalOption>
-                  </ProjectModal>
+                    </ProjectOption>
+                  </ProjectOptions>
                   <ProjectWrapper>
                     <Link href={`/project/${project.id}`}>
                       <ProjectBanner />

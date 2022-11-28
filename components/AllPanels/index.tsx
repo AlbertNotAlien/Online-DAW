@@ -251,7 +251,7 @@ const AllPanels = (props: any) => {
   const [progress, setProgress] = useRecoilState(progressState);
   const [tempo, setTempo] = useState<number>(projectData?.tempo);
 
-  const [recordFile, recordURL, isRecording, startRecording, stopRecording] =
+  const [recordFileRef, recordURL, isRecording, startRecording, stopRecording] =
     useRecorder();
 
   const [isMetronome, setIsMetronome] = useRecoilState(isMetronomeState);
@@ -293,12 +293,12 @@ const AllPanels = (props: any) => {
     };
   }, [projectId, setTracksdata]);
 
-  useEffect(() => {
-    if (recordFile) {
-      console.log(recordFile);
-      handleUploadAudio(recordFile);
-    }
-  }, [recordFile]);
+  // useEffect(() => {
+  //   if (recordFile) {
+  //     console.log(recordFile);
+  //     handleUploadAudio(recordFile);
+  //   }
+  // }, [recordFileRef]);
 
   const handlePlay = () => {
     setPlayerStatus("playing");
@@ -399,8 +399,6 @@ const AllPanels = (props: any) => {
 
   const handleUploadAudio = (file: any) => {
     setIsLoading(true);
-    // console.log("handleUploadAudio");
-    // console.log("file", file);
 
     if (file && tracksData) {
       const newTrackName = `Audio ${tracksData.length + 1}`;
@@ -465,36 +463,8 @@ const AllPanels = (props: any) => {
     console.log("useEffect");
   }, []);
 
-  // useEffect(() => {
-  //   if (tracksData && selectedTrackIndex) {
-  //     const addKeyDown = (event: KeyboardEvent) => {
-  //       if (event.key === "Backspace" || event.key === "Delete") {
-  //         console.log(event.key);
-  //         produce(tracksData, (draft) => {
-  //           draft.filter(
-  //             (track) => (draft = track !== draft[selectedTrackIndex])
-  //           );
-  //         });
-  //       }
-  //     };
-
-  //     document.addEventListener("keydown", addKeyDown);
-
-  //     return () => {
-  //       document.removeEventListener("keydown", addKeyDown);
-  //     };
-  //   }
-  // }, [selectedTrackIndex]);
-
-  console.log("selectedTrackIndex", selectedTrackIndex);
-
   return (
     <Container>
-      {/* {isModalOpen && (
-        <Modal setIsModalOpen={setIsModalOpen}>
-          <ModalContent>123123123123123123123123</ModalContent>
-        </Modal>
-      )} */}
       <HeadBarPanel>
         <HeadBarPanelPart>
           <Link href={"/"}>
@@ -538,9 +508,15 @@ const AllPanels = (props: any) => {
         </HeadBarPanelPart>
         <PlayerControls>
           <ProgressInputs>
-            <ProgressInput value={`${progress.bars + 1}`} />
-            <ProgressInput value={`${progress.quarters + 1}`} />
-            <ProgressInput value={`${Math.floor(progress.sixteenths + 1)}`} />
+            <ProgressInput value={`${progress.bars + 1}`} onChange={() => {}} />
+            <ProgressInput
+              value={`${progress.quarters + 1}`}
+              onChange={() => {}}
+            />
+            <ProgressInput
+              value={`${Math.floor(progress.sixteenths + 1)}`}
+              onChange={() => {}}
+            />
           </ProgressInputs>
           <PlayerButtons>
             <Button onClick={handlePlay}>

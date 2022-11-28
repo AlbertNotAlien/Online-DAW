@@ -20,18 +20,16 @@ const ModalOverlayWrapper = styled.div`
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: white;
+  background-color: gray;
   padding: 20px;
   border-radius: 14px;
   z-index: 30;
   animation: slide-down 300ms ease-out forwards;
 `;
 
-// No changes
 const Backdrop = (props: any) => {
   return (
     <BackdropWrapper
-      // className={classes.backdrop}
       onClick={() => {
         props.setIsModalOpen(false);
       }}
@@ -39,23 +37,15 @@ const Backdrop = (props: any) => {
   );
 };
 
-// No changes
 const ModalOverlay = (props: any) => {
   return (
-    <ModalOverlayWrapper
-    // className={classes.modal}
-    >
-      <div
-      // className={classes.content}
-      >
-        {props.children}
-      </div>
+    <ModalOverlayWrapper>
+      <div>{props.children}</div>
     </ModalOverlayWrapper>
   );
 };
 
 const Modal = (props: any) => {
-  // Get the modal placeholder div from index.html
   const modalPlaceholderElement = document.getElementById(
     "modal-root"
   ) as HTMLElement;

@@ -51,18 +51,32 @@ const FileInput = styled.input`
   display: none;
 `;
 
-const Button = styled.p`
-  /* font-size: 10px; */
-  /* line-height: 20px; */
-  background-color: gray;
-  display: flex;
+const AddTrackButton = styled.button`
+  height: 80%;
   cursor: pointer;
+`;
+
+const ModalButton = styled.div`
+  width: 150px;
+  height: 150px;
+  font-size: 14px;
+  background-color: gray;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  filter: brightness(110%);
+
+  &:hover {
+    filter: brightness(120%);
+  }
 `;
 
 const ModalWrapper = styled.div`
   display: flex;
-  /* flex-direction: column; */
-  /* row-gap: 10px; */
   column-gap: 10px;
 `;
 
@@ -118,13 +132,13 @@ const TimeRuler = (props: any) => {
   return (
     <>
       <Container>
-        <Button
+        <AddTrackButton
           onClick={() => {
             props.setIsModalOpen(true);
           }}
         >
-          +++
-        </Button>
+          +
+        </AddTrackButton>
         {props.isModalOpen && (
           <Modal setIsModalOpen={props.setIsModalOpen}>
             <ModalWrapper>
@@ -135,20 +149,42 @@ const TimeRuler = (props: any) => {
                   multiple={false}
                   ref={uploadRef}
                   onInput={() => {
+                    console.log("onInput1");
                     if (uploadRef.current?.files) {
                       props.handleUploadAudio(uploadRef.current?.files[0]);
+                      console.log("onInput2");
                     }
                   }}
                 />
-                <Button>upload audio</Button>
+                <ModalButton
+                  onClick={() => {
+                    props.setIsModalOpen(false);
+                  }}
+                >
+                  <Image
+                    src="/sound.svg"
+                    alt="upload audio"
+                    width={100}
+                    height={100}
+                  />
+                  <div>upload mp3</div>
+                </ModalButton>
               </label>
-              <Button
+
+              <ModalButton
                 onClick={() => {
                   addMidiTrack(projectData.id);
+                  props.setIsModalOpen(false);
                 }}
               >
-                add midi
-              </Button>
+                <Image
+                  src="/piano.svg"
+                  alt="upload audio"
+                  width={100}
+                  height={100}
+                />
+                add midi track
+              </ModalButton>
             </ModalWrapper>
           </Modal>
         )}
