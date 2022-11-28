@@ -7,22 +7,15 @@ import { useAuth } from "../../context/AuthContext";
 
 import Header from "../../components/Header";
 
-const BackGround = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-`;
-
 const Container = styled.div`
   width: 500px;
   height: 700px;
-  transform: translateY(-15%);
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   row-gap: 48px;
+  margin: 0 auto;
+  margin-top: 100px;
 `;
 
 const Form = styled.form`
@@ -90,7 +83,7 @@ export default function Login() {
   };
 
   return (
-    <BackGround>
+    <>
       <Header />
       <Container>
         <Title>login</Title>
@@ -132,6 +125,6 @@ export default function Login() {
           <Switch>切換至註冊</Switch>
         </Link>
       </Container>
-    </BackGround>
+    </>
   );
 }

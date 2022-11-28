@@ -1,8 +1,66 @@
 import React, { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 
+import styled from "styled-components";
 import { useRouter } from "next/router";
 import Link from "next/link";
+
+import Header from "../../components/Header";
+
+const Container = styled.div`
+  width: 500px;
+  height: 700px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  row-gap: 48px;
+  margin: 0 auto;
+  margin-top: 100px;
+`;
+
+const Form = styled.form`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  row-gap: 12px;
+`;
+
+const Title = styled.h1`
+  font-size: 36px;
+  font-weight: bold;
+  text-align: center;
+  text-transform: uppercase;
+`;
+
+const Input = styled.input`
+  font-size: 15px;
+  width: 100%;
+  height: 48px;
+  border: none;
+  padding: 0 12px;
+  border-radius: 10px;
+  background-color: #535353;
+  &:focus {
+    outline: none;
+  }
+`;
+
+const Button = styled.button`
+  font-weight: bold;
+  width: 100%;
+  height: 48px;
+  border-radius: 10px;
+  border: none;
+  text-transform: uppercase;
+  cursor: pointer;
+`;
+
+const Switch = styled.div`
+  font-size: 12px;
+  text-align: center;
+`;
 
 export default function Signup() {
   //   const router = useRouter();
@@ -16,6 +74,7 @@ export default function Signup() {
   const handleSignup = async (event: any) => {
     event.preventDefault();
     try {
+      console.log("data.displayName", data.displayName);
       await signup(data.email, data.password, data.displayName);
     } catch (err) {
       alert("註冊資訊有誤");
@@ -25,96 +84,62 @@ export default function Signup() {
 
   return (
     <>
-      <div className="flex min-h-full items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-white">
-              Sign up
-            </h2>
-          </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSignup}>
-            <input type="hidden" name="remember" defaultValue="true" />
-            <div className="-space-y-px rounded-md shadow-sm">
-              <div>
-                <label className="sr-only">Name</label>
-                <input
-                  id="display-name"
-                  onChange={(e: any) =>
-                    setData({
-                      ...data,
-                      displayName: e.target.value,
-                    })
-                  }
-                  value={data.displayName}
-                  name="displayName"
-                  type="displayName"
-                  autoComplete="displayName"
-                  required
-                  className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-white placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                  placeholder="Name"
-                />
-              </div>
-              <div>
-                <label htmlFor="email-address" className="sr-only">
-                  Email address
-                </label>
-                <input
-                  id="email-address"
-                  onChange={(e: any) =>
-                    setData({
-                      ...data,
-                      email: e.target.value,
-                    })
-                  }
-                  value={data.email}
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-white placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                  placeholder="Email address"
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="sr-only">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  onChange={(e: any) =>
-                    setData({
-                      ...data,
-                      password: e.target.value,
-                    })
-                  }
-                  value={data.password}
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-white placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                  placeholder="Password"
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-              >
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3"></span>
-                Sign up
-              </button>
-            </div>
-          </form>
-          <Link href="/login">
-            <div className="mt-2 text-xs text-right text-indigo-600 cursor-pointer">
-              切換至登入
-            </div>
-          </Link>
-        </div>
-      </div>
+      <Header />
+      <Container>
+        <Title>singup</Title>
+        <Form onSubmit={handleSignup}>
+          {/* <input type="hidden" name="remember" defaultValue="true" /> */}
+          <Input
+            id="display-name"
+            onChange={(e: any) =>
+              setData({
+                ...data,
+                displayName: e.target.value,
+              })
+            }
+            value={data.displayName}
+            name="displayName"
+            type="displayName"
+            autoComplete="displayName"
+            required
+            placeholder="Name"
+          />
+          <Input
+            id="email-address"
+            onChange={(e: any) =>
+              setData({
+                ...data,
+                email: e.target.value,
+              })
+            }
+            value={data.email}
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            placeholder="Email address"
+          />
+          <Input
+            id="password"
+            onChange={(e: any) =>
+              setData({
+                ...data,
+                password: e.target.value,
+              })
+            }
+            value={data.password}
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            required
+            placeholder="Password"
+          />
+          <Button type="submit">signup</Button>
+        </Form>
+        <Link href="/login">
+          <Switch>切換至登入</Switch>
+        </Link>
+      </Container>
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
-import { useState, useEffect, ReactNode, useCallback } from "react";
+import React, { useState, useEffect, ReactNode, useCallback } from "react";
 import styled from "styled-components";
+
 const { v4: uuidv4 } = require("uuid");
 const { CopyToClipboard } = require("react-copy-to-clipboard");
 
@@ -42,18 +43,21 @@ const Container = styled.div`
   max-height: 80%;
   display: flex;
   padding-top: 30px;
-  /* margin: 0px auto; */
 `;
 
 const SidebarWrapper = styled.div`
   display: flex;
   flex-direction: column;
-  row-gap: 20px;
+  row-gap: 25px;
   width: 200px;
   height: 100%;
-  background-color: rebeccapurple;
   margin-top: 80px;
   padding-left: 20px;
+`;
+
+const SidebarTitle = styled.h2`
+  font-size: 24px;
+  font-weight: bold;
 `;
 
 const SidebarOption = styled.div`
@@ -61,8 +65,7 @@ const SidebarOption = styled.div`
 `;
 
 const ProjectsWrapper = styled.div`
-  /* max-width: 960px; */
-  /* margin: 0px auto; */
+  width: 100%;
   padding: 0px 20px;
   display: flex;
   flex-direction: column;
@@ -70,22 +73,24 @@ const ProjectsWrapper = styled.div`
 
 const Title = styled.h1`
   font-size: 40px;
-  /* margin-bottom: 30px; */
+  font-weight: bold;
   height: 80px;
 `;
 
 const Projects = styled.div`
-  display: flex;
   width: 100%;
+  /* height: calc(100vh - 50px - 30px - 80px); */
+  display: flex;
   flex-wrap: wrap;
   column-gap: 15px;
   row-gap: 15px;
-  /* justify-content: space-between; */
+  /* overflow: auto; */
 `;
 
 const Project = styled.div`
   width: calc((100% - 30px) / 3);
   height: 150px;
+  position: relative;
   &:hover {
     filter: brightness(110%);
   }
@@ -121,20 +126,19 @@ const NewProject = styled.div`
 const ProjectBanner = styled.div`
   width: 100%;
   height: 75px;
-  /* height: 50%; */
   background-color: gray;
 `;
 
 const ProjectContent = styled.div`
   padding: 15px;
   height: 75px;
-  /* height: 60px; */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 `;
 
 const ProjectTitle = styled.div`
+  font-weight: bold;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -166,15 +170,12 @@ const ProjectModal = styled.div<ProjectModalProps>`
   flex-direction: column;
   position: absolute;
   width: 100px;
-  /* height: 100px; */
   background-color: gray;
   right: 0px;
   top: 110px;
   border-radius: 10px;
   overflow: hidden;
   z-index: 20;
-  /* padding: 10px 10px; */
-  /* row-gap: 10px; */
 `;
 
 const ProjectModalOption = styled.div`
@@ -192,12 +193,26 @@ const ProjectInfos = styled.p`
   font-size: 12px;
 `;
 
+const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
+  const { user, isLoadingLogin } = useAuth();
+  const router = useRouter();
+  useEffect(() => {
+    if (!user && !isLoadingLogin) {
+      router.push("/login");
+    }
+  }, [isLoadingLogin]);
+  return !user ? null : children;
+};
+
 const Dashboard = () => {
   const [userProjectList, setUserProjectList] = useState<ProjectInfo[]>([]);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean[]>([]);
   const [copied, setCopied] = useState(false);
 
   const { user, logout } = useAuth();
+  const router = useRouter();
+
+  console.log(user);
 
   console.log("isProjectModalOpen", isProjectModalOpen);
 
@@ -224,7 +239,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     getProjectsData();
-  }, [user.uid]);
+  }, [user?.uid]);
 
   useEffect(() => {
     if (userProjectList) {
@@ -337,37 +352,6 @@ const Dashboard = () => {
     getProjectsData();
   };
 
-  // const addMidiTrack = async () => {
-  //   try {
-  //     const trackRef = doc(
-  //       collection(db, "projects", projectData.id, "tracks")
-  //     );
-  //     const newData = {
-  //       id: trackRef.id,
-  //       name: "Midi",
-  //       type: "midi",
-  //       isMuted: false,
-  //       isSolo: false,
-  //       clips: [
-  //         {
-  //           clipName: "",
-  //           notes: [],
-  //           startPoint: {
-  //             bars: 0,
-  //             quarters: 0,
-  //             sixteenths: 0,
-  //           },
-  //         },
-  //       ],
-  //       selectedBy: "",
-  //     };
-  //     await setDoc(trackRef, newData);
-  //     console.log("info uploaded");
-  //   } catch (err) {
-  //     console.log(err);
-  //   }
-  // };
-
   const convertTimeStamp = (createdTime: Timestamp) => {
     const months = [
       "Jan",
@@ -405,10 +389,10 @@ const Dashboard = () => {
       <Header />
       <Container>
         <SidebarWrapper>
-          <div>Sort By</div>
-          <div>Recent</div>
-          <div>Project Name</div>
-          <div>Owner</div>
+          <SidebarTitle>Sort By</SidebarTitle>
+          <SidebarOption>Recent</SidebarOption>
+          <SidebarOption>Project Name</SidebarOption>
+          <SidebarOption>Owner</SidebarOption>
         </SidebarWrapper>
         <ProjectsWrapper>
           <Title>Recent</Title>
@@ -467,20 +451,6 @@ const Dashboard = () => {
                       } / ${convertTimeStamp(
                         project.createdTime
                       )}`}</ProjectInfos>
-                      {/* <button
-                      onClick={() => {
-                        removeUserProject(
-                          project.id,
-                          project.name,
-                          project.tempo,
-                          project.ownerId,
-                          project.ownerName,
-                          project.createdTime
-                          );
-                        }}
-                        >
-                        delete
-                      </button> */}
                     </ProjectContent>
                   </ProjectWrapper>
                 </Project>
@@ -492,4 +462,12 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+const PrivateDashboard = () => {
+  return (
+    <PrivateRoute>
+      <Dashboard />
+    </PrivateRoute>
+  );
+};
+
+export default PrivateDashboard;

@@ -14,6 +14,7 @@ import {
   onSnapshot,
   DocumentData,
   orderBy,
+  getDocs,
 } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { storage } from "../../config/firebase";
@@ -40,6 +41,7 @@ import {
 import WaveSurfer from "../Tracks/WaveSurfer";
 
 import useRecorder from "../Record/useRecorder";
+import Modal from "../Modal";
 import Tracks from "../Tracks";
 import PianoRoll from "../PianoRoll";
 import Library from "../Library";
@@ -255,7 +257,9 @@ const AllPanels = (props: any) => {
   const [isMetronome, setIsMetronome] = useRecoilState(isMetronomeState);
   const { user, logout } = useAuth();
 
-  console.log("projectId", projectId);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // console.log("projectId", projectId);
   useEffect(() => {
     if (projectId) {
       const docRef = doc(db, "projects", projectId);
@@ -265,13 +269,11 @@ const AllPanels = (props: any) => {
         setProjectData(newData);
       });
 
-      console.log("unsubscribe");
-
       return () => {
         unsubscribe();
       };
     }
-  }, [projectId]);
+  }, []);
 
   useEffect(() => {
     const colRef = collection(db, "projects", projectId, "tracks");
@@ -372,12 +374,33 @@ const AllPanels = (props: any) => {
     }
   };
 
-  console.log("selectedTrackId", selectedTrackId);
+  const updateSelectedTrackIndex = async () => {
+    const colRef = collection(db, "projects", projectId, "tracks");
+    const querySnapshot = await getDocs(colRef);
+
+    const newData = [] as TrackData[];
+    querySnapshot.forEach((doc) => {
+      console.log(doc.id, doc.data());
+      const docData = doc.data() as TrackData;
+      newData.push(docData);
+    });
+    console.log("newData", newData);
+    setTracksdata(newData);
+
+    if (selectedTrackIndex !== null) {
+      const newSelectedTrackIndex = newData.findIndex(
+        (track) => track.id === selectedTrackId
+      );
+      newSelectedTrackIndex === -1
+        ? setSelectedTrackIndex(null)
+        : setSelectedTrackIndex(newSelectedTrackIndex);
+    }
+  };
 
   const handleUploadAudio = (file: any) => {
     setIsLoading(true);
-    console.log("handleUploadAudio");
-    console.log("file", file);
+    // console.log("handleUploadAudio");
+    // console.log("file", file);
 
     if (file && tracksData) {
       const newTrackName = `Audio ${tracksData.length + 1}`;
@@ -391,11 +414,11 @@ const AllPanels = (props: any) => {
 
       uploadBytes(audioRef, file)
         .then((snapshot) => {
-          getDownloadURL(snapshot.ref).then((url) => {
+          getDownloadURL(snapshot.ref).then(async (url) => {
             setAudioList((prev) => [...prev, url]);
             console.log("url", url);
 
-            uploadFileInfo(
+            await uploadFileInfo(
               newTrackName,
               "audio",
               newFileName,
@@ -407,6 +430,8 @@ const AllPanels = (props: any) => {
             );
             console.log("uploadBytes");
           });
+
+          updateSelectedTrackIndex();
         })
 
         .catch((err) => {
@@ -414,18 +439,9 @@ const AllPanels = (props: any) => {
         })
         .finally(() => {
           setIsLoading(false);
-          if (selectedTrackIndex !== null) {
-            const newSelectedTrackIndex = tracksData.findIndex(
-              (track) => track.id === selectedTrackId
-            );
-            setSelectedTrackIndex(newSelectedTrackIndex);
-            console.log("newSelectedTrackIndex", newSelectedTrackIndex);
-          }
         });
     }
   };
-
-  console.log("selectedTrackIndex", selectedTrackIndex);
 
   const handleTempoChange = async (newTempo: number) => {
     setTempo(newTempo);
@@ -470,8 +486,15 @@ const AllPanels = (props: any) => {
   //   }
   // }, [selectedTrackIndex]);
 
+  console.log("selectedTrackIndex", selectedTrackIndex);
+
   return (
     <Container>
+      {/* {isModalOpen && (
+        <Modal setIsModalOpen={setIsModalOpen}>
+          <ModalContent>123123123123123123123123</ModalContent>
+        </Modal>
+      )} */}
       <HeadBarPanel>
         <HeadBarPanelPart>
           <Link href={"/"}>
@@ -515,15 +538,9 @@ const AllPanels = (props: any) => {
         </HeadBarPanelPart>
         <PlayerControls>
           <ProgressInputs>
-            <ProgressInput value={`${progress.bars + 1}`} onChange={() => {}} />
-            <ProgressInput
-              value={`${progress.quarters + 1}`}
-              onChange={() => {}}
-            />
-            <ProgressInput
-              value={`${Math.floor(progress.sixteenths + 1)}`}
-              onChange={() => {}}
-            />
+            <ProgressInput value={`${progress.bars + 1}`} />
+            <ProgressInput value={`${progress.quarters + 1}`} />
+            <ProgressInput value={`${Math.floor(progress.sixteenths + 1)}`} />
           </ProgressInputs>
           <PlayerButtons>
             <Button onClick={handlePlay}>
@@ -592,15 +609,12 @@ const AllPanels = (props: any) => {
         <Library />
         <TracksPanel>
           <Tracks
-            // isPlaying={isPlaying}
-            // projectData={projectData}
-            // trackData={tracksData[index]}
-            // barWidth={barWidth}
             progress={progress}
             projectId={projectId}
-            // convertBeatsToMs={convertBeatsToMs}
-            // convertMsToBeats={convertMsToBeats}
             handleUploadAudio={handleUploadAudio}
+            updateSelectedTrackIndex={updateSelectedTrackIndex}
+            isModalOpen={isModalOpen}
+            setIsModalOpen={setIsModalOpen}
           />
         </TracksPanel>
       </MainEditPanel>

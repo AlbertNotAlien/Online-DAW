@@ -100,7 +100,7 @@ const ProgressLine = styled.div<ProgresslineProps>`
     props.progress.quarters * props.barWidth +
     (props.progress.sixteenths * props.barWidth) / 4}px;
   margin-left: 420px;
-  z-index: 100;
+  z-index: 1;
 `;
 
 const Track = styled.div<TrackProps>`
@@ -172,6 +172,7 @@ const Tracks = (props: any) => {
     selectedTrackIndexState
   );
   const { user, logout } = useAuth();
+  const isMetronome = useRecoilValue(isMetronomeState);
 
   const channelsRef = useRef<Channel[] | undefined>([]);
   const tracksRef = useRef<
@@ -211,14 +212,14 @@ const Tracks = (props: any) => {
     if (tracksRef.current) {
       console.log("playAllTracks");
       tracksRef.current.forEach((trackRef, index) => {
-        if (trackRef?.name === "Player" && tracksData) {
+        if (trackRef instanceof Tone.Player && tracksData) {
           console.log(trackRef);
           trackRef
             .sync()
             .start(
               `${tracksData[index].clips[0].startPoint.bars}:${tracksData[index].clips[0].startPoint.quarters}:${tracksData[index].clips[0].startPoint.sixteenths}`
             );
-        } else if (trackRef?.name === "Synth" && tracksData) {
+        } else if (trackRef instanceof Tone.Synth && tracksData) {
           console.log(trackRef);
           const notes = tracksData[index].clips[0].notes;
           notes.forEach((note) => {
@@ -380,23 +381,42 @@ const Tracks = (props: any) => {
   };
 
   useEffect(() => {
-    if (playingNote && tracksRef.current && selectedTrackIndex !== null) {
-      playNote(
-        tracksRef.current[selectedTrackIndex],
-        playingNote.notation,
-        playingNote.octave
-      );
+    if (
+      playingNote &&
+      Array.isArray(tracksRef.current) &&
+      typeof selectedTrackIndex === "number" &&
+      tracksRef.current[selectedTrackIndex] instanceof Tone.Synth
+    ) {
+      const synthRef = tracksRef.current[selectedTrackIndex];
+      if (synthRef instanceof Tone.Synth) {
+        playNote(synthRef, playingNote.notation, playingNote.octave);
+      }
     }
-  }, [playingNote]);
+  }, [playingNote, selectedTrackIndex]);
 
-  const handleDeleteTrack = async (trackId: string) => {
-    if (selectedTrackId) {
-      console.log(trackId);
-      await deleteDoc(doc(db, "projects", projectId, "tracks", trackId));
-    }
+  const handleDeleteTrack = async (trackId: string, event: KeyboardEvent) => {
+    console.log("handleDeleteTrack");
+    setSelectedTrackIndex(null);
+    setSelectedTrackId(null);
+    console.log("trackId", trackId);
+    await deleteDoc(doc(db, "projects", projectId, "tracks", trackId));
   };
 
-  const isMetronome = useRecoilValue(isMetronomeState);
+  useEffect(() => {
+    if (selectedTrackId !== null) {
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "Backspace" || event.key === "Delete") {
+          handleDeleteTrack(selectedTrackId, event);
+        }
+      });
+      return () =>
+        window.removeEventListener("keydown", (event) => {
+          if (event.key === "Backspace" || event.key === "Delete") {
+            handleDeleteTrack(selectedTrackId, event);
+          }
+        });
+    }
+  });
 
   useEffect(() => {
     if (
@@ -410,23 +430,14 @@ const Tracks = (props: any) => {
     }
   }, [playerStatus, isMetronome]);
 
-  // console.log("tracksData", tracksData);
-
-  // useEffect(() => {
-  //   if (tracksData) {
-  //     tracksData.forEach((track) => {
-  //       console.log("track.selectedBy", track.selectedBy);
-  //       console.log("user.id", user.id);
-  //       if (track.selectedBy !== user.id) {
-  //         console.log("track.name", track.name);
-  //       }
-  //     });
-  //   }
-  // }, [tracksData]);
-
   return (
     <Container>
-      <TimeRuler handleUploadAudio={props.handleUploadAudio} />
+      <TimeRuler
+        handleUploadAudio={props.handleUploadAudio}
+        updateSelectedTrackIndex={props.updateSelectedTrackIndex}
+        isModalOpen={props.isModalOpen}
+        setIsModalOpen={props.setIsModalOpen}
+      />
       <TracksPanel>
         <ProgressLine progress={progress} barWidth={barWidth} />
         {projectData &&
@@ -440,10 +451,9 @@ const Tracks = (props: any) => {
                   handleSelectTrack(track.id, trackIndex);
                 }}
                 trackHeight={150}
-                onDoubleClick={() => {
-                  console.log("onDoubleClick");
-                  handleDeleteTrack(track.id);
-                }}
+                // onDoubleClick={() => {
+                //   handleDeleteTrack(track.id);
+                // }}
                 selectedBySelf={selectedTrackId === track.id}
                 selectedByOthers={
                   track.selectedBy.length > 0 && track.selectedBy !== user.uid

@@ -38,8 +38,9 @@ const Links = styled.div`
 `;
 const LinkText = styled.p`
   font-size: 36px;
-  color: #f6ddcd;
   font-weight: 700;
+  color: #f6ddcd;
+  margin-top: 50px;
   &:hover {
     text-decoration: underline;
     text-underline-offset: 5px;
@@ -66,12 +67,12 @@ export default function Home() {
           <Link href={`/dashboard`}>
             <LinkText>dashboard</LinkText>
           </Link>
-          <Link href={`/login`}>
-            <LinkText>login</LinkText>
-          </Link>
-          <Link href={`/signup`}>
-            <LinkText>signup</LinkText>
-          </Link>
+          <LinkText>
+            <Link href={`/login`}>login</Link>
+          </LinkText>
+          <LinkText>
+            <Link href={`/signup`}>signup</Link>
+          </LinkText>
         </Links>
       </Container>
     </>

@@ -34,11 +34,12 @@ import {
   isLoadingState,
   TrackData,
 } from "../../../context/atoms";
+import Modal from "../../Modal";
 
 const Container = styled.div`
   display: flex;
   min-height: 30px;
-  width: 100%;
+  width: calc(100vw - 200px - 20px - 10px);
   align-items: center;
   padding-left: 10px;
   background-color: gray;
@@ -53,9 +54,16 @@ const FileInput = styled.input`
 const Button = styled.p`
   /* font-size: 10px; */
   /* line-height: 20px; */
-  /* background-color: gray; */
+  background-color: gray;
   display: flex;
   cursor: pointer;
+`;
+
+const ModalWrapper = styled.div`
+  display: flex;
+  /* flex-direction: column; */
+  /* row-gap: 10px; */
+  column-gap: 10px;
 `;
 
 const TimeRuler = (props: any) => {
@@ -92,6 +100,8 @@ const TimeRuler = (props: any) => {
         type: "midi",
       };
       await setDoc(docRef, newData);
+
+      props.updateSelectedTrackIndex();
     } catch (err) {
       console.log(err);
     } finally {
@@ -108,27 +118,40 @@ const TimeRuler = (props: any) => {
   return (
     <>
       <Container>
-        <label>
-          <FileInput
-            type="file"
-            accept=".mp3,audio/*"
-            multiple={false}
-            ref={uploadRef}
-            onInput={() => {
-              if (uploadRef.current?.files) {
-                props.handleUploadAudio(uploadRef.current?.files[0]);
-              }
-            }}
-          />
-          <Button>upload audio</Button>
-        </label>
         <Button
           onClick={() => {
-            addMidiTrack(projectData.id);
+            props.setIsModalOpen(true);
           }}
         >
-          add midi
+          +++
         </Button>
+        {props.isModalOpen && (
+          <Modal setIsModalOpen={props.setIsModalOpen}>
+            <ModalWrapper>
+              <label>
+                <FileInput
+                  type="file"
+                  accept=".mp3,audio/*"
+                  multiple={false}
+                  ref={uploadRef}
+                  onInput={() => {
+                    if (uploadRef.current?.files) {
+                      props.handleUploadAudio(uploadRef.current?.files[0]);
+                    }
+                  }}
+                />
+                <Button>upload audio</Button>
+              </label>
+              <Button
+                onClick={() => {
+                  addMidiTrack(projectData.id);
+                }}
+              >
+                add midi
+              </Button>
+            </ModalWrapper>
+          </Modal>
+        )}
       </Container>
     </>
   );

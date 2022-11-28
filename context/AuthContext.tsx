@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect } from "react";
 import { useRouter } from "next/router";
 import { updateProfile } from "firebase/auth";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import {
   getDatabase,
@@ -32,21 +32,23 @@ export const AuthContextProvider = ({
   children: React.ReactNode;
 }) => {
   const [user, setUser] = useState<any>({});
-  const [loading, setLoading] = useState(true);
+  const [isLoadingLogin, setIsLoadingLogin] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
+        console.log(user);
+
         setUser({
           uid: user.uid,
           email: user.email,
-          displayName: user.displayName,
+          displayName: user.displayName, //////////////////////
         });
       } else {
         setUser(null);
       }
-      setLoading(false);
+      setIsLoadingLogin(false);
     });
     return () => unsubscribe();
   }, []);
@@ -57,17 +59,25 @@ export const AuthContextProvider = ({
     displayName: string
   ) => {
     const res = await createUserWithEmailAndPassword(auth, email, password);
+    console.log("displayName", displayName);
     if (auth.currentUser) {
       await updateProfile(auth.currentUser, {
         displayName: displayName,
       });
     }
+
+    setUser({
+      uid: res.user.uid,
+      email: res.user.email,
+      displayName: displayName,
+    });
+
     const docRef = doc(db, "users", res.user.uid);
     await setDoc(docRef, {
       id: res.user.uid,
       displayName: displayName,
       email: email,
-      state: "offline",
+      state: "online",
     });
     await router.push("/profile");
   };
@@ -76,16 +86,20 @@ export const AuthContextProvider = ({
     const res = await signInWithEmailAndPassword(auth, email, password);
     await router.push("/profile");
     const docRef = doc(db, "users", res.user.uid);
-    await setDoc(docRef, {
+    await updateDoc(docRef, {
       state: "online",
     });
   };
 
   const logout = async () => {
-    setUser(null);
     alert("已登出");
     const res = await signOut(auth);
-    console.log(res);
+    console.log("user", user);
+    // const docRef = doc(db, "users", user.uid);
+    // await updateDoc(docRef, {
+    //   state: "offline",
+    // });
+    setUser(null);
   };
 
   // connect to realtime database
@@ -121,8 +135,10 @@ export const AuthContextProvider = ({
   }, [user?.uid]);
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
-      {loading ? null : children}
+    <AuthContext.Provider
+      value={{ user, isLoadingLogin, login, signup, logout }}
+    >
+      {isLoadingLogin ? null : children}
     </AuthContext.Provider>
   );
 };
