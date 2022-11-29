@@ -128,7 +128,7 @@ export const AuthContextProvider = ({
         onDisconnect(userStatusDatabaseRef)
           .set(isOfflineForDatabase)
           .then(function () {
-            set(userStatusDatabaseRef, isOnlineForDatabase);
+            set(userStatusDatabaseRef, isOnlineForDatabase); //
           });
       }
     });
