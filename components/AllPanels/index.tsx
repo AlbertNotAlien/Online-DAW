@@ -52,34 +52,14 @@ import Loader from "../Loader";
 import { useOnClickOutside } from "../../utils/useOnClickOutside";
 
 const Container = styled.div`
+  width: 100vw;
+  height: 100vh;
   background-color: hsl(0, 0%, 30%);
-  /* margin: 0; */
   padding: 10px;
   display: flex;
   flex-direction: column;
   row-gap: 10px;
-  height: 100vh;
 `;
-
-// const LoaderKeyframes = keyframes`
-//     0% {
-//       transform: rotate(0deg);
-//     }
-//     100% {
-//       transform: rotate(360deg);
-//     }
-// `;
-
-// const Loader = styled.div`
-//   border: 5px solid #f3f3f3;
-//   border-radius: 50%;
-//   border-top: 5px solid #3498db;
-//   width: 50px;
-//   height: 50px;
-//   animation-name: ${LoaderKeyframes};
-//   animation-duration: 1.5s;
-//   animation-iteration-count: infinite;
-// `;
 
 const HeadBarPanel = styled.div`
   display: flex;
@@ -211,6 +191,7 @@ const PianoRollPanel = styled.div<PianoRollPanelProps>`
   background-color: gray;
   border-radius: 10px;
   height: ${(props) => (props.isMidiTrack ? "200px" : "30px")};
+  width: 100%;
 `;
 
 const Button = styled.button`
@@ -298,13 +279,6 @@ const AllPanels = (props: any) => {
       unsubscribe();
     };
   }, [projectId, setTracksData]);
-
-  // useEffect(() => {
-  //   if (recordFile) {
-  //     console.log(recordFile);
-  //     handleUploadAudio(recordFile);
-  //   }
-  // }, [recordFileRef]);
 
   const handlePlay = () => {
     setPlayerStatus("playing");

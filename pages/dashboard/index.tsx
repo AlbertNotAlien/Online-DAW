@@ -274,9 +274,6 @@ const Dashboard = () => {
   // const { userId } = router.query;
   // console.log(userId);
 
-  console.log(window.location.host);
-  console.log(user);
-
   const onCopy = useCallback(() => {
     setCopied(true);
   }, []);
@@ -511,7 +508,7 @@ const Dashboard = () => {
                     <ProjectOption>rename</ProjectOption>
                     <CopyToClipboard
                       onCopy={onCopy}
-                      text={`${window.location.host}/project/${project.id}`}
+                      text={`${window.location.protocol}//${window.location.host}/project/${project.id}`}
                     >
                       <ProjectOption>copy link</ProjectOption>
                     </CopyToClipboard>

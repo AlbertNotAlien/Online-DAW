@@ -33,19 +33,26 @@ import {
   playerStatusState,
   isLoadingState,
   TrackData,
+  inputProgressState,
 } from "../../../context/atoms";
 import Modal from "../../Modal";
+import { calculateBackoffMillis } from "@firebase/util";
 
 const Container = styled.div`
-  display: flex;
-  min-height: 30px;
-  /* width: calc(100vw - 200px - 20px - 10px); */
-  width: 100%;
-  align-items: center;
-  padding-left: 10px;
-  background-color: gray;
+  width: 10200px;
+  height: 30px;
   border-radius: 10px;
-  column-gap: 10px;
+  background-color: gray;
+  display: flex;
+`;
+
+const Controls = styled.div`
+  width: 200px;
+  height: 100%;
+  padding: 5px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const FileInput = styled.input`
@@ -53,8 +60,41 @@ const FileInput = styled.input`
 `;
 
 const AddTrackButton = styled.button`
-  height: 80%;
+  color: white;
+  background-color: #9f9f9f;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
+  width: 100%;
+  height: 100%;
+`;
+
+const Rulers = styled.div`
+  display: flex;
+  height: 100%;
+  align-items: flex-end;
+`;
+
+interface RulerProps {
+  rulerIndex: number;
+  barWidth: number;
+}
+
+const Ruler = styled.div<RulerProps>`
+  border-left: 1px solid white;
+  height: ${(props) =>
+    (props.rulerIndex % 4 === 0 && `calc(100% - 5px)`) ||
+    (props.rulerIndex % 2 === 0 && "10px") ||
+    "5px"};
+  width: ${(props) => props.barWidth}px;
+  padding-left: 5px;
+  font-size: 5px;
+  color: white;
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(75%);
+  }
 `;
 
 const ModalButton = styled.div`
@@ -90,6 +130,9 @@ const TimeRuler = (props: any) => {
   const [selectedTrackId, setSelectedTrackId] =
     useRecoilState(selectedTrackIdState);
   const uploadRef = useRef<HTMLInputElement>(null);
+  const [barWidth, setBarWidth] = useRecoilState(barWidthState);
+  const [progress, setProgress] = useRecoilState(progressState);
+  const [inputProgress, setInputProgress] = useRecoilState(inputProgressState);
 
   const addMidiTrack = async (projectId: string) => {
     try {
@@ -130,16 +173,24 @@ const TimeRuler = (props: any) => {
     }
   };
 
+  const handleSetProgressLine = (quartersIndex: number) => {
+    const currentBars = Math.floor(quartersIndex / 4);
+    const currentQuarters = quartersIndex % 4;
+    setProgress({
+      bars: currentBars,
+      quarters: currentQuarters,
+      sixteenths: 0,
+    });
+    setInputProgress({
+      bars: currentBars,
+      quarters: currentQuarters,
+      sixteenths: 0,
+    });
+  };
+
   return (
     <>
       <Container>
-        <AddTrackButton
-          onClick={() => {
-            props.setIsModalOpen(true);
-          }}
-        >
-          +
-        </AddTrackButton>
         {props.isModalOpen && (
           <Modal setIsModalOpen={props.setIsModalOpen}>
             <ModalWrapper>
@@ -186,6 +237,31 @@ const TimeRuler = (props: any) => {
             </ModalWrapper>
           </Modal>
         )}
+        <Controls>
+          <AddTrackButton
+            onClick={() => {
+              props.setIsModalOpen(true);
+            }}
+          >
+            +
+          </AddTrackButton>
+        </Controls>
+        <Rulers>
+          {new Array(500).fill(0).map((_, rulerIndex) => {
+            return (
+              <Ruler
+                key={rulerIndex}
+                barWidth={barWidth}
+                rulerIndex={rulerIndex}
+                onClick={() => {
+                  handleSetProgressLine(rulerIndex);
+                }}
+              >
+                {rulerIndex % 4 === 0 && Math.floor(rulerIndex / 4 + 1)}
+              </Ruler>
+            );
+          })}
+        </Rulers>
       </Container>
     </>
   );

@@ -48,7 +48,9 @@ const Container = styled.div`
   /* position: fixed; */
   top: 0px;
   left: 0px;
-  /* background-color: gray; */
+  background-color: #676767;
+  border-top-left-radius: 10px;
+  border-bottom-left-radius: 10px;
 `;
 
 const TrackTitle = styled.p`
@@ -66,20 +68,15 @@ const TrackButton = styled.button`
   border-radius: 5px;
 `;
 
-const RangePanels = styled.div`
-  /* display: flex; */
-  /* column-gap: 10px; */
-`;
+const RangePanels = styled.div``;
 
 const RangePanel = styled.div`
   height: 20px;
   width: 50%;
   border-radius: 5px;
   margin-left: 20px;
-  /* background-color: #262626; */
   position: relative;
   display: flex;
-  /* overflow: hidden; */
   align-items: center;
   justify-content: center;
 `;

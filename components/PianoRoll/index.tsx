@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, useCallback } from "react";
 import styled from "styled-components";
 
 import NoteRuler from "./NoteRuler";
@@ -28,28 +28,32 @@ import {
 const Container = styled.div`
   display: flex;
   height: 100%;
+  width: 500px;
+  width: 100%;
   position: relative;
   overflow: auto;
 `;
 
-const PianoRoll = (props: any) => {
-  const OCTAVES: number = 6;
-  const NOTATIONS: string[] = [
-    "C",
-    "C#",
-    "D",
-    "D#",
-    "E",
-    "F",
-    "F#",
-    "G",
-    "G#",
-    "A",
-    "A#",
-    "B",
-  ];
+const OCTAVES: number = 6;
+const NOTATIONS: string[] = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
+];
 
+const PianoRoll = (props: any) => {
   const [hoverNote, setHoverNote] = useState<hoverMidiInfoState | null>(null);
+
+  console.log("PianoRoll");
 
   return (
     <Container>
@@ -63,10 +67,9 @@ const PianoRoll = (props: any) => {
         NOTATIONS={NOTATIONS}
         selectedTrackIndex={props.selectedTrackIndex}
         setHoverNote={setHoverNote}
-        hoverNote={hoverNote}
       />
     </Container>
   );
 };
 
-export default PianoRoll;
+export default memo(PianoRoll);

@@ -75,7 +75,6 @@ const Container = styled.div`
   row-gap: 10px;
   height: 100%;
   width: 100%;
-  /* overflow: scroll; */
 `;
 
 const TracksPanel = styled.div`
@@ -102,14 +101,10 @@ const ProgressLine = styled.div<ProgresslineProps>`
 const Track = styled.div<TrackProps>`
   position: relative;
   display: flex;
-  width: 100%;
+  width: 10200px;
   margin-bottom: 10px;
   border-radius: 10px;
   height: ${(props) => props.trackHeight}px;
-  /* background-color: ${(props) =>
-    (props.selectedByOthers && "#282828") ||
-    (props.selectedBySelf && "#282828") ||
-    "#606060"}; */
   background-color: #282828;
   filter: brightness(100%);
   filter: ${(props) => props.selectedBySelf && "brightness(130%)"};
@@ -154,6 +149,7 @@ const ClipTitle = styled.div`
 
 const ClipContent = styled.div`
   pointer-events: none;
+  /* background-color: #00000099; */
 `;
 
 const TrackLock = styled.div`
@@ -204,32 +200,44 @@ const Tracks = (props: any) => {
   // }
 
   useEffect(() => {
-    channelsRef.current = tracksData?.map((track, index) => {
-      const channel = new Tone.Channel().toDestination();
-      channel.mute = track.isMuted;
-      return channel;
-    });
+    if (
+      !Array.isArray(channelsRef.current) ||
+      channelsRef.current.length === 0 ||
+      channelsRef.current.length !== tracksData.length
+    ) {
+      tracksRef.current = tracksData?.map((track, index) => {
+        if (track.type === "midi" && channelsRef.current) {
+          const newSynth = new Tone.Synth();
+          return newSynth;
+        } else if (track.type === "audio" && channelsRef.current) {
+          const player = new Tone.Player(track.clips[0].url);
+          return player;
+        }
+      });
 
-    tracksRef.current = tracksData?.map((track, index) => {
-      if (track.type === "midi" && channelsRef.current) {
-        const newSynth = new Tone.Synth();
-        return newSynth;
-      } else if (track.type === "audio" && channelsRef.current) {
-        const player = new Tone.Player(track.clips[0].url);
-        return player;
-      }
-    });
+      channelsRef.current = tracksData?.map((track, index) => {
+        const channel = new Tone.Channel().toDestination();
+        channel.mute = track.isMuted;
+        return channel;
+      });
 
-    tracksRef.current?.forEach((trackRef, index) => {
-      if (trackRef && channelsRef.current) {
-        trackRef.connect(channelsRef.current[index]);
-      }
-    });
+      tracksRef.current?.forEach((trackRef, index) => {
+        if (trackRef && channelsRef.current) {
+          trackRef.connect(channelsRef.current[index]);
+        }
+      });
+    } else {
+      // solo mute
+      channelsRef.current.forEach((channel, index) => {
+        if (channel.mute !== tracksData[index].isMuted) {
+          channel.mute = tracksData[index].isMuted;
+        }
+      });
+
+      // new channel
+      // remove channel
+    }
   }, [tracksData]);
-
-  if (channelsRef.current) {
-    console.log("channelsRef.current[3]?.mute", channelsRef.current[3]?.mute);
-  }
 
   const playAllTracks = () => {
     if (tracksRef.current) {
@@ -503,11 +511,6 @@ const Tracks = (props: any) => {
 
   return (
     <Container ref={tracksContainerRef}>
-      {/* {isLoading && (
-        <Modal setIsModalOpen={setIsModalOpen}>
-          <Loader />
-        </Modal>
-      )} */}
       <TimeRuler
         handleUploadAudio={props.handleUploadAudio}
         updateSelectedTrackIndex={props.updateSelectedTrackIndex}
@@ -553,7 +556,6 @@ const Tracks = (props: any) => {
                   track={track}
                   trackIndex={trackIndex}
                   isMuted={track.isMuted}
-                  // isMuted={channelsRef?.current?.[trackIndex]?.mute ?? false}
                 />
                 <Timeline>
                   <Draggable
@@ -636,10 +638,7 @@ const Tracks = (props: any) => {
                       </ClipContent>
                     </Clip>
                   </Draggable>
-                  <Measures
-                    projectData={projectData}
-                    // isHoverClipContent={isHoverClipContent}
-                  />
+                  <Measures projectData={projectData} />
                 </Timeline>
               </Track>
             );

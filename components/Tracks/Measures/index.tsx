@@ -72,7 +72,7 @@ const Measures = (props: any) => {
         console.log("Measure");
       }}
     >
-      {new Array(300).fill(0).map((_, quartersIndex) => {
+      {new Array(500).fill(0).map((_, quartersIndex) => {
         return (
           <div key={quartersIndex}>
             <Bar

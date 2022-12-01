@@ -108,10 +108,23 @@ const Notes = (props: any) => {
     lengthQuarters: number,
     lengthSixteenths: number
   ) => {
-    console.log("handleDeleteNote");
-    console.log("tracksData", tracksData);
-    console.log("selectedTrackIndex", selectedTrackIndex);
     if (tracksData && selectedTrackIndex !== null) {
+      const newTracksData = produce(tracksData, (draft) => {
+        draft[selectedTrackIndex].clips[0].notes = draft[
+          selectedTrackIndex
+        ].clips[0].notes.filter(
+          (note) =>
+            !(
+              note.notationIndex === notationIndex &&
+              note.octave === octave &&
+              note.start.bars === startBars &&
+              note.start.quarters === startQuarters &&
+              note.start.sixteenths === startSixteenths
+            )
+        );
+      });
+      setTracksData(newTracksData);
+
       try {
         const trackRef = doc(
           db,
@@ -120,22 +133,6 @@ const Notes = (props: any) => {
           "tracks",
           tracksData[selectedTrackIndex].id
         );
-
-        // const selectedNote = {
-        //   notation: notation,
-        //   notationIndex: notationIndex,
-        //   octave: octave,
-        //   start: {
-        //     bars: startBars,
-        //     quarters: startQuarters,
-        //     sixteenths: startSixteenths,
-        //   },
-        //   length: {
-        //     bars: lengthBars,
-        //     quarters: lengthQuarters,
-        //     sixteenths: lengthSixteenths,
-        //   },
-        // };
 
         const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
 
@@ -162,22 +159,6 @@ const Notes = (props: any) => {
       } catch (err) {
         console.log(err);
       }
-
-      const newTracksData = produce(tracksData, (draft) => {
-        draft[selectedTrackIndex].clips[0].notes = draft[
-          selectedTrackIndex
-        ].clips[0].notes.filter(
-          (note) =>
-            !(
-              note.notationIndex === notationIndex &&
-              note.octave === octave &&
-              note.start.bars === startBars &&
-              note.start.quarters === startQuarters &&
-              note.start.sixteenths === startSixteenths
-            )
-        );
-      });
-      setTracksData(newTracksData);
     }
   };
 

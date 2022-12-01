@@ -42,7 +42,6 @@ import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 interface PianoKeysProps {
   notation: string;
   isOnClick: boolean;
-  isHoverNote: boolean;
 }
 
 interface SixteenthBlockProps {
@@ -71,8 +70,7 @@ const PianoKey = styled.button<PianoKeysProps>`
   background-color: ${(props) =>
     (props.isOnClick === true && "red") ||
     (props.notation.length === 1 && props.isOnClick === false && "white") ||
-    (props.notation.length > 1 && props.isOnClick === false && "black") ||
-    (props.isHoverNote === true && "red")};
+    (props.notation.length > 1 && props.isOnClick === false && "black")};
 
   &:hover {
     background-color: red;
@@ -155,20 +153,12 @@ const NotesPanel = (props: any) => {
   ) => {
     console.log("handleAddNote");
 
-    if (tracksData) {
-      // console.log("projectData", projectData.id);
-      // console.log("selectedTrackIndex", selectedTrackIndex);
-      // console.log("selectedTrackID", tracksData[selectedTrackIndex].id);
+    // console.log("projectData", projectData.id);
+    // console.log("selectedTrackIndex", selectedTrackIndex);
+    // console.log("selectedTrackID", tracksData[selectedTrackIndex].id);
 
+    if (tracksData && selectedTrackIndex !== null) {
       try {
-        const trackRef = doc(
-          db,
-          "projects",
-          projectData.id,
-          "tracks",
-          tracksData[selectedTrackIndex].id
-        );
-
         const newNote = {
           notation: notation,
           notationIndex: notationIndex,
@@ -185,14 +175,28 @@ const NotesPanel = (props: any) => {
           },
         };
 
+        const newTracksData = produce(tracksData, (draft) => {
+          draft[selectedTrackIndex].clips[0].notes.push(newNote);
+        });
+        console.log(newTracksData);
+
+        setTracksData(newTracksData);
+
+        const trackRef = doc(
+          db,
+          "projects",
+          projectData.id,
+          "tracks",
+          tracksData[selectedTrackIndex].id
+        );
+
         const newClips = produce(
           tracksData[selectedTrackIndex].clips,
           (draft) => {
             draft[0].notes.push(newNote);
           }
         );
-        // console.log("newNote", newNote);
-        // console.log("newClips", newClips);
+
         await updateDoc(trackRef, { clips: newClips });
         console.log("info uploaded");
       } catch (err) {
@@ -231,10 +235,6 @@ const NotesPanel = (props: any) => {
                   playingNote?.octave === octaveIndex + 1 &&
                   isMouseDownPianoRoll === true
                 }
-                isHoverNote={
-                  props.hoverNote?.notation === notation &&
-                  props.hoverNote?.octave === octaveIndex + 1
-                }
               />
               {new Array(BARS).fill(0).map((_, barsIndex) => (
                 <BarsWrapper key={barsIndex}>
@@ -265,7 +265,6 @@ const NotesPanel = (props: any) => {
                               notationIndex: notationIndex,
                               octaveIndex: octaveIndex + 1,
                             };
-                            console.log("newHoverMidiInfo", newHoverMidiInfo);
                             props.setHoverNote(newHoverMidiInfo);
                           }}
                           notation={notation}
