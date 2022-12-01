@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import styled from "styled-components";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import produce from "immer";
@@ -42,6 +42,7 @@ import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 interface PianoKeysProps {
   notation: string;
   isOnClick: boolean;
+  isHoverNote: boolean;
 }
 
 interface SixteenthBlockProps {
@@ -55,12 +56,8 @@ interface SixteenthBlockProps {
 
 const Container = styled.div`
   min-height: 720px;
-  /* height: 100%; */
-  /* max-width: 100%; */
-  /* overflow: scroll; */
   display: flex;
   flex-direction: column-reverse;
-  /* top: 0; */
 `;
 
 const PianoKey = styled.button<PianoKeysProps>`
@@ -70,11 +67,16 @@ const PianoKey = styled.button<PianoKeysProps>`
   border-right: 1px solid black;
   border-bottom: none;
   border-left: 1px solid black;
+  cursor: pointer;
   background-color: ${(props) =>
-    // props.notation.length > 1 ? "black" : "white"};
     (props.isOnClick === true && "red") ||
     (props.notation.length === 1 && props.isOnClick === false && "white") ||
-    (props.notation.length > 1 && props.isOnClick === false && "black")};
+    (props.notation.length > 1 && props.isOnClick === false && "black") ||
+    (props.isHoverNote === true && "red")};
+
+  &:hover {
+    background-color: red;
+  }
 `;
 
 const OctaveWrapper = styled.div`
@@ -127,6 +129,7 @@ const SixteenthBlock = styled(MidiBlock)<SixteenthBlockProps>`
     (props.notation === "B" &&
       props.barsIndex % 2 === 1 &&
       "1px solid hsl(0, 0%, 60%)")};
+  cursor: pointer;
 `;
 
 const NotesPanel = (props: any) => {
@@ -134,13 +137,12 @@ const NotesPanel = (props: any) => {
 
   const selectedTrackIndex = useRecoilValue(selectedTrackIndexState);
 
-  const setHoverMidiInfo = useSetRecoilState(hoverMidiInfoState);
   const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
   const [isMouseDownPianoRoll, setIsMouseDownPianoRoll] = useState(false);
 
   const [projectData, setProjectData] =
     useRecoilState<ProjectData>(projectDataState);
-  const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
+  const [tracksData, setTracksData] = useRecoilState(tracksDataState);
 
   const handleAddNote = async (
     notation: string,
@@ -207,7 +209,7 @@ const NotesPanel = (props: any) => {
             <NoationWrapper
               key={`${notation}-${notationIndex}`}
               onMouseLeave={() => {
-                setHoverMidiInfo(null);
+                props.setHoverNote(null);
               }}
             >
               <PianoKey
@@ -229,6 +231,10 @@ const NotesPanel = (props: any) => {
                   playingNote?.octave === octaveIndex + 1 &&
                   isMouseDownPianoRoll === true
                 }
+                isHoverNote={
+                  props.hoverNote?.notation === notation &&
+                  props.hoverNote?.octave === octaveIndex + 1
+                }
               />
               {new Array(BARS).fill(0).map((_, barsIndex) => (
                 <BarsWrapper key={barsIndex}>
@@ -236,7 +242,7 @@ const NotesPanel = (props: any) => {
                     <QuartersWrapper key={quartersIndex}>
                       {new Array(4).fill(0).map((_, sixteenthsIndex) => (
                         <SixteenthBlock
-                          onDoubleClick={() => {
+                          onClick={() => {
                             console.log("doubleClick handleAddNote");
                             handleAddNote(
                               notation,
@@ -254,14 +260,13 @@ const NotesPanel = (props: any) => {
                             setPlayingNote(newPlayingNote);
                           }}
                           onMouseOver={() => {
-                            setHoverMidiInfo(() => {
-                              const newHoverMidiInfo = {
-                                notation: notation,
-                                notationIndex: notationIndex,
-                                octaveIndex: octaveIndex + 1,
-                              };
-                              return newHoverMidiInfo;
-                            });
+                            const newHoverMidiInfo = {
+                              notation: notation,
+                              notationIndex: notationIndex,
+                              octaveIndex: octaveIndex + 1,
+                            };
+                            console.log("newHoverMidiInfo", newHoverMidiInfo);
+                            props.setHoverNote(newHoverMidiInfo);
                           }}
                           notation={notation}
                           barsIndex={barsIndex}

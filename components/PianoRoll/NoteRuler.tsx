@@ -2,44 +2,56 @@ import { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useRecoilValue } from "recoil";
 
-import { hoverMidiInfoState } from "../../context/atoms";
-
-interface NoteRulerInfoProps {
-  // notation: string;
-  notationIndex: number;
-  octaveIndex: number;
-}
+import {
+  tracksDataState,
+  projectDataState,
+  playingNoteState,
+  selectedTrackIdState,
+  selectedTrackIndexState,
+  barWidthState,
+  progressState,
+  isPlayingState,
+  isMetronomeState,
+  isLoadingState,
+  playerStatusState,
+  TrackData,
+  NoteData,
+  AudioData,
+  ClipData,
+  inputProgressState,
+  hoverMidiInfoState,
+} from "../../context/atoms";
 
 const Container = styled.div`
-  width: 100px;
   height: 720px;
+  display: flex;
+  justify-content: flex-end;
 `;
 
-const NoteRulerInfo = styled.p<NoteRulerInfoProps>`
-  width: 100px;
-  height: 100%;
-
+const NoteRulerInfo = styled.p<hoverMidiInfoState>`
+  width: 30px;
+  height: 720px;
   margin: 0px;
-  font-size: 15px;
+  font-size: 12px;
   text-align: right;
-  padding-right: 10px;
-  bottom: ${(props) => props.octaveIndex}px;
+  margin-top: ${(props) =>
+    720 - ((props.octaveIndex - 1) * 12 + props.notationIndex + 1) * 10}px;
+  margin-right: 10px;
+  /* bottom: 0px; */
 `;
 
 const NoteRuler = (props: any) => {
-  const hoverMidiInfo = useRecoilValue(hoverMidiInfoState);
-
   return (
     <Container>
-      {hoverMidiInfo && (
-        <NoteRulerInfo
-          // notation={hoverMidiInfo.notation}
-          notationIndex={hoverMidiInfo.notationIndex}
-          octaveIndex={hoverMidiInfo.octaveIndex}
-        >
-          {`${hoverMidiInfo.notation}${hoverMidiInfo.octaveIndex}`}
-        </NoteRulerInfo>
-      )}
+      <NoteRulerInfo
+        notation={props.hoverNote?.notation}
+        notationIndex={props.hoverNote?.notationIndex}
+        octaveIndex={props.hoverNote?.octaveIndex}
+      >
+        {props.hoverNote
+          ? `${props.hoverNote.notation}${props.hoverNote.octaveIndex}`
+          : ""}
+      </NoteRulerInfo>
     </Container>
   );
 };

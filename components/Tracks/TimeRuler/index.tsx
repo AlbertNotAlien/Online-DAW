@@ -39,7 +39,8 @@ import Modal from "../../Modal";
 const Container = styled.div`
   display: flex;
   min-height: 30px;
-  width: calc(100vw - 200px - 20px - 10px);
+  /* width: calc(100vw - 200px - 20px - 10px); */
+  width: 100%;
   align-items: center;
   padding-left: 10px;
   background-color: gray;
@@ -81,7 +82,7 @@ const ModalWrapper = styled.div`
 `;
 
 const TimeRuler = (props: any) => {
-  const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
+  const [tracksData, setTracksData] = useRecoilState(tracksDataState);
   const [projectData, setProjectData] = useRecoilState(projectDataState);
   const [selectedTrackIndex, setSelectedTrackIndex] = useRecoilState(
     selectedTrackIndexState

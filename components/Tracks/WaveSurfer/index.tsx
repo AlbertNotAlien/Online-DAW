@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 const Clip = styled.div`
   position: relative;
-  z-index: 1;
+  z-index: -1;
   pointer-events: none;
 `;
 
@@ -42,15 +42,8 @@ const formWaveSurferOptions = (waveformRef: any) => ({
 const WaveSurfer = (props: any) => {
   const waveformRef = useRef(null);
   const wavesurfer = useRef<any>(null);
-  const [duration, setDuration] = useState(0);
-
-  const startPoint = props.trackData.clips[0].startPoint;
-  // const startMillisecond = props.convertBeatsToMs(
-  //   (startPoint.bars - 1) * 8 + (startPoint.quarters - 1)
-  // );
 
   const clipUrl = props.trackData.clips[0].url;
-  // console.log("clipUrl", clipUrl);
 
   useEffect(() => {
     const create = async () => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, MouseEvent } from "react";
+import { useState, useEffect, useRef, MouseEvent, memo } from "react";
 
 import styled from "styled-components";
 import { useRecoilState, useRecoilValue } from "recoil";
@@ -8,24 +8,31 @@ import {
   projectDataState,
   NoteData,
   progressState,
+  inputProgressState,
 } from "../../../context/atoms";
-
-const Container = styled.div`
-  display: flex;
-  flex-direction: row;
-  z-index: 10;
-  top: 0;
-  left: 0;
-`;
 
 interface BarProps {
   barWidth: number;
   quartersIndex: number;
+  isHoverClipContent: boolean;
 }
+
+const Container = styled.div`
+  height: 130px;
+  transform: translateY(20px);
+  mix-blend-mode: screen;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: flex-end;
+  z-index: 10;
+  bottom: 0;
+  left: 0;
+`;
 
 const Bar = styled.div<BarProps>`
   width: ${(props) => props.barWidth}px;
-  height: 150px;
+  height: 130px;
   border-left: 0.1px solid gray;
   cursor: pointer;
   &:hover {
@@ -33,22 +40,16 @@ const Bar = styled.div<BarProps>`
   }
   background-color: ${(props) =>
     props.quartersIndex % 8 <= 3 ? "#141414" : "#2d2d2d"};
+  /* pointer-events: ${(props) =>
+    props.isHoverClipContent ? "auto" : "none"}; */
 `;
-
-// const BarLight = styled(Bar)<StyleProps>`
-//   width: ${(props) => props.width}px;
-// `;
-
-// const BarDark = styled(Bar)<StyleProps>`
-//   width: ${(props) => props.width}px;
-//   background-color: #141414;
-// `;
 
 const Measures = (props: any) => {
   const projectData = useRecoilValue(projectDataState);
   const [barWidth, setBarWidth] = useRecoilState(barWidthState);
 
   const [progress, setProgress] = useRecoilState(progressState);
+  const [inputProgress, setInputProgress] = useRecoilState(inputProgressState);
 
   const handleSetProgressLine = (quartersIndex: number) => {
     const currentBars = Math.floor(quartersIndex / 4);
@@ -58,16 +59,26 @@ const Measures = (props: any) => {
       quarters: currentQuarters,
       sixteenths: 0,
     });
+    setInputProgress({
+      bars: currentBars,
+      quarters: currentQuarters,
+      sixteenths: 0,
+    });
   };
 
   return (
-    <Container>
+    <Container
+      onClick={() => {
+        console.log("Measure");
+      }}
+    >
       {new Array(300).fill(0).map((_, quartersIndex) => {
         return (
           <div key={quartersIndex}>
             <Bar
               barWidth={barWidth}
               quartersIndex={quartersIndex}
+              isHoverClipContent={props.isHoverClipContent}
               onClick={() => {
                 handleSetProgressLine(quartersIndex);
               }}
@@ -79,4 +90,4 @@ const Measures = (props: any) => {
   );
 };
 
-export default Measures;
+export default memo(Measures);

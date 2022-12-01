@@ -45,6 +45,10 @@ const Container = styled.div`
   align-items: left;
   padding: 0px 20px;
   row-gap: 10px;
+  /* position: fixed; */
+  top: 0px;
+  left: 0px;
+  /* background-color: gray; */
 `;
 
 const TrackTitle = styled.p`
@@ -144,17 +148,14 @@ interface IsMutedButtonProps {
 // `;
 
 const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
+  color: white;
   background-color: ${(props) =>
     props.isMuted === true ? "#F6DDCD" : "#7c7c7c"};
 `;
 
 const TrackControls = (props: any) => {
   const projectId = props.projectId;
-  const [isMuted, setIsMuted] = useState(props.isMuted);
-
-  useEffect(() => {
-    setIsMuted(props.isMuted);
-  }, [props.isMuted]);
+  const [tracksData, setTracksData] = useRecoilState(tracksDataState);
 
   const handleTrackMute = async (
     isMuted: boolean,
@@ -164,6 +165,20 @@ const TrackControls = (props: any) => {
     console.log("isMuted", isMuted);
     console.log("projectId", projectId);
     console.log("trackId", trackId);
+
+    setTracksData(
+      produce(tracksData, (draft) => {
+        draft[props.trackIndex].isMuted = !isMuted;
+      })
+    );
+
+    props.channelsRef.current[trackIndex].mute = !isMuted;
+
+    props.channelsRef.current.forEach((channel: any, index: number) => {
+      console.log(`mute-${index}`, channel.mute);
+    });
+    console.log("-----");
+
     try {
       const trackRef = doc(db, "projects", projectId, "tracks", trackId);
       const newData = {
@@ -174,15 +189,6 @@ const TrackControls = (props: any) => {
     } catch (err) {
       console.log(err);
     }
-
-    props.channelsRef.current[trackIndex].mute =
-      !props.channelsRef.current[trackIndex].mute;
-    setIsMuted(props.channelsRef.current[trackIndex].mute);
-
-    props.channelsRef.current.forEach((channel: any, index: number) => {
-      console.log(`mute-${index}`, channel.mute);
-    });
-    console.log("-----");
   };
 
   const handleTrackSolo = async (
@@ -237,7 +243,7 @@ const TrackControls = (props: any) => {
             onClick={() => {
               handleTrackMute(props.isMuted, props.track.id, props.trackIndex);
             }}
-            isMuted={isMuted}
+            isMuted={props.isMuted}
           >
             Mute
           </IsMutedButton>

@@ -21,6 +21,14 @@ import {
   signOut,
 } from "firebase/auth";
 import { useState } from "react";
+import { useRecoilState, useRecoilValue } from "recoil";
+import {
+  projectDataState,
+  selectedTrackIdState,
+  selectedTrackIndexState,
+  tracksDataState,
+} from "./atoms";
+import produce from "immer";
 
 const AuthContext = createContext<any>({});
 
@@ -95,10 +103,18 @@ export const AuthContextProvider = ({
     alert("已登出");
     const res = await signOut(auth);
     console.log("user", user);
-    // const docRef = doc(db, "users", user.uid);
-    // await updateDoc(docRef, {
-    //   state: "offline",
-    // });
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const userStatusDatabaseRef = ref(db, "/status/" + user.uid);
+
+    const isOfflineForDatabase = {
+      state: "offline",
+      last_changed: serverTimestamp(),
+    };
+
+    set(userStatusDatabaseRef, isOfflineForDatabase);
+
     setUser(null);
   };
 
@@ -120,15 +136,14 @@ export const AuthContextProvider = ({
       last_changed: serverTimestamp(),
     };
 
-    // console.log(user?.uid);
     const connectedRef = ref(db, ".info/connected");
     onValue(connectedRef, (snap) => {
-      // console.log(snap);
       if (snap.val() === true) {
         onDisconnect(userStatusDatabaseRef)
           .set(isOfflineForDatabase)
           .then(function () {
-            set(userStatusDatabaseRef, isOnlineForDatabase); //
+            set(userStatusDatabaseRef, isOnlineForDatabase);
+            // cleanupSelectedBy
           });
       }
     });

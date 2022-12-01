@@ -31,7 +31,6 @@ interface MidiNoteProps {
 const Clip = styled.div<MidiRegionProps>`
   width: ${(props) => props.barWidth * props.length}px;
   height: 130px;
-  background-color: #ffffff20;
   position: relative;
   pointer-events: none;
   z-index: 1;

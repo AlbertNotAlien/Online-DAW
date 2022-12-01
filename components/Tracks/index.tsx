@@ -5,6 +5,7 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
 import produce from "immer";
 import * as Tone from "tone";
+import Loader from "../Loader";
 
 import {
   doc,
@@ -40,6 +41,7 @@ import {
   NoteData,
   AudioData,
   ClipData,
+  inputProgressState,
 } from "../../context/atoms";
 import Measures from "./Measures";
 import WaveSurfer from "./WaveSurfer";
@@ -48,6 +50,8 @@ import TrackControls from "./TrackControls";
 import TimeRuler from "./TimeRuler";
 import { style } from "wavesurfer.js/src/util";
 import { Channel, PanVol, Volume } from "tone";
+import { useOnClickOutside } from "../../utils/useOnClickOutside";
+import Modal from "../Modal";
 
 interface TrackProps {
   trackHeight: number;
@@ -62,6 +66,7 @@ interface ProgresslineProps {
     sixteenths: number;
   };
   barWidth: number;
+  tracksDataLength: number;
 }
 
 const Container = styled.div`
@@ -69,24 +74,28 @@ const Container = styled.div`
   flex-direction: column;
   row-gap: 10px;
   height: 100%;
+  width: 100%;
+  /* overflow: scroll; */
 `;
 
 const TracksPanel = styled.div`
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  position: relative;
+  width: 100%;
 `;
 
 const ProgressLine = styled.div<ProgresslineProps>`
   width: 1px;
   background-color: #c08a1e;
-  height: calc(100vh - 50px - 200px - 70px);
+  height: ${(props) =>
+    props.tracksDataLength * 150 + (props.tracksDataLength - 1) * 10}px;
   position: absolute;
   left: ${(props) =>
     props.progress.bars * props.barWidth * 4 +
     props.progress.quarters * props.barWidth +
     (props.progress.sixteenths * props.barWidth) / 4}px;
-  margin-left: 420px;
+  margin-left: 200px;
   z-index: 1;
 `;
 
@@ -97,21 +106,28 @@ const Track = styled.div<TrackProps>`
   margin-bottom: 10px;
   border-radius: 10px;
   height: ${(props) => props.trackHeight}px;
-
-  pointer-events: ${(props) => (props.selectedByOthers ? "none" : "inherit")};
-  background-color: ${(props) =>
-    (props.selectedByOthers && "#2F302F") ||
-    (props.selectedBySelf && "#2F302F") ||
-    "#606060"};
+  /* background-color: ${(props) =>
+    (props.selectedByOthers && "#282828") ||
+    (props.selectedBySelf && "#282828") ||
+    "#606060"}; */
+  background-color: #282828;
+  filter: brightness(100%);
+  filter: ${(props) => props.selectedBySelf && "brightness(130%)"};
   opacity: ${(props) => (props.selectedByOthers ? 0.3 : 1)};
+  pointer-events: ${(props) => (props.selectedByOthers ? "none" : "inherit")};
 `;
 
 const Timeline = styled.div`
   position: relative;
 `;
 
-const Clip = styled.div`
+interface ClipProps {
+  isHoverClipContent: boolean;
+}
+
+const Clip = styled.div<ClipProps>`
   position: absolute;
+  z-index: 0;
 `;
 
 const ClipTitle = styled.div`
@@ -127,12 +143,20 @@ const ClipTitle = styled.div`
   cursor: move; /* fallback if grab cursor is unsupported */
   cursor: grab;
 
+  &:hover {
+    pointer-events: auto;
+  }
+
   &:active {
     cursor: grabbing;
   }
 `;
 
-const Lock = styled.div`
+const ClipContent = styled.div`
+  pointer-events: none;
+`;
+
+const TrackLock = styled.div`
   position: absolute;
   top: 50%;
   left: calc((100vw - 200px) / 2);
@@ -140,9 +164,11 @@ const Lock = styled.div`
 `;
 
 const Tracks = (props: any) => {
+  const [_isHoverClipContent, _setIsHoverClipContent] = useState(false);
+  const [isHoverClipContent, setIsHoverClipContent] = useState(false);
   const projectData = useRecoilValue(projectDataState);
 
-  const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
+  const [tracksData, setTracksData] = useRecoilState(tracksDataState);
   const barWidth = useRecoilValue(barWidthState);
 
   const projectId = props.projectId;
@@ -152,6 +178,7 @@ const Tracks = (props: any) => {
   const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
 
   const [progress, setProgress] = useRecoilState(progressState);
+  const [inputProgress, setInputProgress] = useRecoilState(inputProgressState);
 
   const [selectedTrackId, setSelectedTrackId] =
     useRecoilState(selectedTrackIdState);
@@ -161,14 +188,25 @@ const Tracks = (props: any) => {
   const { user, logout } = useAuth();
   const isMetronome = useRecoilValue(isMetronomeState);
 
+  const TracksPanelRef = useRef(null);
+
   const channelsRef = useRef<Channel[] | undefined>([]);
   const tracksRef = useRef<
     (Tone.Synth | Tone.Player | undefined)[] | undefined
   >();
 
+  // if (selectedTrackId !== null || selectedTrackIndex !== null) {
+  //   window.addEventListener("beforeunload", function (e) {
+  //     e.preventDefault();
+  //     e.returnValue = "";
+  //     props.cleanupSelectedBy();
+  //   });
+  // }
+
   useEffect(() => {
-    channelsRef.current = tracksData?.map((_, index) => {
+    channelsRef.current = tracksData?.map((track, index) => {
       const channel = new Tone.Channel().toDestination();
+      channel.mute = track.isMuted;
       return channel;
     });
 
@@ -187,13 +225,11 @@ const Tracks = (props: any) => {
         trackRef.connect(channelsRef.current[index]);
       }
     });
-
-    // if (channelsRef.current) {
-    // channelsRef.current[0].mute = true;
-    // channelsRef.current[2].volume.value = 20;
-    // channelsRef.current[2].pan.value = -1;
-    // }
   }, [tracksData]);
+
+  if (channelsRef.current) {
+    console.log("channelsRef.current[3]?.mute", channelsRef.current[3]?.mute);
+  }
 
   const playAllTracks = () => {
     if (tracksRef.current) {
@@ -207,9 +243,12 @@ const Tracks = (props: any) => {
               `${tracksData[index].clips[0].startPoint.bars}:${tracksData[index].clips[0].startPoint.quarters}:${tracksData[index].clips[0].startPoint.sixteenths}`
             );
         } else if (trackRef instanceof Tone.Synth && tracksData) {
-          console.log(trackRef);
           const notes = tracksData[index].clips[0].notes;
+          console.log(notes);
           notes.forEach((note) => {
+            console.log(
+              `${note.start.bars}:${note.start.quarters}:${note.start.sixteenths}`
+            );
             Tone.Transport.schedule(function () {
               trackRef.triggerAttackRelease(
                 `${note.notation}${note.octave}`,
@@ -229,7 +268,6 @@ const Tracks = (props: any) => {
 
   const startPlaying = () => {
     if (Tone.Transport.state === "started") return;
-    // stopPlaying();
     console.log(`${progress.bars}:${progress.quarters}:${progress.sixteenths}`);
     playAllTracks();
     Tone.Transport.position = `${progress.bars}:${progress.quarters}:${progress.sixteenths}`;
@@ -244,6 +282,8 @@ const Tracks = (props: any) => {
     Tone.Transport.bpm.value = 58;
 
     if (playerStatus === "playing" || playerStatus === "recording") {
+      setIsLoading(true);
+
       const timer = setInterval(() => {
         const transportPosition = Tone.Transport.position
           .toString()
@@ -254,11 +294,17 @@ const Tracks = (props: any) => {
           quarters: transportPosition[1],
           sixteenths: transportPosition[2],
         });
+        setInputProgress({
+          bars: transportPosition[0],
+          quarters: transportPosition[1],
+          sixteenths: transportPosition[2],
+        });
       }, 100);
 
       Tone.loaded().then(() => {
         startTone();
         startPlaying();
+        setIsLoading(false);
       });
 
       return () => {
@@ -270,55 +316,35 @@ const Tracks = (props: any) => {
   }, [playerStatus]);
 
   const handleSelectTrack = async (trackId: string, trackIndex: number) => {
-    // console.log("trackId", trackId);
-    if (tracksData && selectedTrackId !== null && selectedTrackId !== trackId) {
+    if (
+      tracksData &&
+      trackId !== selectedTrackId &&
+      trackIndex !== selectedTrackIndex
+    ) {
+      props.cleanupSelectedBy();
+
+      // setTracksData(
+      //   produce(tracksData, (draft) => {
+      //     draft[trackIndex].selectedBy = user.uid;
+      //   })
+      // );
+      setSelectedTrackId(trackId);
+      setSelectedTrackIndex(trackIndex);
+      console.log("handleSelectTrack");
+
       try {
-        const docRef = doc(
-          db,
-          "projects",
-          projectId,
-          "tracks",
-          selectedTrackId // previous selectedTrackId
-        );
+        const docRef = doc(db, "projects", projectId, "tracks", trackId);
         const newData = {
-          selectedBy: "",
+          selectedBy: user.uid,
         };
         await updateDoc(docRef, newData);
         console.log("info updated");
       } catch (err) {
         console.log(err);
-      } finally {
-        setTracksdata(
-          produce(tracksData, (draft) => {
-            draft[trackIndex].selectedBy = user.uid;
-          })
-        );
-        setSelectedTrackId(trackId);
-        setSelectedTrackIndex(trackIndex);
       }
-    } else if (tracksData && selectedTrackId === null) {
-      setTracksdata(
-        produce(tracksData, (draft) => {
-          draft[trackIndex].selectedBy = user.uid;
-        })
-      );
-      setSelectedTrackId(trackId);
-      setSelectedTrackIndex(trackIndex);
-    }
-
-    try {
-      const docRef = doc(db, "projects", projectId, "tracks", trackId);
-      const newData = {
-        selectedBy: user.uid,
-      };
-      await updateDoc(docRef, newData);
-      console.log("info updated");
-    } catch (err) {
-      console.log(err);
     }
   };
 
-  // [x, x, x]
   const [dragX, setDragX] = useState<number[]>(
     tracksData?.map(
       (track) =>
@@ -339,23 +365,13 @@ const Tracks = (props: any) => {
     );
   }, [tracksData]);
 
-  console.log(
-    tracksData?.map(
-      (track) =>
-        (track.clips[0].startPoint.bars * 4 +
-          track.clips[0].startPoint.quarters) *
-        barWidth
-    )
-  );
-  console.log("dragX", dragX);
-
   const totalX = tracksData.reduce((acc, track) => {
     return (
       acc + track.clips[0].startPoint.bars + track.clips[0].startPoint.quarters
     );
   }, 0);
 
-  console.log(totalX);
+  // console.log(totalX);
 
   useEffect(() => {
     // update x state
@@ -417,7 +433,7 @@ const Tracks = (props: any) => {
         draft[trackIndex].clips[0].startPoint.bars = newBars;
         draft[trackIndex].clips[0].startPoint.quarters = newQuarters;
       });
-      setTracksdata(newTracksData);
+      setTracksData(newTracksData);
       const newClipsData = produce(tracksData[trackIndex].clips, (draft) => {
         draft[0].startPoint.bars = newBars;
         draft[0].startPoint.quarters = newQuarters;
@@ -461,13 +477,12 @@ const Tracks = (props: any) => {
   };
 
   useEffect(() => {
-    console.log("selectedTrackId", selectedTrackId);
     if (selectedTrackId !== null) {
       const handleKeydown = (event: any) => {
         handleDeleteTrack(selectedTrackId, event);
       };
-      window.addEventListener("keydown", handleKeydown);
-      return () => window.removeEventListener("keydown", handleKeydown);
+      document.addEventListener("keydown", handleKeydown);
+      return () => document.removeEventListener("keydown", handleKeydown);
     }
   });
 
@@ -483,18 +498,28 @@ const Tracks = (props: any) => {
     }
   }, [playerStatus, isMetronome]);
 
-  const [newDragX, setNewDragX] = useState(0);
+  const tracksContainerRef = useRef(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
-    <Container>
+    <Container ref={tracksContainerRef}>
+      {/* {isLoading && (
+        <Modal setIsModalOpen={setIsModalOpen}>
+          <Loader />
+        </Modal>
+      )} */}
       <TimeRuler
         handleUploadAudio={props.handleUploadAudio}
         updateSelectedTrackIndex={props.updateSelectedTrackIndex}
         isModalOpen={props.isModalOpen}
         setIsModalOpen={props.setIsModalOpen}
       />
-      <TracksPanel>
-        <ProgressLine progress={progress} barWidth={barWidth} />
+      <TracksPanel ref={TracksPanelRef}>
+        <ProgressLine
+          progress={progress}
+          barWidth={barWidth}
+          tracksDataLength={tracksData.length}
+        />
         {projectData &&
           tracksData &&
           tracksData.length > 0 &&
@@ -506,74 +531,91 @@ const Tracks = (props: any) => {
                   handleSelectTrack(track.id, trackIndex);
                 }}
                 trackHeight={150}
-                // onDoubleClick={() => {
-                //   handleDeleteTrack(track.id);
-                // }}
                 selectedBySelf={selectedTrackId === track.id}
                 selectedByOthers={
                   track.selectedBy.length > 0 && track.selectedBy !== user.uid
                 }
               >
-                {track.selectedBy.length > 0 && track.selectedBy !== user.uid && (
-                  <Lock>
-                    <Image src="/lock.svg" alt="lock" width={25} height={25} />
-                  </Lock>
-                )}
+                {track.selectedBy.length > 0 &&
+                  track.selectedBy !== user.uid && (
+                    <TrackLock>
+                      <Image
+                        src="/lock.svg"
+                        alt="lock"
+                        width={25}
+                        height={25}
+                      />
+                    </TrackLock>
+                  )}
                 <TrackControls
                   channelsRef={channelsRef}
                   projectId={props.projectId}
                   track={track}
                   trackIndex={trackIndex}
-                  isMuted={channelsRef?.current?.[trackIndex]?.mute ?? false}
+                  isMuted={track.isMuted}
+                  // isMuted={channelsRef?.current?.[trackIndex]?.mute ?? false}
                 />
                 <Timeline>
-                  <Clip>
-                    <Draggable
-                      axis="both"
-                      // onStart={(
-                      //   event: DraggableEvent,
-                      //   dragElement: DraggableData
-                      // ) => {
-                      //   console.log(
-                      //     "onStart",
-                      //     dragElement.lastX,
-                      //     dragElement.lastY
-                      //   );
-                      // }}
-                      onDrag={(
-                        event: DraggableEvent,
-                        dragElement: DraggableData
-                      ) => {
-                        handleClipDraggable(
-                          event,
-                          dragElement,
-                          trackIndex,
-                          track.id
-                        );
+                  <Draggable
+                    axis="both"
+                    onDrag={(
+                      event: DraggableEvent,
+                      dragElement: DraggableData
+                    ) => {
+                      handleClipDraggable(
+                        event,
+                        dragElement,
+                        trackIndex,
+                        track.id
+                      );
+                    }}
+                    onStop={(
+                      event: DraggableEvent,
+                      dragElement: DraggableData
+                    ) => {
+                      handleClipDraggableStop(
+                        event,
+                        dragElement,
+                        trackIndex,
+                        track.id
+                      );
+                    }}
+                    grid={[barWidth, 0]}
+                    position={{
+                      x: dragX[trackIndex] || 0,
+                      y: 0,
+                    }}
+                    handle=".handle"
+                    bounds={{ left: 0 }}
+                  >
+                    <Clip
+                      onClick={() => {
+                        console.log("hover clip");
+                        setIsHoverClipContent(true);
                       }}
-                      onStop={(
-                        event: DraggableEvent,
-                        dragElement: DraggableData
-                      ) => {
-                        handleClipDraggableStop(
-                          event,
-                          dragElement,
-                          trackIndex,
-                          track.id
-                        );
+                      onMouseLeave={() => {
+                        console.log("leave hover clip");
+                        setIsHoverClipContent(false);
                       }}
-                      grid={[barWidth, 0]}
-                      position={{
-                        x: dragX[trackIndex] || 0,
-                        y: 0,
-                      }}
-                      handle=".handle"
-                      bounds={{ left: 0 }}
+                      isHoverClipContent={isHoverClipContent}
                     >
-                      <div>
-                        <ClipTitle className="handle">
-                          {track.clips[0].clipName}
-                        </ClipTitle>
+                      <ClipTitle
+                        className="handle"
+                        onClick={() => {
+                          console.log("click");
+                        }}
+                        // onMouseOver={() => {
+                        //   console.log("hover");
+                        //   setIsHoverClipContent(true);
+                        // }}
+                        // onMouseLeave={() => {
+                        //   console.log("leave hover");
+                        //   setIsHoverClipContent(false);
+                        // }}
+                      >
+                        {track.clips[0].clipName}
+                      </ClipTitle>
+                      <ClipContent>
                         {track.type === "audio" ? (
                           <WaveSurfer
                             key={trackIndex}
@@ -591,10 +633,13 @@ const Tracks = (props: any) => {
                             barWidth={barWidth}
                           />
                         )}
-                      </div>
-                    </Draggable>
-                  </Clip>
-                  <Measures projectData={projectData} />
+                      </ClipContent>
+                    </Clip>
+                  </Draggable>
+                  <Measures
+                    projectData={projectData}
+                    // isHoverClipContent={isHoverClipContent}
+                  />
                 </Timeline>
               </Track>
             );

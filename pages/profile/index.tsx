@@ -186,7 +186,7 @@ export default function Profile() {
             <Button onClick={handleLogout}>logout</Button>
           </UserWrapper>
 
-          <MembersWrapper>
+          {/* <MembersWrapper>
             <div>Members</div>
             {members.map((member, index) => (
               <Member key={`${member}-${index}`}>
@@ -207,7 +207,7 @@ export default function Profile() {
                 <MemberState>{member.state}</MemberState>
               </Member>
             ))}
-          </MembersWrapper>
+          </MembersWrapper> */}
         </Container>
       </BackGround>
     </>

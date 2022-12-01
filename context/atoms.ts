@@ -75,6 +75,14 @@ export interface NoteRulerInfo {
 //   default: "",
 // });
 
+export interface hoverMidiInfoState {
+  notation: string;
+  notationIndex: number;
+  octaveIndex: number;
+}
+
+export type AddFunctionType = (msg: string) => void;
+
 export const projectDataState = atom({
   key: "projectDataState",
   default: {
@@ -94,6 +102,14 @@ export const tracksDataState = atom({
 
 export const progressState = atom({
   key: "progressState",
+  default: {
+    bars: 0,
+    quarters: 0,
+    sixteenths: 0,
+  },
+});
+export const inputProgressState = atom({
+  key: "inputProgressState",
   default: {
     bars: 0,
     quarters: 0,

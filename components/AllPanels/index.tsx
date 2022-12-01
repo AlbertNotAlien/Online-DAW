@@ -33,10 +33,10 @@ import {
   isRecordingState,
   isMetronomeState,
   playerStatusState,
-  // projectIdState,
   isLoadingState,
   TrackData,
   ProjectData,
+  inputProgressState,
 } from "../../context/atoms";
 import WaveSurfer from "../Tracks/WaveSurfer";
 
@@ -46,9 +46,10 @@ import Tracks from "../Tracks";
 import PianoRoll from "../PianoRoll";
 import Library from "../Library";
 import Export from "../Export";
-import Record from "../Record";
 import Link from "next/link";
 import Avatar from "boring-avatars";
+import Loader from "../Loader";
+import { useOnClickOutside } from "../../utils/useOnClickOutside";
 
 const Container = styled.div`
   background-color: hsl(0, 0%, 30%);
@@ -60,25 +61,25 @@ const Container = styled.div`
   height: 100vh;
 `;
 
-const LoaderKeyframes = keyframes`
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-`;
+// const LoaderKeyframes = keyframes`
+//     0% {
+//       transform: rotate(0deg);
+//     }
+//     100% {
+//       transform: rotate(360deg);
+//     }
+// `;
 
-const Loader = styled.div`
-  border: 5px solid #f3f3f3;
-  border-radius: 50%;
-  border-top: 5px solid #3498db;
-  width: 50px;
-  height: 50px;
-  animation-name: ${LoaderKeyframes};
-  animation-duration: 1.5s;
-  animation-iteration-count: infinite;
-`;
+// const Loader = styled.div`
+//   border: 5px solid #f3f3f3;
+//   border-radius: 50%;
+//   border-top: 5px solid #3498db;
+//   width: 50px;
+//   height: 50px;
+//   animation-name: ${LoaderKeyframes};
+//   animation-duration: 1.5s;
+//   animation-iteration-count: infinite;
+// `;
 
 const HeadBarPanel = styled.div`
   display: flex;
@@ -147,6 +148,7 @@ const TempoInput = styled.input`
   border: none;
   border-radius: 3px;
   height: 100%;
+  color: white;
   background-color: #323232;
   border-radius: 10px;
   &:focus {
@@ -171,11 +173,15 @@ const ProgressInputs = styled.div`
 
 const ProgressInput = styled.input`
   width: 30px;
+  color: white;
   margin: 4px 0px;
   border-radius: 5px;
   border: none;
   background: #323232;
   text-align: center;
+  &:focus {
+    outline: none;
+  }
   &:hover {
     filter: brightness(200%);
   }
@@ -226,13 +232,12 @@ const TracksPanel = styled.div`
   display: flex;
   flex-direction: column;
   row-gap: 10px;
-  overflow: hidden;
+  overflow: auto;
 `;
 
 const AllPanels = (props: any) => {
-  // const [projectId, setProjectId] = useRecoilState(projectIdState);
   const [projectData, setProjectData] = useRecoilState(projectDataState);
-  const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
+  const [tracksData, setTracksData] = useRecoilState(tracksDataState);
   const projectId = props.projectId;
   const [barWidth, setBarWidth] = useRecoilState(barWidthState);
 
@@ -249,9 +254,10 @@ const AllPanels = (props: any) => {
     selectedTrackIndexState
   );
   const [progress, setProgress] = useRecoilState(progressState);
-  const [tempo, setTempo] = useState<number>(projectData?.tempo);
+  const [inputProgress, setInputProgress] = useRecoilState(inputProgressState);
+  const [tempo, setTempo] = useState<string>("");
 
-  const [recordFileRef, recordURL, isRecording, startRecording, stopRecording] =
+  const [recordFile, recordURL, isRecording, startRecording, stopRecording] =
     useRecorder();
 
   const [isMetronome, setIsMetronome] = useRecoilState(isMetronomeState);
@@ -283,7 +289,7 @@ const AllPanels = (props: any) => {
         const docData = doc.data() as TrackData;
         newData.push(docData);
       });
-      setTracksdata(newData);
+      setTracksData(newData);
     });
 
     console.log("unsubscribe");
@@ -291,7 +297,7 @@ const AllPanels = (props: any) => {
     return () => {
       unsubscribe();
     };
-  }, [projectId, setTracksdata]);
+  }, [projectId, setTracksData]);
 
   // useEffect(() => {
   //   if (recordFile) {
@@ -306,14 +312,21 @@ const AllPanels = (props: any) => {
   };
 
   const handlePause = () => {
-    setPlayerStatus("paused");
-    if (playerStatus === "paused") {
+    if (playerStatus === "recording") {
+      handleRecord();
+    } else if (playerStatus === "paused") {
       setProgress({
         bars: 0,
         quarters: 0,
         sixteenths: 0,
       });
+      setInputProgress({
+        bars: 0,
+        quarters: 0,
+        sixteenths: 0,
+      });
     }
+    setPlayerStatus("paused");
   };
 
   const appendToFilename = (filename: string) => {
@@ -385,7 +398,7 @@ const AllPanels = (props: any) => {
       newData.push(docData);
     });
     console.log("newData", newData);
-    setTracksdata(newData);
+    setTracksData(newData);
 
     if (selectedTrackIndex !== null) {
       const newSelectedTrackIndex = newData.findIndex(
@@ -442,15 +455,14 @@ const AllPanels = (props: any) => {
   };
 
   const handleTempoChange = async (newTempo: number) => {
-    setTempo(newTempo);
     setBarWidth((120 / newTempo) * 10); // projectData.barWidthCoefficient
 
     try {
-      const trackRef = doc(db, "projects", projectId);
+      const docRef = doc(db, "projects", projectId);
       const newData = {
         tempo: newTempo,
       };
-      await updateDoc(trackRef, newData);
+      await updateDoc(docRef, newData);
       console.log("info updated");
     } catch (err) {
       console.log(err);
@@ -459,11 +471,69 @@ const AllPanels = (props: any) => {
 
   useEffect(() => {
     setBarWidth((120 / projectData.tempo) * 10);
-    setTempo(projectData.tempo);
+    setTempo(projectData.tempo.toString());
     console.log("useEffect");
-  }, []);
+  }, [projectData]);
 
-  const tempoRef = useRef(60);
+  useEffect(() => {
+    if (recordFile) {
+      console.log(recordFile);
+      handleUploadAudio(recordFile);
+    }
+  }, [recordFile]);
+
+  const handleRecord = () => {
+    console.log("isRecording", isRecording);
+    if (!isRecording && typeof startRecording === "function") {
+      startRecording();
+      setPlayerStatus("recording");
+    } else if (isRecording && typeof stopRecording === "function") {
+      stopRecording();
+      setPlayerStatus("paused");
+    }
+  };
+
+  const cleanupSelectedBy = async () => {
+    if (tracksData && selectedTrackId !== null && selectedTrackIndex !== null) {
+      const prevSelectedTrackIndex = selectedTrackIndex;
+      // setTracksData(
+      //   produce(tracksData, (draft) => {
+      //     draft[prevSelectedTrackIndex].selectedBy = "";
+      //   })
+      // );
+      setSelectedTrackId(null);
+      setSelectedTrackIndex(null);
+      console.log("cleanupSelectedBy");
+
+      try {
+        const docRef = doc(
+          db,
+          "projects",
+          projectId,
+          "tracks",
+          selectedTrackId // previous selectedTrackId
+        );
+        const newData = {
+          selectedBy: "",
+        };
+        await updateDoc(docRef, newData);
+        console.log("upload cleanupSelectedBy");
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  };
+
+  const tracksContainerRef = useRef(null);
+  const pianoRollRef = useRef(null);
+
+  const handleClickOutside = () => {
+    console.log("handleClickOutside");
+    if (selectedTrackId !== null && selectedTrackIndex !== null) {
+      cleanupSelectedBy();
+    }
+  };
+  useOnClickOutside(tracksContainerRef, pianoRollRef, handleClickOutside);
 
   return (
     <Container>
@@ -479,16 +549,33 @@ const AllPanels = (props: any) => {
               />
             </Logo>
           </Link>
+          <p>{projectData.name}</p>
           <TempoControls>
             <TempoInput
-              type="number"
-              // inputMode="numeric"
-              // ref={tempoRef}
+              type="text"
               value={tempo}
-              min={1}
               required
               onChange={(event) => {
-                handleTempoChange(Number(event.currentTarget.value));
+                const regex = /^[0-9\s]*$/;
+                if (regex.test(event.currentTarget.value)) {
+                  setTempo(event.currentTarget.value);
+                }
+              }}
+              onKeyPress={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  tempo !== "" &&
+                  Number(tempo) > 0 &&
+                  Number(tempo) <= 240
+                ) {
+                  handleTempoChange(Number(event.currentTarget.value));
+                  event.currentTarget.blur();
+                }
+              }}
+              onBlur={(event) => {
+                if (tempo !== "" && Number(tempo) > 0 && Number(tempo) <= 240) {
+                  handleTempoChange(Number(event.currentTarget.value));
+                }
               }}
             />
             <Button>
@@ -510,10 +597,99 @@ const AllPanels = (props: any) => {
         </HeadBarPanelPart>
         <PlayerControls>
           <ProgressInputs>
-            <ProgressInput value={`${progress.bars + 1}`} onChange={() => {}} />
             <ProgressInput
-              value={`${progress.quarters + 1}`}
-              onChange={() => {}}
+              value={`${inputProgress.bars + 1}`}
+              onChange={(event) => {
+                const regex = /^[0-9\s]*$/;
+                if (
+                  regex.test(event.currentTarget.value) &&
+                  event.currentTarget.value !== ""
+                ) {
+                  setInputProgress((prev) => ({
+                    ...prev,
+                    bars: Number(event.currentTarget.value) - 1,
+                  }));
+                } else if (event.currentTarget.value === "") {
+                  console.log("inputProgress.bars", inputProgress.bars);
+                  setInputProgress((prev) => ({
+                    ...prev,
+                    bars: inputProgress.bars,
+                  }));
+                }
+              }}
+              onKeyPress={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  inputProgress.bars.toString() !== "" &&
+                  inputProgress.bars >= 0 &&
+                  inputProgress.bars <= 240
+                ) {
+                  setProgress((prev) => ({
+                    ...prev,
+                    bars: Number(event.currentTarget.value) - 1,
+                  }));
+                  event.currentTarget.blur();
+                }
+              }}
+              onBlur={(event) => {
+                if (
+                  inputProgress.bars.toString() !== "" &&
+                  inputProgress.bars > 0 &&
+                  inputProgress.bars <= 240
+                ) {
+                  setProgress((prev) => ({
+                    ...prev,
+                    bars: Number(event.currentTarget.value) - 1,
+                  }));
+                }
+              }}
+            />
+            <ProgressInput
+              value={`${inputProgress.quarters + 1}`}
+              onChange={(event) => {
+                const regex = /^[0-9\s]*$/;
+                if (
+                  regex.test(event.currentTarget.value) &&
+                  event.currentTarget.value !== ""
+                ) {
+                  setInputProgress((prev) => ({
+                    ...prev,
+                    quarters: Number(event.currentTarget.value) - 1,
+                  }));
+                } else if (event.currentTarget.value === "") {
+                  console.log("inputProgress.quarters", inputProgress.quarters);
+                  setInputProgress((prev) => ({
+                    ...prev,
+                    quarters: inputProgress.quarters,
+                  }));
+                }
+              }}
+              onKeyPress={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  inputProgress.quarters.toString() !== "" &&
+                  inputProgress.quarters >= 0 &&
+                  inputProgress.quarters <= 110
+                ) {
+                  setProgress((prev) => ({
+                    ...prev,
+                    quarters: Number(event.currentTarget.value) - 1,
+                  }));
+                  event.currentTarget.blur();
+                }
+              }}
+              onBlur={(event) => {
+                if (
+                  inputProgress.quarters.toString() !== "" &&
+                  inputProgress.quarters > 0 &&
+                  inputProgress.quarters <= 240
+                ) {
+                  setProgress((prev) => ({
+                    ...prev,
+                    quarters: Number(event.currentTarget.value) - 1,
+                  }));
+                }
+              }}
             />
             <ProgressInput
               value={`${Math.floor(progress.sixteenths + 1)}`}
@@ -536,11 +712,23 @@ const AllPanels = (props: any) => {
             <Button onClick={handlePause}>
               <Image src="/pause-button.svg" alt={""} width={20} height={20} />
             </Button>
-            <Record
+            {/* <Record
               handlePlay={handlePlay}
               handlePause={handlePause}
               handleUploadAudio={handleUploadAudio}
-            />
+            /> */}
+            <Button onClick={handleRecord}>
+              <Image
+                src={
+                  playerStatus === "recording"
+                    ? "/record-button-activated.svg"
+                    : "/record-button.svg"
+                }
+                alt={""}
+                width={20}
+                height={20}
+              />
+            </Button>
           </PlayerButtons>
         </PlayerControls>
         <HeadBarPanelPart>
@@ -550,9 +738,9 @@ const AllPanels = (props: any) => {
                 <Loader />
               </Modal>
             )}
-            <Button>
-              <Export />
-            </Button>
+            {/* <Button> */}
+            <Export />
+            {/* </Button> */}
           </ExportControls>
 
           <Link href={"/profile"}>
@@ -590,14 +778,17 @@ const AllPanels = (props: any) => {
       >
         <Library />
         <TracksPanel>
-          <Tracks
-            progress={progress}
-            projectId={projectId}
-            handleUploadAudio={handleUploadAudio}
-            updateSelectedTrackIndex={updateSelectedTrackIndex}
-            isModalOpen={isModalOpen}
-            setIsModalOpen={setIsModalOpen}
-          />
+          <div ref={tracksContainerRef}>
+            <Tracks
+              progress={progress}
+              projectId={projectId}
+              handleUploadAudio={handleUploadAudio}
+              updateSelectedTrackIndex={updateSelectedTrackIndex}
+              isModalOpen={isModalOpen}
+              setIsModalOpen={setIsModalOpen}
+              cleanupSelectedBy={cleanupSelectedBy}
+            />
+          </div>
         </TracksPanel>
       </MainEditPanel>
       <PianoRollPanel
@@ -606,17 +797,19 @@ const AllPanels = (props: any) => {
           tracksData?.[selectedTrackIndex].type === "midi"
         }
       >
-        {tracksData &&
-          selectedTrackIndex !== null &&
-          tracksData[selectedTrackIndex].type === "midi" && (
-            <PianoRoll
-              projectId={projectId}
-              projectData={projectData}
-              tracksData={tracksData}
-              selectedTrackId={selectedTrackId}
-              selectedTrackIndex={selectedTrackIndex}
-            />
-          )}
+        <div ref={pianoRollRef}>
+          {tracksData &&
+            selectedTrackIndex !== null &&
+            tracksData[selectedTrackIndex].type === "midi" && (
+              <PianoRoll
+                projectId={projectId}
+                projectData={projectData}
+                tracksData={tracksData}
+                selectedTrackId={selectedTrackId}
+                selectedTrackIndex={selectedTrackIndex}
+              />
+            )}
+        </div>
       </PianoRollPanel>
     </Container>
   );

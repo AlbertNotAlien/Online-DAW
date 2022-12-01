@@ -36,9 +36,12 @@ import {
   TrackData,
   NoteData,
   AudioData,
+  inputProgressState,
+  AddFunctionType,
 } from "../../context/atoms";
 import { buffer } from "stream/consumers";
 import Modal from "../Modal";
+import NotificationHub from "../NotificationHub";
 
 const ExportButton = styled.a`
   color: black;
@@ -47,9 +50,64 @@ const ExportButton = styled.a`
   align-items: center;
 `;
 
+const ModalWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+  width: 300px;
+`;
+
+const EndPointTitle = styled.h2`
+  font-size: 24px;
+  font-weight: bold;
+`;
+
+const EndPointInputs = styled.div`
+  display: flex;
+  justify-content: space-between;
+  column-gap: 10px;
+`;
+
+const EndPointInput = styled.input`
+  font-size: 16px;
+  text-align: center;
+  width: 100%;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  &:focus {
+    outline: none;
+  }
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+`;
+
+const Buttons = styled.div`
+  height: 36px;
+
+  display: flex;
+  column-gap: 10px;
+`;
+const Button = styled.button`
+  font-size: 16px;
+  line-height: 18px;
+  width: 50%;
+  background-color: #6e6e6e;
+  border: none;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  &:hover {
+    filter: brightness(110%);
+  }
+`;
+
 const Export = (props: any) => {
   const projectData = useRecoilValue(projectDataState);
-  const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
+  const [tracksData, setTracksData] = useRecoilState(tracksDataState);
   const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState);
   const [isMetronome, setIsMetronome] = useRecoilState(isMetronomeState);
   const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
@@ -59,6 +117,8 @@ const Export = (props: any) => {
 
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useRecoilState(progressState);
+  const [inputProgress, setInputProgress] = useRecoilState(inputProgressState);
+
   const [isLoading, setIsLoading] = useRecoilState(isLoadingState);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -224,22 +284,22 @@ const Export = (props: any) => {
         Tone.Transport.stop();
         setPlayerStatus("paused");
         setIsExporting(false);
-
-        const chunks: any[] = [];
-        recorder.ondataavailable = (event) => chunks.push(event.data);
-        recorder.onstop = (event) => {
-          const blob = new Blob(chunks, { type: "audio/mp3" });
-          const blobUrl = window.URL.createObjectURL(blob);
-          console.log(blob);
-          // window.open(blobUrl);
-
-          const tempLink = document.createElement("a");
-          tempLink.href = blobUrl;
-          tempLink.setAttribute("download", "music.mp3");
-          tempLink.click();
-        };
       }
     }, `${exportEndPoint.bars}:${exportEndPoint.quarters}:${exportEndPoint.sixteenths}`);
+
+    const chunks: any[] = [];
+    recorder.ondataavailable = (event) => chunks.push(event.data);
+    recorder.onstop = (event) => {
+      let blob = new Blob(chunks, { type: "audio/wav; codecs=0" });
+      const blobUrl = window.URL.createObjectURL(blob);
+      console.log(blob);
+      // window.open(blobUrl);
+
+      const tempLink = document.createElement("a");
+      tempLink.href = blobUrl;
+      tempLink.setAttribute("download", "請用Chrome開啟.wav");
+      tempLink.click();
+    };
   };
 
   useEffect(() => {
@@ -251,6 +311,11 @@ const Export = (props: any) => {
           .map((element) => Number(element));
         console.log("transportPosition", transportPosition);
         setProgress({
+          bars: transportPosition[0],
+          quarters: transportPosition[1],
+          sixteenths: transportPosition[2],
+        });
+        setInputProgress({
           bars: transportPosition[0],
           quarters: transportPosition[1],
           sixteenths: transportPosition[2],
@@ -267,67 +332,23 @@ const Export = (props: any) => {
     }
   }, [instrument, playerStatus, isMetronome]);
 
-  const ModalWrapper = styled.div`
-    display: flex;
-    flex-direction: column;
-    row-gap: 10px;
-    width: 300px;
-  `;
-
-  const EndPointTitle = styled.h2`
-    font-size: 24px;
-    font-weight: bold;
-  `;
-
-  const EndPointInputs = styled.div`
-    display: flex;
-    justify-content: space-between;
-    column-gap: 10px;
-  `;
-
-  const EndPointInput = styled.input`
-    font-size: 16px;
-    text-align: center;
-    width: 100%;
-    height: 36px;
-    border-radius: 10px;
-    border: none;
-    &:focus {
-      outline: none;
-    }
-    &::-webkit-outer-spin-button,
-    &::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
-  `;
-
   const endBarsRef = useRef<HTMLInputElement | null>(null);
   const endQuartersRef = useRef<HTMLInputElement | null>(null);
   const endSixteenthsRef = useRef<HTMLInputElement | null>(null);
 
-  const Buttons = styled.div`
-    height: 36px;
+  const notificationRef = useRef<null | AddFunctionType>(null);
 
-    display: flex;
-    column-gap: 10px;
-  `;
-  const Button = styled.button`
-    font-size: 16px;
-    line-height: 18px;
-    width: 50%;
-    background-color: #6e6e6e;
-    border: none;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    &:hover {
-      filter: brightness(110%);
-    }
-  `;
+  const handleConfirmError = (message: string) => {
+    notificationRef.current?.(message);
+  };
 
   return (
     <>
+      <NotificationHub
+        notificationChildren={(add: AddFunctionType) => {
+          notificationRef.current = add;
+        }}
+      />
       {isModalOpen && (
         <Modal setIsModalOpen={setIsModalOpen}>
           <ModalWrapper>
@@ -336,8 +357,10 @@ const Export = (props: any) => {
               <EndPointInput
                 type="number"
                 placeholder="bars"
-                min={2}
+                min={1}
                 max={300}
+                defaultValue={2}
+                required
                 ref={endBarsRef}
               />
               <EndPointInput
@@ -345,6 +368,8 @@ const Export = (props: any) => {
                 placeholder="quarters"
                 min={1}
                 max={4}
+                defaultValue={1}
+                required
                 ref={endQuartersRef}
               />
               <EndPointInput
@@ -352,6 +377,8 @@ const Export = (props: any) => {
                 placeholder="sixteenths"
                 min={1}
                 max={4}
+                defaultValue={1}
+                required
                 ref={endSixteenthsRef}
               />
             </EndPointInputs>
@@ -359,7 +386,36 @@ const Export = (props: any) => {
               <Buttons>
                 <Button
                   onClick={() => {
+                    const regex = /^[0-9\s]*$/;
                     if (
+                      endBarsRef.current &&
+                      endQuartersRef.current &&
+                      endSixteenthsRef.current &&
+                      !regex.test(endBarsRef.current.value) &&
+                      !regex.test(endQuartersRef.current.value) &&
+                      !regex.test(endSixteenthsRef.current.value)
+                    ) {
+                      handleConfirmError("請輸入正確的數值");
+                    } else if (
+                      (endBarsRef.current &&
+                        Number(endBarsRef.current.value) < 1) ||
+                      (endQuartersRef.current &&
+                        Number(endQuartersRef.current.value) < 1) ||
+                      (endSixteenthsRef.current &&
+                        Number(endSixteenthsRef.current.value) < 1)
+                    ) {
+                      handleConfirmError("輸入值不得小於 1");
+                    } else if (
+                      endBarsRef.current &&
+                      endQuartersRef.current &&
+                      endSixteenthsRef.current &&
+                      endBarsRef.current.value === "1" &&
+                      endQuartersRef.current.value === "1" &&
+                      endSixteenthsRef.current.value === "1"
+                    ) {
+                      console.log("alert");
+                      handleConfirmError("輸入值不得皆為 1");
+                    } else if (
                       endBarsRef.current !== null &&
                       endQuartersRef.current !== null &&
                       endSixteenthsRef.current !== null

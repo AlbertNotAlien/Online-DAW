@@ -1,32 +1,38 @@
+import { useState, memo } from "react";
 import styled from "styled-components";
 
 import NoteRuler from "./NoteRuler";
 import Notes from "./Notes";
 import NotesPanel from "./NotesPanel";
 
+import {
+  tracksDataState,
+  projectDataState,
+  playingNoteState,
+  selectedTrackIdState,
+  selectedTrackIndexState,
+  barWidthState,
+  progressState,
+  isPlayingState,
+  isMetronomeState,
+  isLoadingState,
+  playerStatusState,
+  TrackData,
+  NoteData,
+  AudioData,
+  ClipData,
+  inputProgressState,
+  hoverMidiInfoState,
+} from "../../context/atoms";
+
 const Container = styled.div`
   display: flex;
-
-  /* width: 100vw; */
-
-  /* transition: box-shadow 0.2s ease-in-out;
-  &:hover {
-    box-shadow: 0 0 10px #00000050;
-    transition: box-shadow 0.2s ease-in-out;
-  } */
   height: 100%;
   position: relative;
   overflow: auto;
 `;
 
-// const PianoRoll = styled.div`
-//   display: flex;
-//   flex-direction: column-reverse;
-//   position: relative;
-//   height: 100%;
-// `;
-
-export default function App(props: any) {
+const PianoRoll = (props: any) => {
   const OCTAVES: number = 6;
   const NOTATIONS: string[] = [
     "C",
@@ -43,9 +49,11 @@ export default function App(props: any) {
     "B",
   ];
 
+  const [hoverNote, setHoverNote] = useState<hoverMidiInfoState | null>(null);
+
   return (
     <Container>
-      {/* <NoteRuler /> */}
+      <NoteRuler hoverNote={hoverNote} />
       <Notes
         NOTATIONS={NOTATIONS}
         selectedTrackIndex={props.selectedTrackIndex}
@@ -54,8 +62,11 @@ export default function App(props: any) {
         OCTAVES={OCTAVES}
         NOTATIONS={NOTATIONS}
         selectedTrackIndex={props.selectedTrackIndex}
-        // selectedTrackId={props.selectedTrackId}
+        setHoverNote={setHoverNote}
+        hoverNote={hoverNote}
       />
     </Container>
   );
-}
+};
+
+export default PianoRoll;

@@ -8,7 +8,25 @@ import {
   tracksDataState,
   playingNoteState,
   selectedTrackIndexState,
+  projectDataState,
+  ProjectData,
 } from "../../context/atoms";
+
+import {
+  doc,
+  collection,
+  getDoc,
+  setDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  onSnapshot,
+  DocumentData,
+  orderBy,
+} from "firebase/firestore";
+import { db } from "../../config/firebase";
+import { storage } from "../../config/firebase";
+import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 interface DraggableData {
   node: HTMLElement;
@@ -48,11 +66,9 @@ const NoteBar = styled.div<NoteBarProps>`
   height: 10px;
   background: none;
   position: absolute;
-  /* margin-left: 25px; */
   z-index: 1;
   display: flex;
   justify-content: space-between;
-  /* border: 1px solid black; */
 `;
 
 const NoteBarCenter = styled.div`
@@ -70,24 +86,83 @@ const NoteBarSide = styled.div`
 `;
 
 const Notes = (props: any) => {
-  const [tracksData, setTracksdata] = useRecoilState(tracksDataState);
+  const [tracksData, setTracksData] = useRecoilState(tracksDataState);
   const setPlayingNote = useSetRecoilState(playingNoteState);
   const selectedTrackIndex = useRecoilValue(selectedTrackIndexState);
+  const [projectData, setProjectData] =
+    useRecoilState<ProjectData>(projectDataState);
 
   const prevNoteLengthRef = useRef(0);
   const prevNoteStartIndexRef = useRef(0);
 
   // const tracksData = useRecoilValue(tracksDataState);
 
-  const handleDeleteNote = (
+  const handleDeleteNote = async (
+    notation: string,
     notationIndex: number,
     octave: number,
     startBars: number,
     startQuarters: number,
-    startSixteenths: number
+    startSixteenths: number,
+    lengthBars: number,
+    lengthQuarters: number,
+    lengthSixteenths: number
   ) => {
     console.log("handleDeleteNote");
-    if (tracksData && selectedTrackIndex) {
+    console.log("tracksData", tracksData);
+    console.log("selectedTrackIndex", selectedTrackIndex);
+    if (tracksData && selectedTrackIndex !== null) {
+      try {
+        const trackRef = doc(
+          db,
+          "projects",
+          projectData.id,
+          "tracks",
+          tracksData[selectedTrackIndex].id
+        );
+
+        // const selectedNote = {
+        //   notation: notation,
+        //   notationIndex: notationIndex,
+        //   octave: octave,
+        //   start: {
+        //     bars: startBars,
+        //     quarters: startQuarters,
+        //     sixteenths: startSixteenths,
+        //   },
+        //   length: {
+        //     bars: lengthBars,
+        //     quarters: lengthQuarters,
+        //     sixteenths: lengthSixteenths,
+        //   },
+        // };
+
+        const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
+
+        const selectedNoteIndex = prevNotes.findIndex(
+          (note) =>
+            note.notationIndex === notationIndex &&
+            note.octave === octave &&
+            note.start.bars === startBars &&
+            note.start.quarters === startQuarters &&
+            note.start.sixteenths === startSixteenths
+        );
+
+        const newClips = produce(
+          tracksData[selectedTrackIndex].clips,
+          (draft) => {
+            draft[0].notes.splice(selectedNoteIndex, 1);
+          }
+        );
+
+        console.log(newClips);
+
+        await updateDoc(trackRef, { clips: newClips });
+        console.log("info uploaded");
+      } catch (err) {
+        console.log(err);
+      }
+
       const newTracksData = produce(tracksData, (draft) => {
         draft[selectedTrackIndex].clips[0].notes = draft[
           selectedTrackIndex
@@ -102,7 +177,7 @@ const Notes = (props: any) => {
             )
         );
       });
-      setTracksdata(newTracksData);
+      setTracksData(newTracksData);
     }
   };
 
@@ -151,7 +226,7 @@ const Notes = (props: any) => {
         draftNotes.notationIndex = newNotationIndex;
         draftNotes.notation = props.NOTATIONS[newNotationIndex];
       });
-      setTracksdata(newTracksData);
+      setTracksData(newTracksData);
     }
   };
 
@@ -270,62 +345,62 @@ const Notes = (props: any) => {
         draftNotes.length.quarters = Math.floor((sumLengthSixteenths % 16) / 4);
         draftNotes.length.sixteenths = sumLengthSixteenths % 4;
       });
-      setTracksdata(newTracksData);
+      setTracksData(newTracksData);
     }
   };
 
-  const handleExtendNoteLeft = (
-    event: DraggableEvent,
-    dragElement: { x: number },
-    notationIndex: number,
-    octave: number,
-    startBars: number,
-    startQuarters: number,
-    startSixteenths: number
-  ) => {
-    if (tracksData && selectedTrackIndex) {
-      console.log("-dragElement.x", -dragElement.x);
-      const offsetSixteenths = -dragElement.x / 25;
-      const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
+  // const handleExtendNoteLeft = (
+  //   event: DraggableEvent,
+  //   dragElement: { x: number },
+  //   notationIndex: number,
+  //   octave: number,
+  //   startBars: number,
+  //   startQuarters: number,
+  //   startSixteenths: number
+  // ) => {
+  //   if (tracksData && selectedTrackIndex) {
+  //     console.log("-dragElement.x", -dragElement.x);
+  //     const offsetSixteenths = -dragElement.x / 25;
+  //     const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
 
-      const selectedNoteIndex = prevNotes.findIndex(
-        (note) =>
-          note.notationIndex === notationIndex &&
-          note.octave === octave &&
-          note.start.bars === startBars &&
-          note.start.quarters === startQuarters &&
-          note.start.sixteenths === startSixteenths
-      );
+  //     const selectedNoteIndex = prevNotes.findIndex(
+  //       (note) =>
+  //         note.notationIndex === notationIndex &&
+  //         note.octave === octave &&
+  //         note.start.bars === startBars &&
+  //         note.start.quarters === startQuarters &&
+  //         note.start.sixteenths === startSixteenths
+  //     );
 
-      const newTracksData = produce(tracksData, (draft) => {
-        const draftNotes =
-          draft[selectedTrackIndex].clips[0].notes[selectedNoteIndex];
+  //     const newTracksData = produce(tracksData, (draft) => {
+  //       const draftNotes =
+  //         draft[selectedTrackIndex].clips[0].notes[selectedNoteIndex];
 
-        const newLengthSixteenths =
-          prevNoteLengthRef.current + offsetSixteenths <= 0
-            ? 1
-            : prevNoteLengthRef.current + offsetSixteenths;
+  //       const newLengthSixteenths =
+  //         prevNoteLengthRef.current + offsetSixteenths <= 0
+  //           ? 1
+  //           : prevNoteLengthRef.current + offsetSixteenths;
 
-        draftNotes.length.bars = Math.floor(newLengthSixteenths / 16);
-        draftNotes.length.quarters = Math.floor((newLengthSixteenths % 16) / 4);
-        draftNotes.length.sixteenths = newLengthSixteenths % 4;
+  //       draftNotes.length.bars = Math.floor(newLengthSixteenths / 16);
+  //       draftNotes.length.quarters = Math.floor((newLengthSixteenths % 16) / 4);
+  //       draftNotes.length.sixteenths = newLengthSixteenths % 4;
 
-        const newStartSixteenthsIndex =
-          prevNoteStartIndexRef.current - offsetSixteenths <= 0
-            ? 0
-            : prevNoteStartIndexRef.current - offsetSixteenths;
+  //       const newStartSixteenthsIndex =
+  //         prevNoteStartIndexRef.current - offsetSixteenths <= 0
+  //           ? 0
+  //           : prevNoteStartIndexRef.current - offsetSixteenths;
 
-        const newStartSixteenths = newStartSixteenthsIndex % 4;
-        const newStartQuarters = Math.floor((newStartSixteenthsIndex % 16) / 4);
-        const newStartBars = Math.floor(newStartSixteenthsIndex / 16);
+  //       const newStartSixteenths = newStartSixteenthsIndex % 4;
+  //       const newStartQuarters = Math.floor((newStartSixteenthsIndex % 16) / 4);
+  //       const newStartBars = Math.floor(newStartSixteenthsIndex / 16);
 
-        draftNotes.start.bars = newStartBars;
-        draftNotes.start.quarters = newStartQuarters;
-        draftNotes.start.sixteenths = newStartSixteenths;
-      });
-      setTracksdata(newTracksData);
-    }
-  };
+  //       draftNotes.start.bars = newStartBars;
+  //       draftNotes.start.quarters = newStartQuarters;
+  //       draftNotes.start.sixteenths = newStartSixteenths;
+  //     });
+  //     setTracksData(newTracksData);
+  //   }
+  // };
 
   return (
     <Container>
@@ -400,7 +475,7 @@ const Notes = (props: any) => {
                   lengthQuarters={note.length.quarters}
                   lengthSixteenths={note.length.sixteenths}
                 >
-                  <Draggable
+                  {/* <Draggable
                     axis="both"
                     onStart={(
                       event: DraggableEvent,
@@ -438,17 +513,20 @@ const Notes = (props: any) => {
                     handle=".handle-NoteBarSide-Left"
                   >
                     <NoteBarSide className="handle-NoteBarSide-Left" />
-                  </Draggable>
+                  </Draggable> */}
                   <NoteBarCenter
-                    className="handle-NoteBar"
                     onDoubleClick={() => {
                       console.log("onDoubleClick handleDeleteNote");
                       handleDeleteNote(
+                        note.notation,
                         note.notationIndex,
                         note.octave,
                         note.start.bars,
                         note.start.quarters,
-                        note.start.sixteenths
+                        note.start.sixteenths,
+                        note.length.bars,
+                        note.length.quarters,
+                        note.length.sixteenths
                       );
                     }}
                   />
