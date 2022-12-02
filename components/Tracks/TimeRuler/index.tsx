@@ -47,7 +47,7 @@ const Container = styled.div`
 `;
 
 const Controls = styled.div`
-  width: 200px;
+  min-width: 200px;
   height: 100%;
   padding: 5px 20px;
   display: flex;
@@ -153,9 +153,12 @@ const TimeRuler = (props: any) => {
         id: trackId,
         isMuted: false,
         isSolo: false,
+        volume: 0,
+        pan: 0,
         selectedBy: "",
         name: "Midi",
         type: "midi",
+        createdTime: new Date(),
       };
       await setDoc(docRef, newData);
 

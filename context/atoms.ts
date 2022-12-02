@@ -54,6 +54,8 @@ export interface TrackData {
   id: string;
   isMuted: boolean;
   isSolo: boolean;
+  volume: number;
+  pan: number;
   name: string;
   type: string;
   selectedBy: string;

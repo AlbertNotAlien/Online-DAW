@@ -3,18 +3,21 @@ import { useState, useEffect, useRef, MouseEvent } from "react";
 import styled, { keyframes } from "styled-components";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import produce from "immer";
+import ReactTooltip from "react-tooltip";
 const { v4: uuidv4 } = require("uuid");
 
 import {
   doc,
   collection,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
   onSnapshot,
   DocumentData,
   orderBy,
-  getDocs,
+  query,
+  limit,
 } from "firebase/firestore";
 import { db } from "../../config/firebase";
 import { storage } from "../../config/firebase";
@@ -52,8 +55,8 @@ import Loader from "../Loader";
 import { useOnClickOutside } from "../../utils/useOnClickOutside";
 
 const Container = styled.div`
-  width: 100vw;
-  height: 100vh;
+  width: calc(100vw);
+  height: calc(100vh);
   background-color: hsl(0, 0%, 30%);
   padding: 10px;
   display: flex;
@@ -222,8 +225,6 @@ const AllPanels = (props: any) => {
   const projectId = props.projectId;
   const [barWidth, setBarWidth] = useRecoilState(barWidthState);
 
-  const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState);
-  const [isPaused, setIsPaused] = useRecoilState(isPausedState);
   const [isLoading, setIsLoading] = useRecoilState(isLoadingState);
   const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
 
@@ -246,7 +247,6 @@ const AllPanels = (props: any) => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // console.log("projectId", projectId);
   useEffect(() => {
     if (projectId) {
       const docRef = doc(db, "projects", projectId);
@@ -264,7 +264,8 @@ const AllPanels = (props: any) => {
 
   useEffect(() => {
     const colRef = collection(db, "projects", projectId, "tracks");
-    const unsubscribe = onSnapshot(colRef, (snapshot) => {
+    const q = query(colRef, orderBy("createdTime"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const newData = [] as TrackData[];
       snapshot.forEach((doc) => {
         const docData = doc.data() as TrackData;
@@ -334,7 +335,10 @@ const AllPanels = (props: any) => {
     url: string,
     isMuted: boolean,
     isSolo: boolean,
-    selectedBy: string
+    volume: number,
+    pan: number,
+    selectedBy: string,
+    createdTime: Date
   ) => {
     try {
       const trackId = uuidv4().split("-")[0];
@@ -343,8 +347,6 @@ const AllPanels = (props: any) => {
         id: trackId,
         name: name,
         type: type,
-        isMuted: isMuted,
-        isSolo: isSolo,
         clips: [
           {
             clipName: clipName,
@@ -352,7 +354,12 @@ const AllPanels = (props: any) => {
             url: url,
           },
         ],
+        isMuted: isMuted,
+        isSolo: isSolo,
+        volume: volume,
+        pan: pan,
         selectedBy: selectedBy,
+        createdTime: createdTime,
       };
       await setDoc(docRef, newData);
       console.log("info uploaded");
@@ -371,8 +378,6 @@ const AllPanels = (props: any) => {
       const docData = doc.data() as TrackData;
       newData.push(docData);
     });
-    console.log("newData", newData);
-    setTracksData(newData);
 
     if (selectedTrackIndex !== null) {
       const newSelectedTrackIndex = newData.findIndex(
@@ -411,7 +416,10 @@ const AllPanels = (props: any) => {
               url,
               false,
               false,
-              ""
+              0,
+              0,
+              "",
+              new Date()
             );
             console.log("uploadBytes");
           });
@@ -469,15 +477,8 @@ const AllPanels = (props: any) => {
 
   const cleanupSelectedBy = async () => {
     if (tracksData && selectedTrackId !== null && selectedTrackIndex !== null) {
-      const prevSelectedTrackIndex = selectedTrackIndex;
-      // setTracksData(
-      //   produce(tracksData, (draft) => {
-      //     draft[prevSelectedTrackIndex].selectedBy = "";
-      //   })
-      // );
       setSelectedTrackId(null);
       setSelectedTrackIndex(null);
-      console.log("cleanupSelectedBy");
 
       try {
         const docRef = doc(
@@ -618,7 +619,18 @@ const AllPanels = (props: any) => {
                 }
               }}
             />
+            <ReactTooltip
+              id="progressInput"
+              place="top"
+              effect="solid"
+              delayShow={1000}
+            >
+              Arrangement Position - quarters
+            </ReactTooltip>
             <ProgressInput
+              data-tip
+              data-for="progressInput"
+              data-delay-show="1000"
               value={`${inputProgress.quarters + 1}`}
               onChange={(event) => {
                 const regex = /^[0-9\s]*$/;
@@ -686,11 +698,6 @@ const AllPanels = (props: any) => {
             <Button onClick={handlePause}>
               <Image src="/pause-button.svg" alt={""} width={20} height={20} />
             </Button>
-            {/* <Record
-              handlePlay={handlePlay}
-              handlePause={handlePause}
-              handleUploadAudio={handleUploadAudio}
-            /> */}
             <Button onClick={handleRecord}>
               <Image
                 src={
@@ -712,9 +719,7 @@ const AllPanels = (props: any) => {
                 <Loader />
               </Modal>
             )}
-            {/* <Button> */}
             <Export />
-            {/* </Button> */}
           </ExportControls>
 
           <Link href={"/profile"}>
@@ -770,20 +775,19 @@ const AllPanels = (props: any) => {
           selectedTrackIndex !== null &&
           tracksData?.[selectedTrackIndex].type === "midi"
         }
+        ref={pianoRollRef}
       >
-        <div ref={pianoRollRef}>
-          {tracksData &&
-            selectedTrackIndex !== null &&
-            tracksData[selectedTrackIndex].type === "midi" && (
-              <PianoRoll
-                projectId={projectId}
-                projectData={projectData}
-                tracksData={tracksData}
-                selectedTrackId={selectedTrackId}
-                selectedTrackIndex={selectedTrackIndex}
-              />
-            )}
-        </div>
+        {tracksData &&
+          selectedTrackIndex !== null &&
+          tracksData[selectedTrackIndex].type === "midi" && (
+            <PianoRoll
+              projectId={projectId}
+              projectData={projectData}
+              tracksData={tracksData}
+              selectedTrackId={selectedTrackId}
+              selectedTrackIndex={selectedTrackIndex}
+            />
+          )}
       </PianoRollPanel>
     </Container>
   );

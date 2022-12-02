@@ -23,7 +23,6 @@ import { db } from "../../config/firebase";
 import { storage } from "../../config/firebase";
 import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuth } from "../../context/AuthContext";
-// import { useOnClickOutside } from "./useOnClickOutside";
 
 import {
   tracksDataState,
@@ -226,17 +225,23 @@ const Tracks = (props: any) => {
           trackRef.connect(channelsRef.current[index]);
         }
       });
-    } else {
-      // solo mute
-      channelsRef.current.forEach((channel, index) => {
-        if (channel.mute !== tracksData[index].isMuted) {
-          channel.mute = tracksData[index].isMuted;
-        }
-      });
-
-      // new channel
-      // remove channel
     }
+
+    channelsRef.current.forEach((channel, index) => {
+      console.log("channel.volume.value", channel.volume.value);
+      console.log("channel.pan.value", channel.pan.value);
+      console.log("tracksData[index].volume", tracksData[index].volume);
+
+      if (channel.mute !== tracksData[index].isMuted) {
+        channel.mute = tracksData[index].isMuted;
+      }
+      if (channel.volume.value !== tracksData[index].volume) {
+        channel.volume.value = tracksData[index].volume;
+      }
+      if (channel.pan.value !== tracksData[index].pan) {
+        channel.pan.value = tracksData[index].pan;
+      }
+    });
   }, [tracksData]);
 
   const playAllTracks = () => {
@@ -527,9 +532,10 @@ const Tracks = (props: any) => {
           tracksData &&
           tracksData.length > 0 &&
           tracksData.map((track, trackIndex) => {
+            console.log("trackId", track.id);
             return (
               <Track
-                key={`${track.name}-${trackIndex}`}
+                key={track.id}
                 onClick={() => {
                   handleSelectTrack(track.id, trackIndex);
                 }}

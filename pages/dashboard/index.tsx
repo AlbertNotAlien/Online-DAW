@@ -37,6 +37,7 @@ import produce from "immer";
 import Header from "../../components/Header";
 import Modal from "../../components/Modal";
 import Head from "next/head";
+import { ProjectData } from "../../context/atoms";
 
 interface ProjectInfo {
   id: string;
@@ -87,21 +88,16 @@ const Title = styled.h1`
 
 const Projects = styled.div`
   width: 100%;
-  /* height: calc(100vh - 50px - 30px - 80px); */
   display: flex;
   flex-wrap: wrap;
   column-gap: 15px;
   row-gap: 15px;
-  /* overflow: auto; */
 `;
 
 const Project = styled.div`
   width: calc((100% - 30px) / 3);
   height: 150px;
   position: relative;
-  &:hover {
-    filter: brightness(110%);
-  }
 `;
 
 const ProjectWrapper = styled.div`
@@ -112,6 +108,11 @@ const ProjectWrapper = styled.div`
   background-color: #6e6e6e;
   display: flex;
   flex-direction: column;
+  position: relative;
+
+  &:hover {
+    filter: brightness(110%);
+  }
 `;
 
 const NewProject = styled.div`
@@ -135,6 +136,7 @@ const ProjectBanner = styled.div`
   width: 100%;
   height: 75px;
   background-color: gray;
+  position: relative;
 `;
 
 const ProjectContent = styled.div`
@@ -176,14 +178,15 @@ interface ProjectModalProps {
 const ProjectOptions = styled.div<ProjectModalProps>`
   display: ${(props) => (props.isProjectModalOpen ? "flex" : "none")};
   flex-direction: column;
-  position: absolute;
   width: 100px;
   background-color: gray;
   right: 0px;
   top: 110px;
   border-radius: 10px;
   overflow: hidden;
-  z-index: 20;
+  position: absolute;
+  z-index: 2;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 `;
 
 const ProjectOption = styled.div`
@@ -274,15 +277,58 @@ const Dashboard = () => {
   // const { userId } = router.query;
   // console.log(userId);
 
+  const convertTimeStamp = (createdTime: Timestamp) => {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const dateArray = createdTime
+      ?.toDate()
+      .toLocaleString()
+      .substring(0, 10)
+      .split("/")
+      .map((date) => Number(date));
+    return `${months[dateArray[1] - 1]} ${dateArray[2]}, ${dateArray[0]}`;
+  };
+
   const onCopy = useCallback(() => {
     setCopied(true);
   }, []);
+
+  const convertTimeStampToNumber = (timestamp: Timestamp) => {
+    const timeArray = timestamp
+      ?.toDate()
+      .toLocaleString()
+      .substring(0, 10)
+      .split("/");
+    return Number(`${timeArray[0]}${timeArray[1]}${timeArray[2]}`);
+  };
 
   const getProjectsData = async () => {
     const docRef = doc(db, "users", user.uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      setUserProjectList(docSnap.data().projects);
+      const projects = docSnap.data().projects as ProjectInfo[];
+
+      const newProjects = produce(projects, (draft) => {
+        draft.sort(function (projectA: ProjectInfo, projectB: ProjectInfo) {
+          return (
+            convertTimeStampToNumber(projectA.createdTime) -
+            convertTimeStampToNumber(projectB.createdTime)
+          );
+        });
+      });
+      setUserProjectList(newProjects);
     } else {
       console.log("No such document!");
     }
@@ -318,8 +364,11 @@ const Dashboard = () => {
         isMuted: false,
         isSolo: false,
         selectedBy: "",
+        volume: 0,
+        pan: 0,
         name: "Midi",
         type: "midi",
+        createdTime: new Date(),
       };
       await setDoc(docRef, newData);
     } catch (err) {
@@ -327,7 +376,7 @@ const Dashboard = () => {
     }
   };
 
-  const addNewProject = async (projectName: string) => {
+  const addNewProject = async (projectName: string, projectBpm: number) => {
     let projectId = "";
     const createdTime = new Date();
 
@@ -338,7 +387,7 @@ const Dashboard = () => {
       const newData = {
         id: docRef.id,
         name: projectName,
-        tempo: 60,
+        tempo: projectBpm,
         ownerId: user.uid,
         ownerName: user.displayName,
         createdTime: createdTime,
@@ -360,7 +409,7 @@ const Dashboard = () => {
       const newData = {
         id: projectId,
         name: projectName,
-        tempo: 60,
+        tempo: projectBpm,
         ownerId: user.uid,
         ownerName: user.displayName,
         createdTime: createdTime,
@@ -403,30 +452,6 @@ const Dashboard = () => {
     getProjectsData();
   };
 
-  const convertTimeStamp = (createdTime: Timestamp) => {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    const dateArray = createdTime
-      ?.toDate()
-      .toLocaleString()
-      .substring(0, 10)
-      .split("/")
-      .map((date) => Number(date));
-    return `${months[dateArray[1]]} ${dateArray[2]}, ${dateArray[0]}`;
-  };
-
   const handleProjectMenuIcon = (projectIndex: number) => {
     setIsProjectModalOpen(
       produce(isProjectModalOpen, (draft) => {
@@ -436,6 +461,7 @@ const Dashboard = () => {
   };
 
   const newProjectNameRef = useRef<HTMLInputElement | null>(null);
+  const newProjectBpmRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <>
@@ -449,17 +475,36 @@ const Dashboard = () => {
         {isModalOpen && (
           <Modal setIsModalOpen={setIsModalOpen}>
             <ProjectModalWrapper>
-              <ProjectModalTitle>New Project Name</ProjectModalTitle>
+              <ProjectModalTitle>New Project</ProjectModalTitle>
               <ProjectModalInput
                 type="text"
+                name="newProjectName"
+                placeholder="project name"
+                maxLength={20}
                 ref={newProjectNameRef}
+              ></ProjectModalInput>
+              <ProjectModalInput
+                type="text"
+                name="bpm"
+                placeholder="project bpm"
+                maxLength={3}
+                ref={newProjectBpmRef}
               ></ProjectModalInput>
               <ProjectModalButtons>
                 <ProjectModalButton
                   onClick={() => {
-                    if (newProjectNameRef.current) {
-                      console.log(newProjectNameRef.current.value);
-                      addNewProject(newProjectNameRef.current.value);
+                    const regex = /^[0-9\s]*$/;
+                    if (
+                      newProjectNameRef.current &&
+                      newProjectBpmRef.current &&
+                      newProjectNameRef.current.value.length > 0 &&
+                      newProjectBpmRef.current.value.length > 0 &&
+                      regex.test(newProjectBpmRef.current.value)
+                    ) {
+                      addNewProject(
+                        newProjectNameRef.current.value,
+                        Number(newProjectBpmRef.current.value)
+                      );
                       setIsModalOpen(false);
                     }
                   }}
@@ -534,7 +579,7 @@ const Dashboard = () => {
                     <ProjectContent>
                       <ProjectTitle>
                         <Link href={`/project/${project.id}`}>
-                          <ProjectName>{project.name}</ProjectName>
+                          <ProjectName>{project?.name}</ProjectName>
                         </Link>
                         <ProjectMenuIcon
                           onClick={() => {

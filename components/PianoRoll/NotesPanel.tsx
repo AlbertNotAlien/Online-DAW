@@ -131,16 +131,15 @@ const SixteenthBlock = styled(MidiBlock)<SixteenthBlockProps>`
 `;
 
 const NotesPanel = (props: any) => {
+  console.log("NotesPanel");
   const BARS: number = 8;
 
-  const selectedTrackIndex = useRecoilValue(selectedTrackIndexState);
-
-  const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
-  const [isMouseDownPianoRoll, setIsMouseDownPianoRoll] = useState(false);
-
+  // const selectedTrackIndex = useRecoilValue(selectedTrackIndexState);
   const [projectData, setProjectData] =
     useRecoilState<ProjectData>(projectDataState);
   const [tracksData, setTracksData] = useRecoilState(tracksDataState);
+  const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
+  const [isMouseDownPianoRoll, setIsMouseDownPianoRoll] = useState(false);
 
   const handleAddNote = async (
     notation: string,
@@ -152,10 +151,6 @@ const NotesPanel = (props: any) => {
     selectedTrackIndex: number
   ) => {
     console.log("handleAddNote");
-
-    // console.log("projectData", projectData.id);
-    // console.log("selectedTrackIndex", selectedTrackIndex);
-    // console.log("selectedTrackID", tracksData[selectedTrackIndex].id);
 
     if (tracksData && selectedTrackIndex !== null) {
       try {
@@ -178,7 +173,7 @@ const NotesPanel = (props: any) => {
         const newTracksData = produce(tracksData, (draft) => {
           draft[selectedTrackIndex].clips[0].notes.push(newNote);
         });
-        console.log(newTracksData);
+        console.log(tracksData);
 
         setTracksData(newTracksData);
 
@@ -291,4 +286,4 @@ const NotesPanel = (props: any) => {
   );
 };
 
-export default NotesPanel;
+export default memo(NotesPanel);

@@ -23,12 +23,17 @@ import {
   ClipData,
   inputProgressState,
   hoverMidiInfoState,
+  ProjectData,
 } from "../../context/atoms";
+import produce from "immer";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../config/firebase";
+import { useRecoilState } from "recoil";
 
 const Container = styled.div`
   display: flex;
   height: 100%;
-  width: 500px;
+  /* width: 500px; */
   width: 100%;
   position: relative;
   overflow: auto;
@@ -52,8 +57,70 @@ const NOTATIONS: string[] = [
 
 const PianoRoll = (props: any) => {
   const [hoverNote, setHoverNote] = useState<hoverMidiInfoState | null>(null);
+  const [projectData, setProjectData] =
+    useRecoilState<ProjectData>(projectDataState);
+  const [tracksData, setTracksData] = useRecoilState(tracksDataState);
 
   console.log("PianoRoll");
+
+  // const handleAddNote = async (
+  //   notation: string,
+  //   notationIndex: number,
+  //   octave: number,
+  //   startBars: number,
+  //   startQuarters: number,
+  //   startSixteenths: number,
+  //   selectedTrackIndex: number
+  // ) => {
+  //   console.log("handleAddNote");
+
+  //   if (tracksData && selectedTrackIndex !== null) {
+  //     try {
+  //       const newNote = {
+  //         notation: notation,
+  //         notationIndex: notationIndex,
+  //         octave: octave,
+  //         start: {
+  //           bars: startBars,
+  //           quarters: startQuarters,
+  //           sixteenths: startSixteenths,
+  //         },
+  //         length: {
+  //           bars: 0,
+  //           quarters: 0,
+  //           sixteenths: 1,
+  //         },
+  //       };
+
+  //       const newTracksData = produce(tracksData, (draft) => {
+  //         draft[selectedTrackIndex].clips[0].notes.push(newNote);
+  //       });
+  //       console.log(newTracksData);
+
+  //       setTracksData(newTracksData);
+
+  //       const trackRef = doc(
+  //         db,
+  //         "projects",
+  //         projectData.id,
+  //         "tracks",
+  //         tracksData[selectedTrackIndex].id
+  //       );
+
+  //       const newClips = produce(
+  //         tracksData[selectedTrackIndex].clips,
+  //         (draft) => {
+  //           draft[0].notes.push(newNote);
+  //         }
+  //       );
+
+  //       await updateDoc(trackRef, { clips: newClips });
+  //       console.log("info uploaded");
+  //     } catch (err) {
+  //       console.log(err);
+  //     }
+  //   }
+  // };
 
   return (
     <Container>
@@ -67,6 +134,7 @@ const PianoRoll = (props: any) => {
         NOTATIONS={NOTATIONS}
         selectedTrackIndex={props.selectedTrackIndex}
         setHoverNote={setHoverNote}
+        // handleAddNote={handleAddNote}
       />
     </Container>
   );

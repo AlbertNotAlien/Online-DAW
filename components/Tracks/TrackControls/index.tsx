@@ -130,6 +130,19 @@ const RangeValue = styled.input`
     -webkit-appearance: none;
     margin: 0;
   }
+
+  /* -webkit-appearance: none;
+  overflow: hidden;
+  outline-style: solid;
+  outline-color: white;
+  background: none;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    position: relative;
+    background: #f22;
+    border-radius: 50%;
+  } */
 `;
 
 interface IsSoloButtonProps {
@@ -153,6 +166,13 @@ const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
 const TrackControls = (props: any) => {
   const projectId = props.projectId;
   const [tracksData, setTracksData] = useRecoilState(tracksDataState);
+  const [volume, setVolume] = useState(0);
+  const [pan, setPan] = useState(0);
+
+  useEffect(() => {
+    setVolume(tracksData[props.trackIndex].volume);
+    setPan(tracksData[props.trackIndex].pan);
+  }, [tracksData]);
 
   const handleTrackMute = async (
     isMuted: boolean,
@@ -216,26 +236,67 @@ const TrackControls = (props: any) => {
     console.log("-----");
   };
 
-  const [volume, setVolume] = useState(0);
-  const [pan, setPan] = useState(0);
+  const handleTrackVolume = async (
+    volume: number,
+    trackId: string,
+    trackIndex: number
+  ) => {
+    console.log("projectId", projectId);
+    console.log("trackId", trackId);
+
+    setTracksData(
+      produce(tracksData, (draft) => {
+        draft[trackIndex].volume = volume;
+      })
+    );
+
+    props.channelsRef.current[trackIndex].volume.value = volume;
+
+    try {
+      const trackRef = doc(db, "projects", projectId, "tracks", trackId);
+      const newData = {
+        volume: volume,
+      };
+      await updateDoc(trackRef, newData);
+      console.log("info updated");
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleTrackPan = async (
+    pan: number,
+    trackId: string,
+    trackIndex: number
+  ) => {
+    console.log("projectId", projectId);
+    console.log("trackId", trackId);
+
+    setTracksData(
+      produce(tracksData, (draft) => {
+        draft[props.trackIndex].pan = pan;
+      })
+    );
+
+    props.channelsRef.current[trackIndex].pan.value = pan;
+
+    try {
+      const trackRef = doc(db, "projects", projectId, "tracks", trackId);
+      const newData = {
+        pan: pan,
+      };
+      await updateDoc(trackRef, newData);
+      console.log("info updated");
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
     <>
       <Container>
         <TrackTitle>{props.track.name}</TrackTitle>
         <TrackButtons>
-          {/* <IsSoloButton
-            onClick={() => {
-              handleTrackSolo(
-                props.track.isSolo,
-                props.track.id,
-                props.trackIndex
-              );
-            }}
-            isSolo={props.track.isSolo}
-          >
-            Solo
-          </IsSoloButton> */}
           <IsMutedButton
             onClick={() => {
               handleTrackMute(props.isMuted, props.track.id, props.trackIndex);
@@ -248,11 +309,6 @@ const TrackControls = (props: any) => {
         {props.channelsRef.current !== false && (
           <RangePanels>
             <RangePanel>
-              {/* <VolumeControl
-              // onMouseDown={(event) => {
-              //   handleVolumeChange(event);
-              // }}
-              /> */}
               <RangeValue
                 type="range"
                 value={volume}
@@ -265,25 +321,11 @@ const TrackControls = (props: any) => {
                       ? 0
                       : Math.floor(Number(event.target.value));
                   setVolume(value);
-                  props.channelsRef.current[props.trackIndex].volume.value =
-                    value;
+                  handleTrackVolume(value, props.track.id, props.trackIndex);
                 }}
-                // type="number"
-                // value={volume}
-                // onChange={(event) => {
-                //   console.log(event.target.value);
-                //   const value =
-                //     event.target.value === null
-                //       ? 0
-                //       : Math.floor(Number(event.target.value));
-                //   setVolume(value);
-                //   props.channelsRef.current[props.trackIndex].volume.value =
-                //     value;
-                // }}
               />
             </RangePanel>
             <RangePanel>
-              {/* <PanControl /> */}
               <RangeValue
                 type="range"
                 value={pan * 100}
@@ -291,11 +333,10 @@ const TrackControls = (props: any) => {
                 max={100}
                 step={0.1}
                 onChange={(event) => {
-                  // console.log(event.target.value);
                   const value = Number(event.target.value) / 100;
                   console.log(value);
                   setPan(value);
-                  props.channelsRef.current[props.trackIndex].pan.value = value;
+                  handleTrackPan(value, props.track.id, props.trackIndex);
                 }}
               />
             </RangePanel>

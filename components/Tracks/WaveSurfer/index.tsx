@@ -53,7 +53,7 @@ const WaveSurfer = (props: any) => {
       // console.log("props.trackData", props.trackData.clips[0].url);
 
       wavesurfer.current = WaveSurfer.create(options);
-      console.log("wavesurfer", wavesurfer.current);
+      // console.log("wavesurfer", wavesurfer.current);
       wavesurfer.current.load(clipUrl);
     };
 
@@ -67,11 +67,7 @@ const WaveSurfer = (props: any) => {
     };
   }, [clipUrl]);
 
-  return (
-    <>
-      <Clip id="waveform" ref={waveformRef} />
-    </>
-  );
+  return <Clip id="waveform" ref={waveformRef} />;
 };
 
 export default WaveSurfer;
