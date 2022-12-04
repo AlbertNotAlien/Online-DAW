@@ -49,7 +49,7 @@ const Container = styled.div`
 const Controls = styled.div`
   min-width: 200px;
   height: 100%;
-  padding: 5px 20px;
+  padding: 5px 5px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -204,10 +204,27 @@ const TimeRuler = (props: any) => {
                   multiple={false}
                   ref={uploadRef}
                   onInput={() => {
-                    console.log("onInput1");
+                    const startTime = {
+                      bars: progress.bars,
+                      quarters: progress.quarters,
+                      sixteenths: progress.sixteenths,
+                    };
+
                     if (uploadRef.current?.files) {
-                      props.handleUploadAudio(uploadRef.current?.files[0]);
-                      console.log("onInput2");
+                      const trackId = uuidv4().split("-")[0];
+                      const newTrackName = `Audio ${tracksData.length + 1}`;
+                      const newFileName = props.appendToFilename(
+                        uploadRef.current?.files[0].name
+                      );
+
+                      props.handleUploadAudio(
+                        uploadRef.current?.files[0],
+                        "audio",
+                        startTime,
+                        trackId, // new track id,
+                        newTrackName,
+                        newFileName
+                      );
                       props.setIsModalOpen(false);
                     }
                   }}

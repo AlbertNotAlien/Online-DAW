@@ -50,11 +50,11 @@ const WaveSurfer = (props: any) => {
       const WaveSurfer = (await import("wavesurfer.js")).default;
       const options: Options = formWaveSurferOptions(waveformRef.current);
 
-      // console.log("props.trackData", props.trackData.clips[0].url);
-
       wavesurfer.current = WaveSurfer.create(options);
-      // console.log("wavesurfer", wavesurfer.current);
-      wavesurfer.current.load(clipUrl);
+
+      if (clipUrl) {
+        wavesurfer.current.load(clipUrl);
+      }
     };
 
     setTimeout(create, 10);

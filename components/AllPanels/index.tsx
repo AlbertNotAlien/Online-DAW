@@ -62,6 +62,7 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   row-gap: 10px;
+  justify-content: space-between;
 `;
 
 const HeadBarPanel = styled.div`
@@ -76,17 +77,32 @@ const HeadBarPanel = styled.div`
   position: relative;
 `;
 
+const HeadBarPanelParts = styled.div`
+  height: 100%;
+  width: 100%;
+  column-gap: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
 const HeadBarPanelPart = styled.div`
   height: 100%;
   display: flex;
   align-items: center;
+  column-gap: 10px;
+`;
+
+const HeadBarDivider = styled.div`
+  height: 80%;
+  border-left: 1px solid #494949;
 `;
 
 const Logo = styled.div`
   position: relative;
   display: flex;
   align-items: center;
-  width: calc(200px - 20px + 10px);
+  width: calc(200px - 10px);
 `;
 
 const Profile = styled.div`
@@ -105,6 +121,8 @@ const PlayerControls = styled.div`
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+  background-color: #323232;
+  border-radius: 10px;
 `;
 
 const PlayerButtons = styled.div`
@@ -117,19 +135,22 @@ const TempoControls = styled.div`
   display: flex;
   align-items: center;
   height: 100%;
+  background-color: #323232;
+  border-radius: 10px;
 `;
 
 const ExportControls = styled.div`
   display: flex;
   align-items: center;
   height: 100%;
+  background-color: #323232;
+  border-radius: 10px;
 `;
 
 const TempoInput = styled.input`
-  width: 50px;
+  width: 40px;
   text-align: center;
   border: none;
-  border-radius: 3px;
   height: 100%;
   color: white;
   background-color: #323232;
@@ -152,6 +173,7 @@ const ProgressInputs = styled.div`
   border-radius: 10px;
   width: 100px;
   justify-content: center;
+  align-items: center;
 `;
 
 const ProgressInput = styled.input`
@@ -203,7 +225,9 @@ const Button = styled.button`
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   height: 100%;
+  width: 40px;
   &:hover {
     transform: scale(110%);
   }
@@ -212,11 +236,47 @@ const Button = styled.button`
   }
 `;
 
+const TracksPanelScroll = styled.div`
+  overflow: auto;
+
+  &::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  &::-webkit-scrollbar-button {
+    display: none;
+  }
+
+  &::-webkit-scrollbar-track-piece {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    background-color: #727272;
+  }
+
+  &::-webkit-scrollbar-track {
+    box-shadow: transparent;
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+`;
+
 const TracksPanel = styled.div`
   display: flex;
   flex-direction: column;
   row-gap: 10px;
-  overflow: auto;
+`;
+
+const ProjectNameWrapper = styled.p`
+  font-size: 14px;
+  text-align: center;
+  padding: 0px 10px;
 `;
 
 const AllPanels = (props: any) => {
@@ -262,7 +322,11 @@ const AllPanels = (props: any) => {
     }
   }, []);
 
+  console.log("tracksData", tracksData);
+
   useEffect(() => {
+    if (!projectId) return;
+    console.log("useEffect");
     const colRef = collection(db, "projects", projectId, "tracks");
     const q = query(colRef, orderBy("createdTime"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -274,8 +338,6 @@ const AllPanels = (props: any) => {
       setTracksData(newData);
     });
 
-    console.log("unsubscribe");
-
     return () => {
       unsubscribe();
     };
@@ -283,7 +345,6 @@ const AllPanels = (props: any) => {
 
   const handlePlay = () => {
     setPlayerStatus("playing");
-    console.log("handlePlay");
   };
 
   const handlePause = () => {
@@ -327,6 +388,26 @@ const AllPanels = (props: any) => {
     }
   };
 
+  const updateSelectedTrackIndex = async () => {
+    const colRef = collection(db, "projects", projectId, "tracks");
+    const querySnapshot = await getDocs(colRef);
+
+    const newData = [] as TrackData[];
+    querySnapshot.forEach((doc) => {
+      const docData = doc.data() as TrackData;
+      newData.push(docData);
+    });
+
+    if (selectedTrackIndex !== null) {
+      const newSelectedTrackIndex = newData.findIndex(
+        (track) => track.id === selectedTrackId
+      );
+      newSelectedTrackIndex === -1
+        ? setSelectedTrackIndex(null)
+        : setSelectedTrackIndex(newSelectedTrackIndex);
+    }
+  };
+
   const uploadFileInfo = async (
     name: string,
     type: string,
@@ -338,13 +419,14 @@ const AllPanels = (props: any) => {
     volume: number,
     pan: number,
     selectedBy: string,
-    createdTime: Date
+    createdTime: Date,
+    trackId: string
   ) => {
+    console.log("uploadFileInfo");
     try {
-      const trackId = uuidv4().split("-")[0];
       const docRef = doc(db, "projects", projectId, "tracks", trackId);
       const newData = {
-        id: trackId,
+        id: trackId, ///////////////////////////////////////////////////////////////////////////////////////////////
         name: name,
         type: type,
         clips: [
@@ -361,57 +443,53 @@ const AllPanels = (props: any) => {
         selectedBy: selectedBy,
         createdTime: createdTime,
       };
-      await setDoc(docRef, newData);
+      if (recordFile && type === "record") {
+        console.log("trackId", trackId);
+        console.log("updateDoc");
+        await updateDoc(docRef, newData);
+      } else {
+        console.log("setDoc");
+        await setDoc(docRef, newData);
+      }
       console.log("info uploaded");
     } catch (err) {
       console.log(err);
     }
   };
 
-  const updateSelectedTrackIndex = async () => {
-    const colRef = collection(db, "projects", projectId, "tracks");
-    const querySnapshot = await getDocs(colRef);
-
-    const newData = [] as TrackData[];
-    querySnapshot.forEach((doc) => {
-      console.log(doc.id, doc.data());
-      const docData = doc.data() as TrackData;
-      newData.push(docData);
-    });
-
-    if (selectedTrackIndex !== null) {
-      const newSelectedTrackIndex = newData.findIndex(
-        (track) => track.id === selectedTrackId
-      );
-      newSelectedTrackIndex === -1
-        ? setSelectedTrackIndex(null)
-        : setSelectedTrackIndex(newSelectedTrackIndex);
-    }
-  };
-
-  const handleUploadAudio = (file: any) => {
+  const handleUploadAudio = (
+    file: any,
+    type: string,
+    startPoint: {
+      bars: number;
+      quarters: number;
+      sixteenths: number;
+    },
+    trackId: string,
+    trackName: string,
+    fileName: string
+  ) => {
     setIsLoading(true);
 
-    if (file && tracksData) {
-      const newTrackName = `Audio ${tracksData.length + 1}`;
-      const newFileName = appendToFilename(file.name || "record");
-      const newStartPoint = { bars: 0, quarters: 0, sixteenths: 0 };
+    if (file !== null && tracksData) {
+      const newStartPoint = {
+        bars: startPoint.bars,
+        quarters: startPoint.quarters,
+        sixteenths: startPoint.sixteenths,
+      };
 
-      const audioRef = ref(
-        storage,
-        `projects/${projectId}/audios/${newFileName}`
-      );
+      const audioRef = ref(storage, `projects/${projectId}/audios/${fileName}`);
 
       uploadBytes(audioRef, file)
         .then((snapshot) => {
           getDownloadURL(snapshot.ref).then(async (url) => {
             setAudioList((prev) => [...prev, url]);
-            console.log("url", url);
 
+            // const trackId = uuidv4().split("-")[0];
             await uploadFileInfo(
-              newTrackName,
-              "audio",
-              newFileName,
+              trackName,
+              type,
+              fileName,
               newStartPoint,
               url,
               false,
@@ -419,11 +497,10 @@ const AllPanels = (props: any) => {
               0,
               0,
               "",
-              new Date()
+              new Date(),
+              trackId
             );
-            console.log("uploadBytes");
           });
-
           updateSelectedTrackIndex();
         })
 
@@ -454,26 +531,73 @@ const AllPanels = (props: any) => {
   useEffect(() => {
     setBarWidth((120 / projectData.tempo) * 10);
     setTempo(projectData.tempo.toString());
-    console.log("useEffect");
   }, [projectData]);
 
-  useEffect(() => {
-    if (recordFile) {
-      console.log(recordFile);
-      handleUploadAudio(recordFile);
-    }
-  }, [recordFile]);
+  const recordStartTimeRef = useRef({ bars: 0, quarters: 0, sixteenths: 0 });
+
+  const newRecordTrackIdRef = useRef("");
+  const newRecordTrackNameRef = useRef("");
+  const newRecordFileNameRef = useRef("");
 
   const handleRecord = () => {
+    console.log("handleRecord");
     console.log("isRecording", isRecording);
     if (!isRecording && typeof startRecording === "function") {
+      newRecordTrackIdRef.current = uuidv4().split("-")[0];
+      recordStartTimeRef.current = {
+        bars: progress.bars,
+        quarters: progress.quarters,
+        sixteenths: progress.sixteenths,
+      };
+
+      newRecordTrackNameRef.current = `Record ${tracksData.length + 1}`;
+      newRecordFileNameRef.current = appendToFilename("record");
+      const newStartPoint = {
+        bars: progress.bars,
+        quarters: progress.quarters,
+        sixteenths: progress.sixteenths,
+      };
+      const createdTime = new Date();
+      console.log("newRecordTrackIdRef.current", newRecordTrackIdRef.current);
+
+      uploadFileInfo(
+        newRecordTrackNameRef.current,
+        "record",
+        newRecordFileNameRef.current,
+        newStartPoint,
+        "",
+        false,
+        false,
+        0,
+        0,
+        "",
+        createdTime,
+        newRecordTrackIdRef.current
+      );
+
       startRecording();
       setPlayerStatus("recording");
     } else if (isRecording && typeof stopRecording === "function") {
+      console.log("stopRecording");
+      console.log("recordFile", recordFile);
       stopRecording();
       setPlayerStatus("paused");
     }
   };
+
+  useEffect(() => {
+    if (recordFile) {
+      handleUploadAudio(
+        recordFile,
+        "record",
+        recordStartTimeRef.current,
+        newRecordTrackIdRef.current, // new track id
+        newRecordTrackNameRef.current,
+        newRecordFileNameRef.current
+      );
+      console.log("handleUploadAudio");
+    }
+  }, [recordFile]);
 
   const cleanupSelectedBy = async () => {
     if (tracksData && selectedTrackId !== null && selectedTrackIndex !== null) {
@@ -503,7 +627,6 @@ const AllPanels = (props: any) => {
   const pianoRollRef = useRef(null);
 
   const handleClickOutside = () => {
-    console.log("handleClickOutside");
     if (selectedTrackId !== null && selectedTrackIndex !== null) {
       cleanupSelectedBy();
     }
@@ -513,241 +636,264 @@ const AllPanels = (props: any) => {
   return (
     <Container>
       <HeadBarPanel>
-        <HeadBarPanelPart>
-          <Link href={"/"}>
-            <Logo>
-              <Image
-                src="/logo-combine.svg"
-                alt="logo"
-                width={84.084 * 1.5}
-                height={22.555 * 1.5}
-              />
-            </Logo>
-          </Link>
-          <p>{projectData.name}</p>
-          <TempoControls>
-            <TempoInput
-              type="text"
-              value={tempo}
-              required
-              onChange={(event) => {
-                const regex = /^[0-9\s]*$/;
-                if (regex.test(event.currentTarget.value)) {
-                  setTempo(event.currentTarget.value);
-                }
-              }}
-              onKeyPress={(event) => {
-                if (
-                  event.key === "Enter" &&
-                  tempo !== "" &&
-                  Number(tempo) > 0 &&
-                  Number(tempo) <= 240
-                ) {
-                  handleTempoChange(Number(event.currentTarget.value));
-                  event.currentTarget.blur();
-                }
-              }}
-              onBlur={(event) => {
-                if (tempo !== "" && Number(tempo) > 0 && Number(tempo) <= 240) {
-                  handleTempoChange(Number(event.currentTarget.value));
-                }
-              }}
+        <Link href={"/"}>
+          <Logo>
+            <Image
+              src="/logo-combine.svg"
+              alt="logo"
+              width={84.084 * 1.5}
+              height={22.555 * 1.5}
             />
-            <Button>
-              <Image
-                src={
-                  isMetronome
-                    ? "/metronome-button-activated.svg"
-                    : "/metronome-button.svg"
-                }
-                alt={""}
-                width={20}
-                height={20}
-                onClick={() => {
-                  setIsMetronome(!isMetronome);
+          </Logo>
+        </Link>
+        <HeadBarPanelParts>
+          <HeadBarPanelPart>
+            <TempoControls>
+              <TempoInput
+                type="text"
+                value={tempo}
+                required
+                onChange={(event) => {
+                  const regex = /^[0-9\s]*$/;
+                  if (regex.test(event.currentTarget.value)) {
+                    setTempo(event.currentTarget.value);
+                  }
+                }}
+                onKeyPress={(event) => {
+                  if (
+                    event.key === "Enter" &&
+                    tempo !== "" &&
+                    Number(tempo) > 0 &&
+                    Number(tempo) <= 240
+                  ) {
+                    handleTempoChange(Number(event.currentTarget.value));
+                    event.currentTarget.blur();
+                  }
+                }}
+                onBlur={(event) => {
+                  if (
+                    tempo !== "" &&
+                    Number(tempo) > 0 &&
+                    Number(tempo) <= 240
+                  ) {
+                    handleTempoChange(Number(event.currentTarget.value));
+                  }
                 }}
               />
-            </Button>
-          </TempoControls>
-        </HeadBarPanelPart>
-        <PlayerControls>
-          <ProgressInputs>
-            <ProgressInput
-              value={`${inputProgress.bars + 1}`}
-              onChange={(event) => {
-                const regex = /^[0-9\s]*$/;
-                if (
-                  regex.test(event.currentTarget.value) &&
-                  event.currentTarget.value !== ""
-                ) {
-                  setInputProgress((prev) => ({
-                    ...prev,
-                    bars: Number(event.currentTarget.value) - 1,
-                  }));
-                } else if (event.currentTarget.value === "") {
-                  console.log("inputProgress.bars", inputProgress.bars);
-                  setInputProgress((prev) => ({
-                    ...prev,
-                    bars: inputProgress.bars,
-                  }));
-                }
-              }}
-              onKeyPress={(event) => {
-                if (
-                  event.key === "Enter" &&
-                  inputProgress.bars.toString() !== "" &&
-                  inputProgress.bars >= 0 &&
-                  inputProgress.bars <= 240
-                ) {
-                  setProgress((prev) => ({
-                    ...prev,
-                    bars: Number(event.currentTarget.value) - 1,
-                  }));
-                  event.currentTarget.blur();
-                }
-              }}
-              onBlur={(event) => {
-                if (
-                  inputProgress.bars.toString() !== "" &&
-                  inputProgress.bars > 0 &&
-                  inputProgress.bars <= 240
-                ) {
-                  setProgress((prev) => ({
-                    ...prev,
-                    bars: Number(event.currentTarget.value) - 1,
-                  }));
-                }
-              }}
-            />
-            <ReactTooltip
-              id="progressInput"
-              place="top"
-              effect="solid"
-              delayShow={1000}
-            >
-              Arrangement Position - quarters
-            </ReactTooltip>
-            <ProgressInput
-              data-tip
-              data-for="progressInput"
-              data-delay-show="1000"
-              value={`${inputProgress.quarters + 1}`}
-              onChange={(event) => {
-                const regex = /^[0-9\s]*$/;
-                if (
-                  regex.test(event.currentTarget.value) &&
-                  event.currentTarget.value !== ""
-                ) {
-                  setInputProgress((prev) => ({
-                    ...prev,
-                    quarters: Number(event.currentTarget.value) - 1,
-                  }));
-                } else if (event.currentTarget.value === "") {
-                  console.log("inputProgress.quarters", inputProgress.quarters);
-                  setInputProgress((prev) => ({
-                    ...prev,
-                    quarters: inputProgress.quarters,
-                  }));
-                }
-              }}
-              onKeyPress={(event) => {
-                if (
-                  event.key === "Enter" &&
-                  inputProgress.quarters.toString() !== "" &&
-                  inputProgress.quarters >= 0 &&
-                  inputProgress.quarters <= 110
-                ) {
-                  setProgress((prev) => ({
-                    ...prev,
-                    quarters: Number(event.currentTarget.value) - 1,
-                  }));
-                  event.currentTarget.blur();
-                }
-              }}
-              onBlur={(event) => {
-                if (
-                  inputProgress.quarters.toString() !== "" &&
-                  inputProgress.quarters > 0 &&
-                  inputProgress.quarters <= 240
-                ) {
-                  setProgress((prev) => ({
-                    ...prev,
-                    quarters: Number(event.currentTarget.value) - 1,
-                  }));
-                }
-              }}
-            />
-            <ProgressInput
-              value={`${Math.floor(progress.sixteenths + 1)}`}
-              onChange={() => {}}
-            />
-          </ProgressInputs>
-          <PlayerButtons>
-            <Button onClick={handlePlay}>
-              <Image
-                src={
-                  playerStatus === "playing"
-                    ? "/play-button-activated.svg"
-                    : "/play-button.svg"
-                }
-                alt={""}
-                width={20}
-                height={20}
-              />
-            </Button>
-            <Button onClick={handlePause}>
-              <Image src="/pause-button.svg" alt={""} width={20} height={20} />
-            </Button>
-            <Button onClick={handleRecord}>
-              <Image
-                src={
-                  playerStatus === "recording"
-                    ? "/record-button-activated.svg"
-                    : "/record-button.svg"
-                }
-                alt={""}
-                width={20}
-                height={20}
-              />
-            </Button>
-          </PlayerButtons>
-        </PlayerControls>
-        <HeadBarPanelPart>
-          <ExportControls>
-            {isLoading && (
-              <Modal setIsModalOpen={setIsModalOpen}>
-                <Loader />
-              </Modal>
-            )}
-            <Export />
-          </ExportControls>
-
-          <Link href={"/profile"}>
-            <Profile>
-              {user ? (
-                <Avatar
-                  size={30}
-                  name="Maria Mitchell"
-                  variant="beam"
-                  colors={[
-                    "#92A1C6",
-                    "#146A7C",
-                    "#F0AB3D",
-                    "#C271B4",
-                    "#C20D90",
-                  ]}
-                />
-              ) : (
+              <HeadBarDivider />
+              <Button>
                 <Image
-                  src="/profile.svg"
-                  alt="profile"
-                  width={30}
-                  height={30}
+                  src={
+                    isMetronome
+                      ? "/metronome-button-activated.svg"
+                      : "/metronome-button.svg"
+                  }
+                  alt={""}
+                  width={20}
+                  height={20}
+                  onClick={() => {
+                    setIsMetronome(!isMetronome);
+                  }}
                 />
+              </Button>
+            </TempoControls>
+          </HeadBarPanelPart>
+          <PlayerControls>
+            <ProgressInputs>
+              <ProgressInput
+                value={`${inputProgress.bars + 1}`}
+                onChange={(event) => {
+                  const regex = /^[0-9\s]*$/;
+                  if (
+                    regex.test(event.currentTarget.value) &&
+                    event.currentTarget.value !== ""
+                  ) {
+                    setInputProgress((prev) => ({
+                      ...prev,
+                      bars: Number(event.currentTarget.value) - 1,
+                    }));
+                  } else if (event.currentTarget.value === "") {
+                    console.log("inputProgress.bars", inputProgress.bars);
+                    setInputProgress((prev) => ({
+                      ...prev,
+                      bars: inputProgress.bars,
+                    }));
+                  }
+                }}
+                onKeyPress={(event) => {
+                  if (
+                    event.key === "Enter" &&
+                    inputProgress.bars.toString() !== "" &&
+                    inputProgress.bars >= 0 &&
+                    inputProgress.bars <= 240
+                  ) {
+                    setProgress((prev) => ({
+                      ...prev,
+                      bars: Number(event.currentTarget.value) - 1,
+                    }));
+                    event.currentTarget.blur();
+                  }
+                }}
+                onBlur={(event) => {
+                  if (
+                    inputProgress.bars.toString() !== "" &&
+                    inputProgress.bars > 0 &&
+                    inputProgress.bars <= 240
+                  ) {
+                    setProgress((prev) => ({
+                      ...prev,
+                      bars: Number(event.currentTarget.value) - 1,
+                    }));
+                  }
+                }}
+              />
+              <ReactTooltip
+                id="progressInput"
+                place="top"
+                effect="solid"
+                delayShow={1000}
+              >
+                Arrangement Position - quarters
+              </ReactTooltip>
+              <HeadBarDivider />
+              <ProgressInput
+                data-tip
+                data-for="progressInput"
+                data-delay-show="1000"
+                value={`${inputProgress.quarters + 1}`}
+                onChange={(event) => {
+                  const regex = /^[0-9\s]*$/;
+                  if (
+                    regex.test(event.currentTarget.value) &&
+                    event.currentTarget.value !== ""
+                  ) {
+                    setInputProgress((prev) => ({
+                      ...prev,
+                      quarters: Number(event.currentTarget.value) - 1,
+                    }));
+                  } else if (event.currentTarget.value === "") {
+                    console.log(
+                      "inputProgress.quarters",
+                      inputProgress.quarters
+                    );
+                    setInputProgress((prev) => ({
+                      ...prev,
+                      quarters: inputProgress.quarters,
+                    }));
+                  }
+                }}
+                onKeyPress={(event) => {
+                  if (
+                    event.key === "Enter" &&
+                    inputProgress.quarters.toString() !== "" &&
+                    inputProgress.quarters >= 0 &&
+                    inputProgress.quarters <= 110
+                  ) {
+                    setProgress((prev) => ({
+                      ...prev,
+                      quarters: Number(event.currentTarget.value) - 1,
+                    }));
+                    event.currentTarget.blur();
+                  }
+                }}
+                onBlur={(event) => {
+                  if (
+                    inputProgress.quarters.toString() !== "" &&
+                    inputProgress.quarters > 0 &&
+                    inputProgress.quarters <= 240
+                  ) {
+                    setProgress((prev) => ({
+                      ...prev,
+                      quarters: Number(event.currentTarget.value) - 1,
+                    }));
+                  }
+                }}
+              />
+              <HeadBarDivider />
+              <ProgressInput
+                value={`${Math.floor(progress.sixteenths + 1)}`}
+                onChange={() => {}}
+              />
+            </ProgressInputs>
+            <HeadBarDivider />
+
+            <PlayerButtons>
+              <Button onClick={handlePlay}>
+                <Image
+                  src={
+                    playerStatus === "playing"
+                      ? "/play-button-activated.svg"
+                      : "/play-button.svg"
+                  }
+                  alt={""}
+                  width={18}
+                  height={18}
+                />
+              </Button>
+              <HeadBarDivider />
+              <Button onClick={handlePause}>
+                <Image
+                  src="/pause-button.svg"
+                  alt={""}
+                  width={16}
+                  height={16}
+                />
+              </Button>
+              <HeadBarDivider />
+              <Button onClick={handleRecord}>
+                <Image
+                  src={
+                    playerStatus === "recording"
+                      ? "/record-button-activated.svg"
+                      : "/record-button.svg"
+                  }
+                  alt={""}
+                  width={18}
+                  height={18}
+                />
+              </Button>
+            </PlayerButtons>
+          </PlayerControls>
+          <HeadBarPanelPart>
+            <ExportControls>
+              <ProjectNameWrapper>{projectData.name}</ProjectNameWrapper>
+              <HeadBarDivider />
+
+              {isLoading && (
+                <Modal setIsModalOpen={setIsModalOpen}>
+                  <Loader />
+                </Modal>
               )}
-            </Profile>
-          </Link>
-        </HeadBarPanelPart>
+              <Export />
+            </ExportControls>
+
+            <Link href={"/profile"}>
+              <Profile>
+                {user ? (
+                  <Avatar
+                    size={30}
+                    name="Maria Mitchell"
+                    variant="beam"
+                    colors={[
+                      "#92A1C6",
+                      "#146A7C",
+                      "#F0AB3D",
+                      "#C271B4",
+                      "#C20D90",
+                    ]}
+                  />
+                ) : (
+                  <Image
+                    src="/profile.svg"
+                    alt="profile"
+                    width={30}
+                    height={30}
+                  />
+                )}
+              </Profile>
+            </Link>
+          </HeadBarPanelPart>
+        </HeadBarPanelParts>
       </HeadBarPanel>
       <MainEditPanel
         isMidiTrack={
@@ -756,8 +902,8 @@ const AllPanels = (props: any) => {
         }
       >
         <Library />
-        <TracksPanel>
-          <div ref={tracksContainerRef}>
+        <TracksPanelScroll ref={tracksContainerRef}>
+          <TracksPanel>
             <Tracks
               progress={progress}
               projectId={projectId}
@@ -766,9 +912,11 @@ const AllPanels = (props: any) => {
               isModalOpen={isModalOpen}
               setIsModalOpen={setIsModalOpen}
               cleanupSelectedBy={cleanupSelectedBy}
+              recordStartTimeRef={recordStartTimeRef}
+              appendToFilename={appendToFilename}
             />
-          </div>
-        </TracksPanel>
+          </TracksPanel>
+        </TracksPanelScroll>
       </MainEditPanel>
       <PianoRollPanel
         isMidiTrack={

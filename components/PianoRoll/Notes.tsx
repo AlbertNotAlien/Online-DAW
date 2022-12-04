@@ -330,58 +330,58 @@ const Notes = (props: any) => {
     }
   };
 
-  // const handleExtendNoteLeft = (
-  //   event: DraggableEvent,
-  //   dragElement: { x: number },
-  //   notationIndex: number,
-  //   octave: number,
-  //   startBars: number,
-  //   startQuarters: number,
-  //   startSixteenths: number
-  // ) => {
-  //   if (tracksData && selectedTrackIndex) {
-  //     console.log("-dragElement.x", -dragElement.x);
-  //     const offsetSixteenths = -dragElement.x / 25;
-  //     const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
+  const handleExtendNoteLeft = (
+    event: DraggableEvent,
+    dragElement: { x: number },
+    notationIndex: number,
+    octave: number,
+    startBars: number,
+    startQuarters: number,
+    startSixteenths: number
+  ) => {
+    if (tracksData && selectedTrackIndex) {
+      console.log("-dragElement.x", -dragElement.x);
+      const offsetSixteenths = -dragElement.x / 25;
+      const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
 
-  //     const selectedNoteIndex = prevNotes.findIndex(
-  //       (note) =>
-  //         note.notationIndex === notationIndex &&
-  //         note.octave === octave &&
-  //         note.start.bars === startBars &&
-  //         note.start.quarters === startQuarters &&
-  //         note.start.sixteenths === startSixteenths
-  //     );
+      const selectedNoteIndex = prevNotes.findIndex(
+        (note) =>
+          note.notationIndex === notationIndex &&
+          note.octave === octave &&
+          note.start.bars === startBars &&
+          note.start.quarters === startQuarters &&
+          note.start.sixteenths === startSixteenths
+      );
 
-  //     const newTracksData = produce(tracksData, (draft) => {
-  //       const draftNotes =
-  //         draft[selectedTrackIndex].clips[0].notes[selectedNoteIndex];
+      const newTracksData = produce(tracksData, (draft) => {
+        const draftNotes =
+          draft[selectedTrackIndex].clips[0].notes[selectedNoteIndex];
 
-  //       const newLengthSixteenths =
-  //         prevNoteLengthRef.current + offsetSixteenths <= 0
-  //           ? 1
-  //           : prevNoteLengthRef.current + offsetSixteenths;
+        const newLengthSixteenths =
+          prevNoteLengthRef.current + offsetSixteenths <= 0
+            ? 1
+            : prevNoteLengthRef.current + offsetSixteenths;
 
-  //       draftNotes.length.bars = Math.floor(newLengthSixteenths / 16);
-  //       draftNotes.length.quarters = Math.floor((newLengthSixteenths % 16) / 4);
-  //       draftNotes.length.sixteenths = newLengthSixteenths % 4;
+        draftNotes.length.bars = Math.floor(newLengthSixteenths / 16);
+        draftNotes.length.quarters = Math.floor((newLengthSixteenths % 16) / 4);
+        draftNotes.length.sixteenths = newLengthSixteenths % 4;
 
-  //       const newStartSixteenthsIndex =
-  //         prevNoteStartIndexRef.current - offsetSixteenths <= 0
-  //           ? 0
-  //           : prevNoteStartIndexRef.current - offsetSixteenths;
+        const newStartSixteenthsIndex =
+          prevNoteStartIndexRef.current - offsetSixteenths <= 0
+            ? 0
+            : prevNoteStartIndexRef.current - offsetSixteenths;
 
-  //       const newStartSixteenths = newStartSixteenthsIndex % 4;
-  //       const newStartQuarters = Math.floor((newStartSixteenthsIndex % 16) / 4);
-  //       const newStartBars = Math.floor(newStartSixteenthsIndex / 16);
+        const newStartSixteenths = newStartSixteenthsIndex % 4;
+        const newStartQuarters = Math.floor((newStartSixteenthsIndex % 16) / 4);
+        const newStartBars = Math.floor(newStartSixteenthsIndex / 16);
 
-  //       draftNotes.start.bars = newStartBars;
-  //       draftNotes.start.quarters = newStartQuarters;
-  //       draftNotes.start.sixteenths = newStartSixteenths;
-  //     });
-  //     setTracksData(newTracksData);
-  //   }
-  // };
+        draftNotes.start.bars = newStartBars;
+        draftNotes.start.quarters = newStartQuarters;
+        draftNotes.start.sixteenths = newStartSixteenths;
+      });
+      setTracksData(newTracksData);
+    }
+  };
 
   return (
     <Container>
@@ -456,7 +456,7 @@ const Notes = (props: any) => {
                   lengthQuarters={note.length.quarters}
                   lengthSixteenths={note.length.sixteenths}
                 >
-                  {/* <Draggable
+                  <Draggable
                     axis="both"
                     onStart={(
                       event: DraggableEvent,
@@ -494,7 +494,7 @@ const Notes = (props: any) => {
                     handle=".handle-NoteBarSide-Left"
                   >
                     <NoteBarSide className="handle-NoteBarSide-Left" />
-                  </Draggable> */}
+                  </Draggable>
                   <NoteBarCenter
                     onDoubleClick={() => {
                       console.log("onDoubleClick handleDeleteNote");
@@ -517,6 +517,7 @@ const Notes = (props: any) => {
                       event: DraggableEvent,
                       dragElement: DraggableData
                     ) => {
+                      console.log("onStart");
                       handlePrevNoteData(
                         event,
                         dragElement,

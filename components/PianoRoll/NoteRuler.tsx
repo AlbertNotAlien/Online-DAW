@@ -93,24 +93,6 @@ const NoteRuler = (props: any) => {
               ) < 2 && props.hoverNote?.octaveIndex === octaveIndex
             }
           >{`C${octaveIndex}`}</OctaveInfo>
-          <>
-            {console.log("octaveIndex", octaveIndex)}
-            {console.log(
-              Math.abs(
-                props.hoverNote?.octaveIndex * 12 +
-                  props.hoverNote?.notationIndex -
-                  octaveIndex * 12
-              )
-            )}
-            {console.log(props.hoverNote?.octaveIndex === octaveIndex)}
-            {console.log(
-              Math.abs(
-                props.hoverNote?.octaveIndex * 12 +
-                  props.hoverNote?.notationIndex -
-                  octaveIndex * 12
-              ) < 2 && props.hoverNote?.octaveIndex === octaveIndex
-            )}
-          </>
         </OctaveInfoWrapper>
       ))}
     </Container>

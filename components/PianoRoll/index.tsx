@@ -61,8 +61,6 @@ const PianoRoll = (props: any) => {
     useRecoilState<ProjectData>(projectDataState);
   const [tracksData, setTracksData] = useRecoilState(tracksDataState);
 
-  console.log("PianoRoll");
-
   // const handleAddNote = async (
   //   notation: string,
   //   notationIndex: number,

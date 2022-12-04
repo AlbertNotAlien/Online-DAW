@@ -38,12 +38,12 @@ import {
 import { style } from "wavesurfer.js/src/util";
 
 const Container = styled.div`
-  min-width: 200px;
+  max-width: 200px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: left;
-  padding: 0px 20px;
+  padding: 0px 15px;
   row-gap: 10px;
   /* position: fixed; */
   top: 0px;
@@ -74,11 +74,12 @@ const RangePanel = styled.div`
   height: 20px;
   width: 50%;
   border-radius: 5px;
-  margin-left: 20px;
+  /* margin-left: 20px; */
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* justify-content: center; */
+  column-gap: 10px;
 `;
 
 const VolumeControl = styled.div`
@@ -89,37 +90,11 @@ const VolumeControl = styled.div`
   left: 0px;
 `;
 
-// const VolumeControl = styled.input`
-//   &:focus {
-//     outline: none;
-//   }
-
-//   &::-webkit-slider-runnable-track {
-//   }
-
-//   &::-webkit-slider-thumb {
-//     -webkit-appearance: none;
-//     width: 25px;
-//     height: 25px;
-//     border-radius: 50%;
-//     background-color: #e76f51;
-//     cursor: pointer;
-//   }
-// `;
-
-// const PanControl = styled.div`
-//   height: 100%;
-//   width: 80%;
-//   background-color: #ccccbb;
-//   position: absolute;
-//   left: 0px;
-// `;
-
-const RangeValue = styled.input`
+const RangeInput = styled.input`
   text-align: center;
   color: white;
   font-size: 10px;
-  position: absolute;
+  /* position: absolute; */
   height: 100%;
   border: none;
   &:focus {
@@ -157,10 +132,15 @@ interface IsMutedButtonProps {
 //   background-color: ${(props) => (props.isSolo ? "#F6DDCD" : "#7c7c7c")};
 // `;
 
+const RangeValue = styled.p`
+  font-size: 10px;
+  min-width: 30px;
+`;
+
 const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
   color: white;
   background-color: ${(props) =>
-    props.isMuted === true ? "#F6DDCD" : "#7c7c7c"};
+    props.isMuted === true ? "#383838" : "#7c7c7c"};
 `;
 
 const TrackControls = (props: any) => {
@@ -292,24 +272,38 @@ const TrackControls = (props: any) => {
     }
   };
 
+  const TitleAndMute = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  `;
+
   return (
     <>
       <Container>
-        <TrackTitle>{props.track.name}</TrackTitle>
-        <TrackButtons>
-          <IsMutedButton
-            onClick={() => {
-              handleTrackMute(props.isMuted, props.track.id, props.trackIndex);
-            }}
-            isMuted={props.isMuted}
-          >
-            Mute
-          </IsMutedButton>
-        </TrackButtons>
+        <TitleAndMute>
+          <TrackTitle>{props.track.name}</TrackTitle>
+          <TrackButtons>
+            <IsMutedButton
+              onClick={() => {
+                handleTrackMute(
+                  props.isMuted,
+                  props.track.id,
+                  props.trackIndex
+                );
+              }}
+              isMuted={props.isMuted}
+            >
+              Mute
+            </IsMutedButton>
+          </TrackButtons>
+        </TitleAndMute>
+
         {props.channelsRef.current !== false && (
           <RangePanels>
             <RangePanel>
-              <RangeValue
+              <RangeValue>{`${Math.floor(volume)}db`}</RangeValue>
+              <RangeInput
                 type="range"
                 value={volume}
                 min={-70}
@@ -326,7 +320,12 @@ const TrackControls = (props: any) => {
               />
             </RangePanel>
             <RangePanel>
-              <RangeValue
+              <RangeValue>
+                {(Math.abs(pan * 100) < 1 && "C") ||
+                  (pan * 100 >= 1 && `${Math.floor(pan * 50)}R`) ||
+                  (pan * 100 <= -1 && `${Math.floor(pan * 50)}L`)}
+              </RangeValue>
+              <RangeInput
                 type="range"
                 value={pan * 100}
                 min={-100}

@@ -39,15 +39,17 @@ import {
   inputProgressState,
   AddFunctionType,
 } from "../../context/atoms";
-import { buffer } from "stream/consumers";
 import Modal from "../Modal";
 import NotificationHub from "../NotificationHub";
 
 const ExportButton = styled.a`
   color: black;
+  width: 50px;
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
+  transform: translateX(-3px);
 `;
 
 const ModalWrapper = styled.div`
@@ -83,18 +85,22 @@ const EndPointInput = styled.input`
     -webkit-appearance: none;
     margin: 0;
   }
+  color: white;
+  background-color: #323232;
 `;
 
-const Buttons = styled.div`
+const ModalButtons = styled.div`
   height: 36px;
 
   display: flex;
   column-gap: 10px;
 `;
-const Button = styled.button`
+
+const ModalButton = styled.button`
   font-size: 16px;
   line-height: 18px;
   width: 50%;
+  color: white;
   background-color: #6e6e6e;
   border: none;
   border-radius: 10px;
@@ -133,7 +139,7 @@ const Export = (props: any) => {
 
   const getAudioEnd = (track: TrackData) => {
     return new Promise((resolve, reject) => {
-      if (track.type === "audio") {
+      if (track.type === "audio" || track.type === "record") {
         const startPoint = track.clips[0].startPoint;
         const startTime =
           startPoint.bars * 16 +
@@ -147,9 +153,11 @@ const Export = (props: any) => {
           });
         };
 
-        getBuffer(track.clips[0].url, function (buff: any) {
-          const duration = Tone.Time(buff.duration).toBarsBeatsSixteenths();
-          resolve(duration);
+        Tone.loaded().then(() => {
+          getBuffer(track.clips[0].url, function (buff: any) {
+            const duration = Tone.Time(buff.duration).toBarsBeatsSixteenths();
+            resolve(duration);
+          });
         });
 
         // getBuffer.then((data) => console.log(data));
@@ -248,7 +256,7 @@ const Export = (props: any) => {
         );
 
       tracksData
-        ?.filter((track) => track.type === "audio")
+        ?.filter((track) => track.type === "audio" || track.type === "record")
         .forEach((track) => handlePlayAudio(track.clips[0], dest));
 
       Tone.loaded()
@@ -290,14 +298,16 @@ const Export = (props: any) => {
     const chunks: any[] = [];
     recorder.ondataavailable = (event) => chunks.push(event.data);
     recorder.onstop = (event) => {
-      let blob = new Blob(chunks, { type: "audio/wav; codecs=0" });
+      // let blob = new Blob(chunks, { type: "audio/wav; codecs=0" });
+      let blob = new Blob(chunks, { type: "audio/mp3" });
       const blobUrl = window.URL.createObjectURL(blob);
       console.log(blob);
       // window.open(blobUrl);
 
       const tempLink = document.createElement("a");
       tempLink.href = blobUrl;
-      tempLink.setAttribute("download", "請用Chrome開啟.wav");
+      // tempLink.setAttribute("download", "請用Chrome開啟.wav");
+      tempLink.setAttribute("download", `${projectData.name}.mp3`);
       tempLink.click();
     };
   };
@@ -383,8 +393,8 @@ const Export = (props: any) => {
               />
             </EndPointInputs>
             <div>
-              <Buttons>
-                <Button
+              <ModalButtons>
+                <ModalButton
                   onClick={() => {
                     const regex = /^[0-9\s]*$/;
                     if (
@@ -431,8 +441,8 @@ const Export = (props: any) => {
                   }}
                 >
                   Confirm
-                </Button>
-                <Button
+                </ModalButton>
+                <ModalButton
                   onClick={() => {
                     endBarsRef.current = null;
                     endQuartersRef.current = null;
@@ -441,8 +451,8 @@ const Export = (props: any) => {
                   }}
                 >
                   Cancel
-                </Button>
-              </Buttons>
+                </ModalButton>
+              </ModalButtons>
             </div>
           </ModalWrapper>
         </Modal>
@@ -453,7 +463,7 @@ const Export = (props: any) => {
           // exportAudio();
         }}
       >
-        <Image src="/export-button.svg" alt={""} width={25} height={25} />
+        <Image src="/export-button.svg" alt={""} width={24} height={24} />
       </ExportButton>
       {isExporting && <p>converting</p>}
     </>

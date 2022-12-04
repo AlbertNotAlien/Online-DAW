@@ -7,7 +7,6 @@ import { useAuth } from "../../context/AuthContext";
 const Container = styled.div`
   height: 50px;
   width: 100%;
-  /* background-color: rebeccapurple; */
   display: flex;
   justify-content: space-between;
   padding: 0px 20px;
@@ -41,9 +40,9 @@ const Header = () => {
             {user ? (
               <Avatar
                 size={30}
-                name="Maria Mitchell"
+                name="Willa Cather"
                 variant="beam"
-                colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
+                // colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
               />
             ) : (
               <Image src="/profile.svg" alt="profile" width={30} height={30} />

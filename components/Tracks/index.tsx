@@ -51,6 +51,7 @@ import { style } from "wavesurfer.js/src/util";
 import { Channel, PanVol, Volume } from "tone";
 import { useOnClickOutside } from "../../utils/useOnClickOutside";
 import Modal from "../Modal";
+import useRecorder from "../Record/useRecorder";
 
 interface TrackProps {
   trackHeight: number;
@@ -90,9 +91,10 @@ const ProgressLine = styled.div<ProgresslineProps>`
     props.tracksDataLength * 150 + (props.tracksDataLength - 1) * 10}px;
   position: absolute;
   left: ${(props) =>
-    props.progress.bars * props.barWidth * 4 +
-    props.progress.quarters * props.barWidth +
-    (props.progress.sixteenths * props.barWidth) / 4}px;
+    (props.progress.bars * 4 +
+      props.progress.quarters +
+      props.progress.sixteenths * 0.25) *
+    props.barWidth}px;
   margin-left: 200px;
   z-index: 1;
 `;
@@ -158,6 +160,18 @@ const TrackLock = styled.div`
   z-index: 2;
 `;
 
+interface RecordingLengthBarProps {
+  recordingClipLength: number;
+}
+
+const RecordingLengthBar = styled.div<RecordingLengthBarProps>`
+  width: ${(props) => props.recordingClipLength}px;
+  height: 150px;
+  background-color: #f6ddcd;
+  position: absolute;
+  bottom: 0px;
+`;
+
 const Tracks = (props: any) => {
   const [_isHoverClipContent, _setIsHoverClipContent] = useState(false);
   const [isHoverClipContent, setIsHoverClipContent] = useState(false);
@@ -185,6 +199,9 @@ const Tracks = (props: any) => {
 
   const TracksPanelRef = useRef(null);
 
+  const [recordFile, recordURL, isRecording, startRecording, stopRecording] =
+    useRecorder();
+
   const channelsRef = useRef<Channel[] | undefined>([]);
   const tracksRef = useRef<
     (Tone.Synth | Tone.Player | undefined)[] | undefined
@@ -199,17 +216,29 @@ const Tracks = (props: any) => {
   // }
 
   useEffect(() => {
+    console.log("tracksRef useEffect");
+    const urls = tracksData.filter((track) => track.clips[0].url !== "");
+    console.log("urls", urls);
+
     if (
       !Array.isArray(channelsRef.current) ||
       channelsRef.current.length === 0 ||
-      channelsRef.current.length !== tracksData.length
+      channelsRef.current.length !== tracksData.length ||
+      recordFile //////////////////////////////////////////////////////////////////
     ) {
       tracksRef.current = tracksData?.map((track, index) => {
         if (track.type === "midi" && channelsRef.current) {
           const newSynth = new Tone.Synth();
           return newSynth;
-        } else if (track.type === "audio" && channelsRef.current) {
-          const player = new Tone.Player(track.clips[0].url);
+        } else if (
+          (track.type === "audio" ||
+            (track.type === "record" && track.clips[0].url)) &&
+          channelsRef.current
+        ) {
+          // const player = new Tone.Player(track.clips[0].url);
+          console.log("tracksRef");
+          const buffer = new Tone.Buffer(track.clips[0].url);
+          const player = new Tone.Player(buffer);
           return player;
         }
       });
@@ -228,10 +257,6 @@ const Tracks = (props: any) => {
     }
 
     channelsRef.current.forEach((channel, index) => {
-      console.log("channel.volume.value", channel.volume.value);
-      console.log("channel.pan.value", channel.pan.value);
-      console.log("tracksData[index].volume", tracksData[index].volume);
-
       if (channel.mute !== tracksData[index].isMuted) {
         channel.mute = tracksData[index].isMuted;
       }
@@ -246,10 +271,8 @@ const Tracks = (props: any) => {
 
   const playAllTracks = () => {
     if (tracksRef.current) {
-      console.log("playAllTracks");
       tracksRef.current.forEach((trackRef, index) => {
         if (trackRef instanceof Tone.Player && tracksData) {
-          console.log(trackRef);
           trackRef
             .sync()
             .start(
@@ -257,11 +280,7 @@ const Tracks = (props: any) => {
             );
         } else if (trackRef instanceof Tone.Synth && tracksData) {
           const notes = tracksData[index].clips[0].notes;
-          console.log(notes);
           notes.forEach((note) => {
-            console.log(
-              `${note.start.bars}:${note.start.quarters}:${note.start.sixteenths}`
-            );
             Tone.Transport.schedule(function () {
               trackRef.triggerAttackRelease(
                 `${note.notation}${note.octave}`,
@@ -282,20 +301,26 @@ const Tracks = (props: any) => {
   const startPlaying = () => {
     if (Tone.Transport.state === "started") return;
     console.log(`${progress.bars}:${progress.quarters}:${progress.sixteenths}`);
-    playAllTracks();
     Tone.Transport.position = `${progress.bars}:${progress.quarters}:${progress.sixteenths}`;
     Tone.Transport.start();
+    playAllTracks();
   };
 
   useEffect(() => {
-    const startTone = async () => {
-      await Tone.start();
-    };
-
-    Tone.Transport.bpm.value = 58;
+    Tone.Transport.bpm.value = projectData.tempo;
 
     if (playerStatus === "playing" || playerStatus === "recording") {
       setIsLoading(true);
+
+      const startTone = async () => {
+        await Tone.start();
+      };
+
+      Tone.loaded().then(() => {
+        startTone();
+        startPlaying();
+        setIsLoading(false);
+      });
 
       const timer = setInterval(() => {
         const transportPosition = Tone.Transport.position
@@ -314,12 +339,6 @@ const Tracks = (props: any) => {
         });
       }, 100);
 
-      Tone.loaded().then(() => {
-        startTone();
-        startPlaying();
-        setIsLoading(false);
-      });
-
       return () => {
         clearInterval(timer);
       };
@@ -327,6 +346,24 @@ const Tracks = (props: any) => {
       stopPlaying();
     }
   }, [playerStatus]);
+
+  useEffect(() => {
+    const recordStartTime = props.recordStartTimeRef.current;
+
+    setRecordingClipLength(
+      ((progress.bars - recordStartTime.bars) * 4 +
+        (progress.quarters - recordStartTime.quarters) * 1 +
+        (progress.sixteenths - recordStartTime.sixteenths) * 0.25) *
+        barWidth
+    );
+
+    // console.log("progress", progress);
+    // console.log("recordStartTime", recordStartTime);
+  }, [progress, props.recordStartTimeRef.current]);
+
+  const [recordingClipLength, setRecordingClipLength] = useState(0);
+
+  // console.log(recordingClipLength);
 
   const handleSelectTrack = async (trackId: string, trackIndex: number) => {
     if (
@@ -343,7 +380,6 @@ const Tracks = (props: any) => {
       // );
       setSelectedTrackId(trackId);
       setSelectedTrackIndex(trackIndex);
-      console.log("handleSelectTrack");
 
       try {
         const docRef = doc(db, "projects", projectId, "tracks", trackId);
@@ -384,8 +420,6 @@ const Tracks = (props: any) => {
     );
   }, 0);
 
-  // console.log(totalX);
-
   useEffect(() => {
     // update x state
     tracksData?.map(
@@ -420,6 +454,7 @@ const Tracks = (props: any) => {
       console.log("info updated");
     } catch (err) {
       console.log(err);
+      console.log("err");
     }
   };
 
@@ -430,16 +465,8 @@ const Tracks = (props: any) => {
     trackId: string
   ) => {
     const currentQuarters = Math.floor(dragElement.x / barWidth);
-
     const newBars = Math.floor(currentQuarters / 4);
     const newQuarters = currentQuarters % 4;
-
-    console.log("dragElement.x", dragElement.x);
-    console.log("barWidth", barWidth);
-    console.log("currentQuarters", currentQuarters);
-    console.log("currentQuarters", currentQuarters);
-    console.log("newBars", newBars);
-    console.log("newQuarters", newQuarters);
 
     if (tracksData && tracksData[trackIndex].clips) {
       const newTracksData = produce(tracksData, (draft) => {
@@ -521,6 +548,7 @@ const Tracks = (props: any) => {
         updateSelectedTrackIndex={props.updateSelectedTrackIndex}
         isModalOpen={props.isModalOpen}
         setIsModalOpen={props.setIsModalOpen}
+        appendToFilename={props.appendToFilename}
       />
       <TracksPanel ref={TracksPanelRef}>
         <ProgressLine
@@ -532,7 +560,6 @@ const Tracks = (props: any) => {
           tracksData &&
           tracksData.length > 0 &&
           tracksData.map((track, trackIndex) => {
-            console.log("trackId", track.id);
             return (
               <Track
                 key={track.id}
@@ -598,11 +625,9 @@ const Tracks = (props: any) => {
                   >
                     <Clip
                       onClick={() => {
-                        console.log("hover clip");
                         setIsHoverClipContent(true);
                       }}
                       onMouseLeave={() => {
-                        console.log("leave hover clip");
                         setIsHoverClipContent(false);
                       }}
                       isHoverClipContent={isHoverClipContent}
@@ -612,19 +637,11 @@ const Tracks = (props: any) => {
                         onClick={() => {
                           console.log("click");
                         }}
-                        // onMouseOver={() => {
-                        //   console.log("hover");
-                        //   setIsHoverClipContent(true);
-                        // }}
-                        // onMouseLeave={() => {
-                        //   console.log("leave hover");
-                        //   setIsHoverClipContent(false);
-                        // }}
                       >
                         {track.clips[0].clipName}
                       </ClipTitle>
                       <ClipContent>
-                        {track.type === "audio" ? (
+                        {track.type === "audio" || track.type === "record" ? (
                           <WaveSurfer
                             key={trackIndex}
                             index={trackIndex}
@@ -641,6 +658,13 @@ const Tracks = (props: any) => {
                             barWidth={barWidth}
                           />
                         )}
+                        {trackIndex === tracksData.length - 1 &&
+                          track.type === "record" &&
+                          isRecording && (
+                            <RecordingLengthBar
+                              recordingClipLength={recordingClipLength}
+                            />
+                          )}
                       </ClipContent>
                     </Clip>
                   </Draggable>

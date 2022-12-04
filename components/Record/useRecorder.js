@@ -34,14 +34,11 @@ const useRecorder = () => {
       return;
     }
 
-    console.log(recorder.state);
-    // Manage recorder state.
-    // if (recorder.state === "inactive") {
-    console.log("isRecording", isRecording);
-
     if (isRecording) {
+      console.log("recorder.start()");
       recorder.start();
     } else if (!isRecording) {
+      console.log("recorder.stop()");
       recorder.stop();
     }
 
@@ -69,7 +66,14 @@ const useRecorder = () => {
     setPlayerStatus("paused");
   };
 
-  return [recordFile, recordURL, isRecording, startRecording, stopRecording];
+  return [
+    recordFile,
+    // setRecordFile,
+    recordURL,
+    isRecording,
+    startRecording,
+    stopRecording,
+  ];
 };
 
 async function requestRecorder() {

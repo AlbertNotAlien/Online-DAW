@@ -46,8 +46,6 @@ export const AuthContextProvider = ({
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log(user);
-
         setUser({
           uid: user.uid,
           email: user.email,
@@ -112,7 +110,6 @@ export const AuthContextProvider = ({
       state: "offline",
       last_changed: serverTimestamp(),
     };
-
     set(userStatusDatabaseRef, isOfflineForDatabase);
 
     setUser(null);
