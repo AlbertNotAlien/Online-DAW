@@ -319,7 +319,6 @@ const Export = (props: any) => {
           .toString()
           .split(":")
           .map((element) => Number(element));
-        console.log("transportPosition", transportPosition);
         setProgress({
           bars: transportPosition[0],
           quarters: transportPosition[1],

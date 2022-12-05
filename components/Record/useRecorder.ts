@@ -19,17 +19,19 @@ import {
 
 const useRecorder = () => {
   const [recordURL, setRecordURL] = useState("");
-  const [recordFile, setRecordFile] = useState(null);
-  const [recorder, setRecorder] = useState(null);
+  const [recordFile, setRecordFile] = useState<null | Blob>(null);
+  const [recorder, setRecorder] = useState<null | MediaRecorder>(null);
   const [isRecording, setIsRecording] = useRecoilState(isRecordingState);
   const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
 
-  let audioChunks = [];
+  let audioChunks: Blob[] = [];
   useEffect(() => {
     // Lazily obtain recorder first time we're recording.
     if (recorder === null) {
       if (isRecording) {
-        requestRecorder().then(setRecorder, console.error);
+        requestRecorder().then((recorder) => {
+          setRecorder(recorder);
+        }, console.error);
       }
       return;
     }
@@ -43,7 +45,7 @@ const useRecorder = () => {
     }
 
     // Obtain the audio when ready.
-    const handleData = (e) => {
+    const handleData = (e: BlobEvent) => {
       setRecordURL(window.URL.createObjectURL(e.data));
       audioChunks.push(e.data);
       let blob = new Blob(audioChunks, { type: "audio/mp3" });
@@ -66,14 +68,19 @@ const useRecorder = () => {
     setPlayerStatus("paused");
   };
 
+  const cleanupRecordFile = () => {
+    setRecordFile(null);
+  };
+
   return [
     recordFile,
-    // setRecordFile,
+    setRecordFile,
+    // cleanupRecordFile,
     recordURL,
     isRecording,
     startRecording,
     stopRecording,
-  ];
+  ] as const;
 };
 
 async function requestRecorder() {

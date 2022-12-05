@@ -299,8 +299,15 @@ const AllPanels = (props: any) => {
   const [inputProgress, setInputProgress] = useRecoilState(inputProgressState);
   const [tempo, setTempo] = useState<string>("");
 
-  const [recordFile, recordURL, isRecording, startRecording, stopRecording] =
-    useRecorder();
+  const [
+    recordFile,
+    setRecordFile,
+    // cleanupRecordFile,
+    recordURL,
+    isRecording,
+    startRecording,
+    stopRecording,
+  ] = useRecorder();
 
   const [isMetronome, setIsMetronome] = useRecoilState(isMetronomeState);
   const { user, logout } = useAuth();
@@ -312,7 +319,6 @@ const AllPanels = (props: any) => {
       const docRef = doc(db, "projects", projectId);
       const unsubscribe = onSnapshot(docRef, (snapshot) => {
         const newData = snapshot.data() as ProjectData;
-        console.log(newData);
         setProjectData(newData);
       });
 
@@ -321,8 +327,6 @@ const AllPanels = (props: any) => {
       };
     }
   }, []);
-
-  console.log("tracksData", tracksData);
 
   useEffect(() => {
     if (!projectId) return;
@@ -503,12 +507,15 @@ const AllPanels = (props: any) => {
           });
           updateSelectedTrackIndex();
         })
-
         .catch((err) => {
           console.log(err);
         })
         .finally(() => {
           setIsLoading(false);
+          if (recordFile) {
+            // cleanupRecordFile();
+            setRecordFile(null);
+          }
         });
     }
   };

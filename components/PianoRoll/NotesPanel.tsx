@@ -131,7 +131,7 @@ const SixteenthBlock = styled(MidiBlock)<SixteenthBlockProps>`
 `;
 
 const NotesPanel = (props: any) => {
-  console.log("NotesPanel");
+  // console.log("NotesPanel");
   const BARS: number = 8;
 
   // const selectedTrackIndex = useRecoilValue(selectedTrackIndexState);
@@ -173,8 +173,6 @@ const NotesPanel = (props: any) => {
         const newTracksData = produce(tracksData, (draft) => {
           draft[selectedTrackIndex].clips[0].notes.push(newNote);
         });
-        console.log(tracksData);
-
         setTracksData(newTracksData);
 
         const trackRef = doc(

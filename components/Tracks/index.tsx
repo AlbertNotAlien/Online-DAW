@@ -216,9 +216,9 @@ const Tracks = (props: any) => {
   // }
 
   useEffect(() => {
-    console.log("tracksRef useEffect");
+    // console.log("tracksRef useEffect");
     const urls = tracksData.filter((track) => track.clips[0].url !== "");
-    console.log("urls", urls);
+    // console.log("urls", urls);
 
     if (
       !Array.isArray(channelsRef.current) ||
@@ -236,7 +236,7 @@ const Tracks = (props: any) => {
           channelsRef.current
         ) {
           // const player = new Tone.Player(track.clips[0].url);
-          console.log("tracksRef");
+          // console.log("tracksRef");
           const buffer = new Tone.Buffer(track.clips[0].url);
           const player = new Tone.Player(buffer);
           return player;
