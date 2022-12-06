@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import * as Tone from "tone";
 
@@ -24,7 +24,10 @@ const useRecorder = () => {
   const [isRecording, setIsRecording] = useRecoilState(isRecordingState);
   const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
 
-  let audioChunks: Blob[] = [];
+  console.log("recordFile", recordFile);
+
+  const audioChunksRef = useRef<Blob[]>([]);
+
   useEffect(() => {
     // Lazily obtain recorder first time we're recording.
     if (recorder === null) {
@@ -37,18 +40,18 @@ const useRecorder = () => {
     }
 
     if (isRecording) {
-      console.log("recorder.start()");
       recorder.start();
     } else if (!isRecording) {
-      console.log("recorder.stop()");
       recorder.stop();
     }
 
     // Obtain the audio when ready.
     const handleData = (e: BlobEvent) => {
+      audioChunksRef.current = [];
+      console.log("handleData");
       setRecordURL(window.URL.createObjectURL(e.data));
-      audioChunks.push(e.data);
-      let blob = new Blob(audioChunks, { type: "audio/mp3" });
+      audioChunksRef.current.push(e.data);
+      let blob = new Blob(audioChunksRef.current, { type: "audio/mp3" });
       setRecordFile(blob);
     };
 
@@ -57,27 +60,19 @@ const useRecorder = () => {
   }, [recorder, isRecording]);
 
   const startRecording = () => {
-    console.log("startRecording");
     setIsRecording(true);
     setPlayerStatus("recording");
   };
 
   const stopRecording = () => {
-    console.log("stopRecording");
     setIsRecording(false);
     setPlayerStatus("paused");
-  };
-
-  const cleanupRecordFile = () => {
-    setRecordFile(null);
   };
 
   return [
     recordFile,
     setRecordFile,
-    // cleanupRecordFile,
     recordURL,
-    isRecording,
     startRecording,
     stopRecording,
   ] as const;

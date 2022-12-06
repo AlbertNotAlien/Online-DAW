@@ -1,5 +1,13 @@
 import Image from "next/image";
-import { useState, useEffect, useRef, MouseEvent } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  MouseEvent,
+  SetStateAction,
+  Dispatch,
+  MutableRefObject,
+} from "react";
 import styled from "styled-components";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
@@ -41,6 +49,7 @@ import {
   AudioData,
   ClipData,
   inputProgressState,
+  isRecordingState,
 } from "../../context/atoms";
 import Measures from "./Measures";
 import WaveSurfer from "./WaveSurfer";
@@ -172,7 +181,28 @@ const RecordingLengthBar = styled.div<RecordingLengthBarProps>`
   bottom: 0px;
 `;
 
-const Tracks = (props: any) => {
+interface TracksProps {
+  progress: {
+    bars: number;
+    quarters: number;
+    sixteenths: number;
+  };
+  projectId: string;
+  handleUploadAudio: Function;
+  updateSelectedTrackIndex: Function;
+  isModalOpen: boolean;
+  setIsModalOpen: Dispatch<SetStateAction<boolean>>;
+  cleanupSelectedBy: Function;
+  recordStartTimeRef: MutableRefObject<{
+    bars: number;
+    quarters: number;
+    sixteenths: number;
+  }>;
+  appendToFilename: Function;
+}
+
+// const Tracks = (props: any) => {
+const Tracks = (props: TracksProps) => {
   const [_isHoverClipContent, _setIsHoverClipContent] = useState(false);
   const [isHoverClipContent, setIsHoverClipContent] = useState(false);
   const projectData = useRecoilValue(projectDataState);
@@ -196,10 +226,11 @@ const Tracks = (props: any) => {
   );
   const { user, logout } = useAuth();
   const isMetronome = useRecoilValue(isMetronomeState);
+  const isRecording = useRecoilValue(isRecordingState);
 
   const TracksPanelRef = useRef(null);
 
-  const [recordFile, recordURL, isRecording, startRecording, stopRecording] =
+  const [recordFile, setRecordFile, recordURL, startRecording, stopRecording] =
     useRecorder();
 
   const channelsRef = useRef<Channel[] | undefined>([]);
@@ -235,8 +266,6 @@ const Tracks = (props: any) => {
             (track.type === "record" && track.clips[0].url)) &&
           channelsRef.current
         ) {
-          // const player = new Tone.Player(track.clips[0].url);
-          // console.log("tracksRef");
           const buffer = new Tone.Buffer(track.clips[0].url);
           const player = new Tone.Player(buffer);
           return player;
@@ -350,20 +379,17 @@ const Tracks = (props: any) => {
   useEffect(() => {
     const recordStartTime = props.recordStartTimeRef.current;
 
-    setRecordingClipLength(
-      ((progress.bars - recordStartTime.bars) * 4 +
-        (progress.quarters - recordStartTime.quarters) * 1 +
-        (progress.sixteenths - recordStartTime.sixteenths) * 0.25) *
-        barWidth
-    );
-
-    // console.log("progress", progress);
-    // console.log("recordStartTime", recordStartTime);
-  }, [progress, props.recordStartTimeRef.current]);
+    if (isRecording) {
+      setRecordingClipLength(
+        ((progress.bars - recordStartTime.bars) * 4 +
+          (progress.quarters - recordStartTime.quarters) * 1 +
+          (progress.sixteenths - recordStartTime.sixteenths) * 0.25) *
+          barWidth
+      );
+    }
+  }, [progress, props.recordStartTimeRef.current, isRecording]);
 
   const [recordingClipLength, setRecordingClipLength] = useState(0);
-
-  // console.log(recordingClipLength);
 
   const handleSelectTrack = async (trackId: string, trackIndex: number) => {
     if (
@@ -372,12 +398,6 @@ const Tracks = (props: any) => {
       trackIndex !== selectedTrackIndex
     ) {
       props.cleanupSelectedBy();
-
-      // setTracksData(
-      //   produce(tracksData, (draft) => {
-      //     draft[trackIndex].selectedBy = user.uid;
-      //   })
-      // );
       setSelectedTrackId(trackId);
       setSelectedTrackIndex(trackIndex);
 
@@ -421,7 +441,6 @@ const Tracks = (props: any) => {
   }, 0);
 
   useEffect(() => {
-    // update x state
     tracksData?.map(
       (track) =>
         (track.clips[0].startPoint.bars * 4 +
@@ -454,7 +473,6 @@ const Tracks = (props: any) => {
       console.log("info updated");
     } catch (err) {
       console.log(err);
-      console.log("err");
     }
   };
 
@@ -484,9 +502,8 @@ const Tracks = (props: any) => {
 
   const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
 
-  const now = Tone.now();
-
   const playNote = (trackRef: Tone.Synth, notation: string, octave: number) => {
+    const now = Tone.now();
     if (trackRef) {
       trackRef.triggerAttackRelease(`${notation}${octave}`, "8n", now);
       console.log("playNote");
@@ -508,18 +525,17 @@ const Tracks = (props: any) => {
   }, [playingNote, selectedTrackIndex]);
 
   const handleDeleteTrack = async (trackId: string, event: KeyboardEvent) => {
-    if (event.key === "Backspace" || event.key === "Delete") {
-      console.log("handleDeleteTrack");
-      setSelectedTrackIndex(null);
-      setSelectedTrackId(null);
-      await deleteDoc(doc(db, "projects", projectId, "tracks", trackId));
-    }
+    setSelectedTrackIndex(null);
+    setSelectedTrackId(null);
+    await deleteDoc(doc(db, "projects", projectId, "tracks", trackId));
   };
 
   useEffect(() => {
     if (selectedTrackId !== null) {
       const handleKeydown = (event: any) => {
-        handleDeleteTrack(selectedTrackId, event);
+        if (event.key === "Backspace" || event.key === "Delete") {
+          handleDeleteTrack(selectedTrackId, event);
+        }
       };
       document.addEventListener("keydown", handleKeydown);
       return () => document.removeEventListener("keydown", handleKeydown);
@@ -539,7 +555,6 @@ const Tracks = (props: any) => {
   }, [playerStatus, isMetronome]);
 
   const tracksContainerRef = useRef(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <Container ref={tracksContainerRef}>
@@ -647,8 +662,6 @@ const Tracks = (props: any) => {
                             index={trackIndex}
                             projectData={projectData}
                             trackData={tracksData[trackIndex]}
-                            convertMsToBeats={props.convertMsToBeats}
-                            convertBeatsToMs={props.convertBeatsToMs}
                           />
                         ) : (
                           <MidiBar
@@ -658,9 +671,10 @@ const Tracks = (props: any) => {
                             barWidth={barWidth}
                           />
                         )}
-                        {trackIndex === tracksData.length - 1 &&
+
+                        {isRecording &&
                           track.type === "record" &&
-                          isRecording && (
+                          trackIndex === tracksData.length - 1 && (
                             <RecordingLengthBar
                               recordingClipLength={recordingClipLength}
                             />

@@ -28,15 +28,12 @@ const ProjectDetail = () => {
   const { user, logout } = useAuth();
   const projectData = useRecoilValue(projectDataState);
 
-  // const [projectId, setProjectId] = useRecoilState(projectIdState);
-
   useEffect(() => {
     if (!user) {
       router.push("/login");
     }
-  }, []);
+  }, [router, user]);
 
-  console.log("projectId", projectId);
   return (
     <>
       <Head>

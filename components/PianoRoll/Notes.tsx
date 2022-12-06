@@ -286,7 +286,6 @@ const Notes = (props: any) => {
     startQuarters: number,
     startSixteenths: number
   ) => {
-    // console.log("handlePrevNoteData");
     if (tracksData && selectedTrackIndex !== null) {
       const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
       const selectedNoteIndex = prevNotes.findIndex(
@@ -308,8 +307,6 @@ const Notes = (props: any) => {
         prevNote.start.quarters * 4 +
         prevNote.start.sixteenths;
     }
-    // console.log("prevNoteLengthRef.current", prevNoteLengthRef.current);
-    // console.log("prevNoteStartIndexRef.current", prevNoteStartIndexRef.current);
   };
 
   const handleExtendNoteRight = async (

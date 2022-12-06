@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { useState, useEffect, useRef, MouseEvent } from "react";
 import styled, { keyframes } from "styled-components";
-import { useRecoilState, useSetRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import produce from "immer";
 import ReactTooltip from "react-tooltip";
 const { v4: uuidv4 } = require("uuid");
@@ -298,16 +298,10 @@ const AllPanels = (props: any) => {
   const [progress, setProgress] = useRecoilState(progressState);
   const [inputProgress, setInputProgress] = useRecoilState(inputProgressState);
   const [tempo, setTempo] = useState<string>("");
+  const isRecording = useRecoilValue(isRecordingState);
 
-  const [
-    recordFile,
-    setRecordFile,
-    // cleanupRecordFile,
-    recordURL,
-    isRecording,
-    startRecording,
-    stopRecording,
-  ] = useRecorder();
+  const [recordFile, setRecordFile, recordURL, startRecording, stopRecording] =
+    useRecorder();
 
   const [isMetronome, setIsMetronome] = useRecoilState(isMetronomeState);
   const { user, logout } = useAuth();
@@ -514,6 +508,7 @@ const AllPanels = (props: any) => {
           setIsLoading(false);
           if (recordFile) {
             // cleanupRecordFile();
+            console.log("setRecordFile");
             setRecordFile(null);
           }
         });
@@ -538,7 +533,8 @@ const AllPanels = (props: any) => {
   useEffect(() => {
     setBarWidth((120 / projectData.tempo) * 10);
     setTempo(projectData.tempo.toString());
-  }, [projectData]);
+    console.log("useEffect");
+  }, [projectData, setBarWidth]);
 
   const recordStartTimeRef = useRef({ bars: 0, quarters: 0, sixteenths: 0 });
 
@@ -565,7 +561,6 @@ const AllPanels = (props: any) => {
         sixteenths: progress.sixteenths,
       };
       const createdTime = new Date();
-      console.log("newRecordTrackIdRef.current", newRecordTrackIdRef.current);
 
       uploadFileInfo(
         newRecordTrackNameRef.current,
@@ -587,6 +582,9 @@ const AllPanels = (props: any) => {
     } else if (isRecording && typeof stopRecording === "function") {
       console.log("stopRecording");
       console.log("recordFile", recordFile);
+
+      setRecordFile(null);
+
       stopRecording();
       setPlayerStatus("paused");
     }
@@ -604,7 +602,7 @@ const AllPanels = (props: any) => {
       );
       console.log("handleUploadAudio");
     }
-  }, [recordFile]);
+  }, [recordFile]); // useCallback來最佳化效能
 
   const cleanupSelectedBy = async () => {
     if (tracksData && selectedTrackId !== null && selectedTrackIndex !== null) {
