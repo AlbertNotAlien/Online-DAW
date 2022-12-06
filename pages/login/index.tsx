@@ -3,9 +3,9 @@ import Link from "next/link";
 
 import styled from "styled-components";
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../src/context/AuthContext";
 
-import Header from "../../components/Header";
+import Header from "../../src/components/Header";
 import Head from "next/head";
 
 const Container = styled.div`

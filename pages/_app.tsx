@@ -8,7 +8,7 @@ import "../styles/globals.css";
 
 import Head from "next/head";
 // import Layout from "../components/layout";
-import { AuthContextProvider } from "../context/AuthContext";
+import { AuthContextProvider } from "../src/context/AuthContext";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (

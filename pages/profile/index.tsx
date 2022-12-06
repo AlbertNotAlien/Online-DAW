@@ -3,8 +3,8 @@ import { useRouter } from "next/router";
 import styled from "styled-components";
 import Image from "next/image";
 
-import { useAuth } from "../../context/AuthContext";
-import { db, auth } from "../../config/firebase";
+import { useAuth } from "../../src/context/AuthContext";
+import { db, auth } from "../../src/config/firebase";
 import {
   doc,
   collection,
@@ -15,7 +15,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import Avatar from "boring-avatars";
-import Header from "../../components/Header";
+import Header from "../../src/components/Header";
 import Link from "next/link";
 import Head from "next/head";
 

@@ -1,8 +1,8 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import AllPanels from "../../components/AllPanels";
-import { useAuth } from "../../context/AuthContext";
+import AllPanels from "../../src/components/AllPanels";
+import { useAuth } from "../../src/context/AuthContext";
 import {
   tracksDataState,
   projectDataState,
@@ -19,7 +19,7 @@ import {
   NoteData,
   AudioData,
   ClipData,
-} from "../../context/atoms";
+} from "../../src/context/atoms";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 
 const ProjectDetail = () => {

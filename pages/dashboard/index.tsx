@@ -11,8 +11,8 @@ import styled from "styled-components";
 const { v4: uuidv4 } = require("uuid");
 const { CopyToClipboard } = require("react-copy-to-clipboard");
 
-import { useAuth } from "../../context/AuthContext";
-import { db, auth } from "../../config/firebase";
+import { useAuth } from "../../src/context/AuthContext";
+import { db, auth } from "../../src/config/firebase";
 import {
   doc,
   collection,
@@ -34,11 +34,11 @@ import Link from "next/link";
 import { set } from "firebase/database";
 import produce from "immer";
 
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
-import Modal from "../../components/Modal";
+import Header from "../../src/components/Header";
+import Footer from "../../src/components/Footer";
+import Modal from "../../src/components/Modal";
 import Head from "next/head";
-import { ProjectData } from "../../context/atoms";
+import { ProjectData } from "../../src/context/atoms";
 
 interface ProjectInfo {
   id: string;
