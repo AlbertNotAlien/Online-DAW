@@ -1,5 +1,12 @@
 import Image from "next/image";
-import { useState, useEffect, useRef, MouseEvent } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  MouseEvent,
+  SetStateAction,
+  Dispatch,
+} from "react";
 import styled, { keyframes } from "styled-components";
 import { useRecoilState, useSetRecoilState } from "recoil";
 import produce from "immer";
@@ -34,9 +41,8 @@ import {
   isLoadingState,
   TrackData,
   inputProgressState,
-} from "../../../context/atoms";
+} from "../../../store/atoms";
 import Modal from "../../Modal";
-import { calculateBackoffMillis } from "@firebase/util";
 
 const Container = styled.div`
   width: 10200px;
@@ -121,7 +127,15 @@ const ModalWrapper = styled.div`
   column-gap: 10px;
 `;
 
-const TimeRuler = (props: any) => {
+interface TimeRuler {
+  handleUploadAudio: Function;
+  updateSelectedTrackIndex: Function;
+  isModalOpen: boolean;
+  setIsModalOpen: Dispatch<SetStateAction<boolean>>;
+  appendToFilename: Function;
+}
+
+const TimeRuler = (props: TimeRuler) => {
   const [tracksData, setTracksData] = useRecoilState(tracksDataState);
   const [projectData, setProjectData] = useRecoilState(projectDataState);
   const [selectedTrackIndex, setSelectedTrackIndex] = useRecoilState(

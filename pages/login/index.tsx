@@ -63,7 +63,6 @@ const Switch = styled.div`
 `;
 
 export default function Login() {
-  // const router = useRouter();
   const { login } = useAuth();
 
   const [data, setData] = useState({
@@ -71,7 +70,7 @@ export default function Login() {
     password: "",
   });
 
-  const handleLogin = async (event: any) => {
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     try {
@@ -93,10 +92,9 @@ export default function Login() {
       <Container>
         <Title>login</Title>
         <Form onSubmit={handleLogin}>
-          {/* <input type="hidden" name="remember" defaultValue="true" /> */}
           <Input
             id="email-address"
-            onChange={(e: any) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setData({
                 ...data,
                 email: e.target.value,
@@ -111,7 +109,7 @@ export default function Login() {
           />
           <Input
             id="password"
-            onChange={(e: any) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setData({
                 ...data,
                 password: e.target.value,

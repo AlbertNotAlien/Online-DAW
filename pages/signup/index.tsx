@@ -74,7 +74,7 @@ export default function Signup() {
     displayName: "",
   });
 
-  const handleSignup = async (event: any) => {
+  const handleSignup = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
       console.log("data.displayName", data.displayName);
@@ -96,10 +96,9 @@ export default function Signup() {
       <Container>
         <Title>singup</Title>
         <Form onSubmit={handleSignup}>
-          {/* <input type="hidden" name="remember" defaultValue="true" /> */}
           <Input
             id="display-name"
-            onChange={(e: any) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setData({
                 ...data,
                 displayName: e.target.value,
@@ -114,7 +113,7 @@ export default function Signup() {
           />
           <Input
             id="email-address"
-            onChange={(e: any) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setData({
                 ...data,
                 email: e.target.value,
@@ -129,7 +128,7 @@ export default function Signup() {
           />
           <Input
             id="password"
-            onChange={(e: any) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setData({
                 ...data,
                 password: e.target.value,

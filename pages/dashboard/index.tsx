@@ -38,7 +38,7 @@ import Header from "../../src/components/Header";
 import Footer from "../../src/components/Footer";
 import Modal from "../../src/components/Modal";
 import Head from "next/head";
-import { ProjectData } from "../../src/context/atoms";
+import { ProjectData } from "../../src/store/atoms";
 
 interface ProjectInfo {
   id: string;

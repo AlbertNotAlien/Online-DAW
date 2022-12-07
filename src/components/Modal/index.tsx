@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Dispatch, ReactNode, SetStateAction } from "react";
 // import classes from "./Modal.module.css";
 import styled from "styled-components";
 
@@ -27,7 +27,11 @@ const ModalOverlayWrapper = styled.div`
   animation: slide-down 300ms ease-out forwards;
 `;
 
-const Backdrop = (props: any) => {
+interface BackdropProps {
+  setIsModalOpen: Dispatch<SetStateAction<boolean>>;
+}
+
+const Backdrop = (props: BackdropProps) => {
   return (
     <BackdropWrapper
       onClick={() => {
@@ -37,7 +41,11 @@ const Backdrop = (props: any) => {
   );
 };
 
-const ModalOverlay = (props: any) => {
+interface ModalOverlayProps {
+  children: ReactNode;
+}
+
+const ModalOverlay = (props: ModalOverlayProps) => {
   return (
     <ModalOverlayWrapper>
       <div>{props.children}</div>
@@ -45,7 +53,12 @@ const ModalOverlay = (props: any) => {
   );
 };
 
-const Modal = (props: any) => {
+interface ModalProps {
+  setIsModalOpen: Dispatch<SetStateAction<boolean>>;
+  children: ReactNode;
+}
+
+const Modal = (props: ModalProps) => {
   const modalPlaceholderElement = document.getElementById(
     "modal-root"
   ) as HTMLElement;

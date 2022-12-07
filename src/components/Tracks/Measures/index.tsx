@@ -9,12 +9,12 @@ import {
   NoteData,
   progressState,
   inputProgressState,
-} from "../../../context/atoms";
+  ProjectData,
+} from "../../../store/atoms";
 
 interface BarProps {
   barWidth: number;
   quartersIndex: number;
-  isHoverClipContent: boolean;
 }
 
 const Container = styled.div`
@@ -40,11 +40,13 @@ const Bar = styled.div<BarProps>`
   }
   background-color: ${(props) =>
     props.quartersIndex % 8 <= 3 ? "#141414" : "#2d2d2d"};
-  /* pointer-events: ${(props) =>
-    props.isHoverClipContent ? "auto" : "none"}; */
 `;
 
-const Measures = (props: any) => {
+interface MeasuresProps {
+  projectData: ProjectData;
+}
+
+const Measures = (props: MeasuresProps) => {
   const projectData = useRecoilValue(projectDataState);
   const [barWidth, setBarWidth] = useRecoilState(barWidthState);
 
@@ -74,7 +76,6 @@ const Measures = (props: any) => {
             <Bar
               barWidth={barWidth}
               quartersIndex={quartersIndex}
-              isHoverClipContent={props.isHoverClipContent}
               onClick={() => {
                 handleSetProgressLine(quartersIndex);
               }}

@@ -72,11 +72,6 @@ export interface NoteRulerInfo {
   octaveIndex: number;
 }
 
-// export const projectIdState = atom({
-//   key: "projectIdState",
-//   default: "",
-// });
-
 export interface hoverMidiInfoState {
   notation: string;
   notationIndex: number;
@@ -136,7 +131,7 @@ export const selectedTrackIndexState = atom({
 
 export const barWidthState = atom({
   key: "barWidthState",
-  default: 0, // *BPM
+  default: 0,
 });
 
 export const selectedTrackIdState = atom({
@@ -166,18 +161,5 @@ export const isLoadingState = atom({
 });
 export const playerStatusState = atom({
   key: "playerStatusState",
-  default: "paused", // "playing/paused/recording"
+  default: "paused", // "playing / paused / recording"
 });
-
-// const uploadTrackData = async (tracksData: boolean, trackId: string) => {
-//   try {
-//     const trackRef = doc(db, "projects", projectId, "tracks", trackId);
-//     const newData = {
-//       isMuted: isMuted,
-//     };
-//     await updateDoc(trackRef, newData);
-//     console.log("info updated");
-//   } catch (err) {
-//     console.log(err);
-//   }
-// };

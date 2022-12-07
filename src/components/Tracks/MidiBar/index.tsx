@@ -5,7 +5,9 @@ import {
   barWidthState,
   projectDataState,
   NoteData,
-} from "../../../context/atoms";
+  ProjectData,
+  TrackData,
+} from "../../../store/atoms";
 
 interface MidiRegionProps {
   barWidth: number;
@@ -59,7 +61,14 @@ const MidiNote = styled.div<MidiNoteProps>`
   /* left: 0px; */
 `;
 
-const TrackNotes = (props: any) => {
+interface MidiBarProps {
+  isPlaying: boolean;
+  projectData: ProjectData;
+  trackData: TrackData;
+  barWidth: number;
+}
+
+const MidiBar = (props: MidiBarProps) => {
   const [barWidth, setBarWidth] = useRecoilState(barWidthState);
   const projectData = useRecoilValue(projectDataState);
 
@@ -86,4 +95,4 @@ const TrackNotes = (props: any) => {
   );
 };
 
-export default TrackNotes;
+export default MidiBar;

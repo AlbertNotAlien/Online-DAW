@@ -38,7 +38,7 @@ import {
   AudioData,
   inputProgressState,
   AddFunctionType,
-} from "../../context/atoms";
+} from "../../../src/store/atoms";
 import Modal from "../Modal";
 import NotificationHub from "../NotificationHub";
 
@@ -111,7 +111,7 @@ const ModalButton = styled.button`
   }
 `;
 
-const Export = (props: any) => {
+const Export = () => {
   const projectData = useRecoilValue(projectDataState);
   const [tracksData, setTracksData] = useRecoilState(tracksDataState);
   const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState);
@@ -147,14 +147,14 @@ const Export = (props: any) => {
           startPoint.sixteenths;
 
         const getBuffer = (url: string, fn: Function) => {
-          const buffer: any = new Tone.Buffer(url, function () {
+          const buffer = new Tone.Buffer(url, function () {
             const buff = buffer.get();
             fn(buff);
           });
         };
 
         Tone.loaded().then(() => {
-          getBuffer(track.clips[0].url, function (buff: any) {
+          getBuffer(track.clips[0].url, function (buff: Tone.ToneAudioBuffer) {
             const duration = Tone.Time(buff.duration).toBarsBeatsSixteenths();
             resolve(duration);
           });
@@ -295,7 +295,7 @@ const Export = (props: any) => {
       }
     }, `${exportEndPoint.bars}:${exportEndPoint.quarters}:${exportEndPoint.sixteenths}`);
 
-    const chunks: any[] = [];
+    const chunks: BlobPart[] | undefined = [];
     recorder.ondataavailable = (event) => chunks.push(event.data);
     recorder.onstop = (event) => {
       // let blob = new Blob(chunks, { type: "audio/wav; codecs=0" });

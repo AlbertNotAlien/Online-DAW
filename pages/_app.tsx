@@ -1,14 +1,10 @@
-import "../styles/globals.css";
 import * as React from "react";
-import { Reset } from "styled-reset";
 import type { AppProps } from "next/app";
+import { Reset } from "styled-reset";
 import { RecoilRoot } from "recoil";
 
-import "../styles/globals.css";
-
-import Head from "next/head";
-// import Layout from "../components/layout";
 import { AuthContextProvider } from "../src/context/AuthContext";
+import "../styles/globals.css";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (

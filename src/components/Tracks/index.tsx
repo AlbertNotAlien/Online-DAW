@@ -50,7 +50,7 @@ import {
   ClipData,
   inputProgressState,
   isRecordingState,
-} from "../../context/atoms";
+} from "../../store/atoms";
 import Measures from "./Measures";
 import WaveSurfer from "./WaveSurfer";
 import MidiBar from "./MidiBar";
@@ -60,7 +60,7 @@ import { style } from "wavesurfer.js/src/util";
 import { Channel, PanVol, Volume } from "tone";
 import { useOnClickOutside } from "../../utils/useOnClickOutside";
 import Modal from "../Modal";
-import useRecorder from "../Record/useRecorder";
+import useRecorder from "../../utils/useRecorder";
 
 interface TrackProps {
   trackHeight: number;
@@ -201,7 +201,6 @@ interface TracksProps {
   appendToFilename: Function;
 }
 
-// const Tracks = (props: any) => {
 const Tracks = (props: TracksProps) => {
   const [_isHoverClipContent, _setIsHoverClipContent] = useState(false);
   const [isHoverClipContent, setIsHoverClipContent] = useState(false);
@@ -233,7 +232,7 @@ const Tracks = (props: TracksProps) => {
   const [recordFile, setRecordFile, recordURL, startRecording, stopRecording] =
     useRecorder();
 
-  const channelsRef = useRef<Channel[] | undefined>([]);
+  const channelsRef = useRef<Channel[]>([]);
   const tracksRef = useRef<
     (Tone.Synth | Tone.Player | undefined)[] | undefined
   >();
@@ -404,7 +403,7 @@ const Tracks = (props: TracksProps) => {
       try {
         const docRef = doc(db, "projects", projectId, "tracks", trackId);
         const newData = {
-          selectedBy: user.uid,
+          selectedBy: user?.uid,
         };
         await updateDoc(docRef, newData);
         console.log("info updated");
@@ -532,7 +531,7 @@ const Tracks = (props: TracksProps) => {
 
   useEffect(() => {
     if (selectedTrackId !== null) {
-      const handleKeydown = (event: any) => {
+      const handleKeydown = (event: KeyboardEvent) => {
         if (event.key === "Backspace" || event.key === "Delete") {
           handleDeleteTrack(selectedTrackId, event);
         }
@@ -584,11 +583,11 @@ const Tracks = (props: TracksProps) => {
                 trackHeight={150}
                 selectedBySelf={selectedTrackId === track.id}
                 selectedByOthers={
-                  track.selectedBy.length > 0 && track.selectedBy !== user.uid
+                  track.selectedBy.length > 0 && track.selectedBy !== user?.uid
                 }
               >
                 {track.selectedBy.length > 0 &&
-                  track.selectedBy !== user.uid && (
+                  track.selectedBy !== user?.uid && (
                     <TrackLock>
                       <Image
                         src="/lock.svg"
@@ -658,8 +657,6 @@ const Tracks = (props: TracksProps) => {
                       <ClipContent>
                         {track.type === "audio" || track.type === "record" ? (
                           <WaveSurfer
-                            key={trackIndex}
-                            index={trackIndex}
                             projectData={projectData}
                             trackData={tracksData[trackIndex]}
                           />

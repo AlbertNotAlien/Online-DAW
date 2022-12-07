@@ -21,16 +21,29 @@ import {
   signOut,
 } from "firebase/auth";
 import { useState } from "react";
-import { useRecoilState, useRecoilValue } from "recoil";
 import {
   projectDataState,
   selectedTrackIdState,
   selectedTrackIndexState,
   tracksDataState,
-} from "./atoms";
+} from "../../src/store/atoms";
 import produce from "immer";
 
-const AuthContext = createContext<any>({});
+interface UserType {
+  uid: string | null;
+  email: string | null;
+  displayName: string | null;
+}
+
+interface CreateContextType {
+  user: UserType | null;
+  isLoadingLogin: boolean;
+  login: Function;
+  signup: Function;
+  logout: Function;
+}
+
+const AuthContext = createContext<CreateContextType>({} as CreateContextType);
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -39,7 +52,7 @@ export const AuthContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [user, setUser] = useState<any>({});
+  const [user, setUser] = useState<UserType | null>(null);
   const [isLoadingLogin, setIsLoadingLogin] = useState(true);
   const router = useRouter();
 
@@ -104,7 +117,7 @@ export const AuthContextProvider = ({
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const userStatusDatabaseRef = ref(db, "/status/" + user.uid);
+    const userStatusDatabaseRef = ref(db, "/status/" + user?.uid);
 
     const isOfflineForDatabase = {
       state: "offline",

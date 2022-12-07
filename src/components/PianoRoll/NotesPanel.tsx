@@ -1,4 +1,11 @@
-import { useState, useEffect, useRef, memo } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  memo,
+  SetStateAction,
+  Dispatch,
+} from "react";
 import styled from "styled-components";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import produce from "immer";
@@ -21,7 +28,7 @@ import {
   TrackData,
   ProjectData,
   NoteData,
-} from "../../context/atoms";
+} from "../../../src/store/atoms";
 
 import {
   doc,
@@ -130,11 +137,14 @@ const SixteenthBlock = styled(MidiBlock)<SixteenthBlockProps>`
   cursor: pointer;
 `;
 
-const NotesPanel = (props: any) => {
-  // console.log("NotesPanel");
-  const BARS: number = 8;
+interface NotesPanel {
+  NOTATIONS: string[];
+  selectedTrackIndex: number;
+  setHoverNote: Dispatch<SetStateAction<hoverMidiInfoState | null>>;
+}
 
-  // const selectedTrackIndex = useRecoilValue(selectedTrackIndexState);
+const NotesPanel = (props: NotesPanel) => {
+  const BARS: number = 8;
   const [projectData, setProjectData] =
     useRecoilState<ProjectData>(projectDataState);
   const [tracksData, setTracksData] = useRecoilState(tracksDataState);
@@ -200,7 +210,7 @@ const NotesPanel = (props: any) => {
 
   return (
     <Container>
-      {new Array(props.OCTAVES).fill(0).map((_, octaveIndex) => (
+      {new Array(6).fill(0).map((_, octaveIndex) => (
         <OctaveWrapper key={octaveIndex}>
           {props.NOTATIONS.map((notation: string, notationIndex: number) => (
             <NoationWrapper
@@ -236,7 +246,6 @@ const NotesPanel = (props: any) => {
                       {new Array(4).fill(0).map((_, sixteenthsIndex) => (
                         <SixteenthBlock
                           onClick={() => {
-                            console.log("doubleClick handleAddNote");
                             handleAddNote(
                               notation,
                               notationIndex,

@@ -24,7 +24,7 @@ import {
   inputProgressState,
   hoverMidiInfoState,
   ProjectData,
-} from "../../context/atoms";
+} from "../../store/atoms";
 import produce from "immer";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "../../config/firebase";
@@ -39,7 +39,6 @@ const Container = styled.div`
   overflow: auto;
 `;
 
-const OCTAVES: number = 6;
 const NOTATIONS: string[] = [
   "C",
   "C#",
@@ -55,7 +54,15 @@ const NOTATIONS: string[] = [
   "B",
 ];
 
-const PianoRoll = (props: any) => {
+interface PianoRollProps {
+  projectId: string;
+  projectData: ProjectData;
+  tracksData: TrackData[];
+  selectedTrackId: string | null;
+  selectedTrackIndex: number;
+}
+
+const PianoRoll = (props: PianoRollProps) => {
   const [hoverNote, setHoverNote] = useState<hoverMidiInfoState | null>(null);
   const [projectData, setProjectData] =
     useRecoilState<ProjectData>(projectDataState);
@@ -69,11 +76,9 @@ const PianoRoll = (props: any) => {
         selectedTrackIndex={props.selectedTrackIndex}
       />
       <NotesPanel
-        OCTAVES={OCTAVES}
         NOTATIONS={NOTATIONS}
         selectedTrackIndex={props.selectedTrackIndex}
         setHoverNote={setHoverNote}
-        // handleAddNote={handleAddNote}
       />
     </Container>
   );

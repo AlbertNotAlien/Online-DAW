@@ -20,7 +20,7 @@ import {
   ClipData,
   inputProgressState,
   hoverMidiInfoState,
-} from "../../context/atoms";
+} from "../../store/atoms";
 
 const Container = styled.div`
   height: 720px;
@@ -67,7 +67,11 @@ interface OctaveInfoProps {
   octaveIndex: number;
 }
 
-const NoteRuler = (props: any) => {
+interface NoteRuler {
+  hoverNote: hoverMidiInfoState | null;
+}
+
+const NoteRuler = (props: NoteRuler) => {
   return (
     <Container>
       <NoteRulerInfoWrapper>

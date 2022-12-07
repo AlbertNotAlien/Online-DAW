@@ -3,7 +3,7 @@ import { X } from "react-feather";
 import { useTransition, animated } from "@react-spring/web";
 import styled from "styled-components";
 
-import { AddFunctionType } from "../../context/atoms";
+import { AddFunctionType } from "../../store/atoms";
 
 export const Main = styled.div`
   cursor: pointer;

@@ -26,7 +26,7 @@ import {
   barWidthState,
   progressState,
   TrackData,
-} from "../../context/atoms";
+} from "../../store/atoms";
 
 const Container = styled.div`
   min-width: 200px;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
+import { ProjectData, TrackData } from "../../../store/atoms";
 
 const Clip = styled.div`
   position: relative;
@@ -8,7 +9,7 @@ const Clip = styled.div`
 `;
 
 interface Options {
-  container: any;
+  container: HTMLDivElement;
   waveColor: string;
   progressColor: string;
   cursorColor: string;
@@ -23,7 +24,7 @@ interface Options {
   zIndex: number;
 }
 
-const formWaveSurferOptions = (waveformRef: any) => ({
+const formWaveSurferOptions = (waveformRef: HTMLDivElement) => ({
   container: waveformRef,
   waveColor: "#eee",
   progressColor: "#eee",
@@ -39,18 +40,26 @@ const formWaveSurferOptions = (waveformRef: any) => ({
   zIndex: 2,
 });
 
-const WaveSurfer = (props: any) => {
-  const waveformRef = useRef(null);
-  const wavesurfer = useRef<any>(null);
+interface WaveSurferProps {
+  projectData: ProjectData;
+  trackData: TrackData;
+}
+
+const WaveSurfer = (props: WaveSurferProps) => {
+  const waveformRef = useRef<HTMLDivElement | null>(null);
+  const wavesurfer = useRef<WaveSurfer>();
 
   const clipUrl = props.trackData.clips[0].url;
 
   useEffect(() => {
     const create = async () => {
+      if (!waveformRef.current) return;
+
       const WaveSurfer = (await import("wavesurfer.js")).default;
       const options: Options = formWaveSurferOptions(waveformRef.current);
 
       wavesurfer.current = WaveSurfer.create(options);
+      const w = WaveSurfer.create(options);
 
       if (clipUrl) {
         wavesurfer.current.load(clipUrl);

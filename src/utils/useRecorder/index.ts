@@ -15,7 +15,7 @@ import {
   isRecordingState,
   isMetronomeState,
   TrackData,
-} from "../../context/atoms";
+} from "../../store/atoms";
 
 const useRecorder = () => {
   const [recordURL, setRecordURL] = useState("");

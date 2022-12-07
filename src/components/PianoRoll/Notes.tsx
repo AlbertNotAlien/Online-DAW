@@ -10,7 +10,7 @@ import {
   selectedTrackIndexState,
   projectDataState,
   ProjectData,
-} from "../../context/atoms";
+} from "../../store/atoms";
 
 import {
   doc,
@@ -85,7 +85,12 @@ const NoteBarSide = styled.div`
   z-index: 2;
 `;
 
-const Notes = (props: any) => {
+interface NotesProps {
+  NOTATIONS: string[];
+  selectedTrackIndex: number | null;
+}
+
+const Notes = (props: NotesProps) => {
   const [tracksData, setTracksData] = useRecoilState(tracksDataState);
   const setPlayingNote = useSetRecoilState(playingNoteState);
   const selectedTrackIndex = useRecoilValue(selectedTrackIndexState);

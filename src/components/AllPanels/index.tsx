@@ -40,10 +40,10 @@ import {
   TrackData,
   ProjectData,
   inputProgressState,
-} from "../../context/atoms";
+} from "../../../src/store/atoms";
 import WaveSurfer from "../Tracks/WaveSurfer";
 
-import useRecorder from "../Record/useRecorder";
+import useRecorder from "../../utils/useRecorder";
 import Modal from "../Modal";
 import Tracks from "../Tracks";
 import PianoRoll from "../PianoRoll";
@@ -279,10 +279,9 @@ const ProjectNameWrapper = styled.p`
   padding: 0px 10px;
 `;
 
-const AllPanels = (props: any) => {
+const AllPanels = ({ projectId }: { projectId: string }) => {
   const [projectData, setProjectData] = useRecoilState(projectDataState);
   const [tracksData, setTracksData] = useRecoilState(tracksDataState);
-  const projectId = props.projectId;
   const [barWidth, setBarWidth] = useRecoilState(barWidthState);
 
   const [isLoading, setIsLoading] = useRecoilState(isLoadingState);
@@ -456,7 +455,7 @@ const AllPanels = (props: any) => {
   };
 
   const handleUploadAudio = (
-    file: any,
+    file: Blob,
     type: string,
     startPoint: {
       bars: number;
@@ -596,11 +595,10 @@ const AllPanels = (props: any) => {
         recordFile,
         "record",
         recordStartTimeRef.current,
-        newRecordTrackIdRef.current, // new track id
+        newRecordTrackIdRef.current,
         newRecordTrackNameRef.current,
         newRecordFileNameRef.current
       );
-      console.log("handleUploadAudio");
     }
   }, [recordFile]); // useCallback來最佳化效能
 
