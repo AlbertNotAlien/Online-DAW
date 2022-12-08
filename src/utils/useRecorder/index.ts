@@ -1,6 +1,6 @@
 import { isRecordingState, playerStatusState } from "../../store/atoms";
 import { useEffect, useState, useRef } from "react";
-import { useRecoilState } from "recoil";
+import { useRecoilState, useSetRecoilState } from "recoil";
 
 const useRecorder = () => {
   const [recordURL, setRecordURL] = useState("");

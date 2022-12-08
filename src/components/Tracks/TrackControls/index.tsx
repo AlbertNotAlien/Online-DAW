@@ -128,7 +128,6 @@ const TrackControls = (props: TrackControlsProps) => {
         isMuted: !isMuted,
       };
       await updateDoc(trackRef, newData);
-      console.log("info updated");
     } catch (err) {
       console.log(err);
     }
@@ -156,7 +155,6 @@ const TrackControls = (props: TrackControlsProps) => {
         volume: volume,
       };
       await updateDoc(trackRef, newData);
-      console.log("info updated");
     } catch (err) {
       console.log(err);
     }
@@ -184,7 +182,6 @@ const TrackControls = (props: TrackControlsProps) => {
         pan: pan,
       };
       await updateDoc(trackRef, newData);
-      console.log("info updated");
     } catch (err) {
       console.log(err);
     }

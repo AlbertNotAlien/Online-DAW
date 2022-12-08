@@ -381,7 +381,6 @@ const Tracks = (props: TracksProps) => {
           selectedBy: user?.uid,
         };
         await updateDoc(docRef, newData);
-        console.log("info updated");
       } catch (err) {
         console.log(err);
       }
@@ -436,7 +435,6 @@ const Tracks = (props: TracksProps) => {
         clips: clips,
       };
       await updateDoc(trackRef, newData);
-      console.log("info updated");
     } catch (err) {
       console.log(err);
     }

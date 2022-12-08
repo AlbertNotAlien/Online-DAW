@@ -510,7 +510,6 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
         tempo: newTempo,
       };
       await updateDoc(docRef, newData);
-      console.log("info updated");
     } catch (err) {
       console.log(err);
     }
