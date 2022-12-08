@@ -53,19 +53,19 @@ const NoteRuler = (props: NoteRulerProps) => {
   return (
     <Container>
       <>
-        {props.hoverNote && (
-          <HoverNoteInfoWrapper>
+        <HoverNoteInfoWrapper>
+          {props.hoverNote && (
             <HoverNoteInfo
-              notation={props.hoverNote.notation}
-              notationIndex={props.hoverNote.notationIndex}
-              octaveIndex={props.hoverNote.octaveIndex}
+              notation={props.hoverNote?.notation}
+              notationIndex={props.hoverNote?.notationIndex}
+              octaveIndex={props.hoverNote?.octaveIndex}
             >
               {props.hoverNote
                 ? `${props.hoverNote.notation}${props.hoverNote.octaveIndex}`
                 : ""}
             </HoverNoteInfo>
-          </HoverNoteInfoWrapper>
-        )}
+          )}
+        </HoverNoteInfoWrapper>
 
         {new Array(6).fill(0).map((_, octaveIndex) => (
           <OctaveInfoWrapper key={octaveIndex}>
