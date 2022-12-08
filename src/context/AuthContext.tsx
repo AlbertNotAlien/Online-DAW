@@ -32,7 +32,7 @@ interface UserType {
 }
 
 interface CreateContextType {
-  user: UserType;
+  user: UserType | null;
   isLoadingLogin: boolean;
   login: Function;
   signup: Function;
@@ -105,7 +105,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     alert("已登出");
     await signOut(auth);
-    console.log("user", user);
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -151,14 +150,10 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   }, [user?.uid]);
 
   return (
-    <>
-      {user && (
-        <AuthContext.Provider
-          value={{ user, isLoadingLogin, login, signup, logout }}
-        >
-          {isLoadingLogin ? null : children}
-        </AuthContext.Provider>
-      )}
-    </>
+    <AuthContext.Provider
+      value={{ user, isLoadingLogin, login, signup, logout }}
+    >
+      {isLoadingLogin ? null : children}
+    </AuthContext.Provider>
   );
 };
