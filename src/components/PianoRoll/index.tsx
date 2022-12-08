@@ -1,34 +1,10 @@
-import { useState, memo, useCallback } from "react";
-import styled from "styled-components";
-
 import NoteRuler from "./NoteRuler";
 import Notes from "./Notes";
 import NotesPanel from "./NotesPanel";
 
-import {
-  tracksDataState,
-  projectDataState,
-  playingNoteState,
-  selectedTrackIdState,
-  selectedTrackIndexState,
-  barWidthState,
-  progressState,
-  isPlayingState,
-  isMetronomeState,
-  isLoadingState,
-  playerStatusState,
-  TrackData,
-  NoteData,
-  AudioData,
-  ClipData,
-  inputProgressState,
-  hoverMidiInfoState,
-  ProjectData,
-} from "../../store/atoms";
-import produce from "immer";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "../../config/firebase";
-import { useRecoilState } from "recoil";
+import { TrackData, hoverMidiInfo, ProjectData } from "../../store/atoms";
+import styled from "styled-components";
+import { useState, memo } from "react";
 
 const Container = styled.div`
   display: flex;
@@ -63,10 +39,7 @@ interface PianoRollProps {
 }
 
 const PianoRoll = (props: PianoRollProps) => {
-  const [hoverNote, setHoverNote] = useState<hoverMidiInfoState | null>(null);
-  const [projectData, setProjectData] =
-    useRecoilState<ProjectData>(projectDataState);
-  const [tracksData, setTracksData] = useRecoilState(tracksDataState);
+  const [hoverNote, setHoverNote] = useState<hoverMidiInfo | null>(null);
 
   return (
     <Container>

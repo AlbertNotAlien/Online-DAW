@@ -1,8 +1,8 @@
+import { useAuth } from "../../context/AuthContext";
 import styled from "styled-components";
 import Link from "next/link";
 import Image from "next/image";
 import Avatar from "boring-avatars";
-import { useAuth } from "../../context/AuthContext";
 
 const Container = styled.div`
   height: 50px;
@@ -20,12 +20,12 @@ const Logo = styled.div`
 const Profile = styled.div``;
 
 const Header = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   return (
     <>
       <Container>
-        <Link href={"/"}>
+        <Link href="/">
           <Logo>
             <Image
               src="/logo-combine.svg"
@@ -35,7 +35,7 @@ const Header = () => {
             />
           </Logo>
         </Link>
-        <Link href={"/profile"}>
+        <Link href="/profile">
           <Profile>
             {user ? (
               <Avatar

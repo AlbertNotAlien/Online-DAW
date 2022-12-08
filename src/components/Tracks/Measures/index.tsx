@@ -1,16 +1,12 @@
-import { useState, useEffect, useRef, MouseEvent, memo } from "react";
-
-import styled from "styled-components";
-import { useRecoilState, useRecoilValue } from "recoil";
-
 import {
   barWidthState,
-  projectDataState,
-  NoteData,
   progressState,
   inputProgressState,
-  ProjectData,
 } from "../../../store/atoms";
+import { memo } from "react";
+
+import styled from "styled-components";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 
 interface BarProps {
   barWidth: number;
@@ -42,16 +38,11 @@ const Bar = styled.div<BarProps>`
     props.quartersIndex % 8 <= 3 ? "#141414" : "#2d2d2d"};
 `;
 
-interface MeasuresProps {
-  projectData: ProjectData;
-}
+const Measures = () => {
+  const barWidth = useRecoilValue(barWidthState);
 
-const Measures = (props: MeasuresProps) => {
-  const projectData = useRecoilValue(projectDataState);
-  const [barWidth, setBarWidth] = useRecoilState(barWidthState);
-
-  const [progress, setProgress] = useRecoilState(progressState);
-  const [inputProgress, setInputProgress] = useRecoilState(inputProgressState);
+  const setProgress = useSetRecoilState(progressState);
+  const setInputProgress = useSetRecoilState(inputProgressState);
 
   const handleSetProgressLine = (quartersIndex: number) => {
     const currentBars = Math.floor(quartersIndex / 4);

@@ -1,32 +1,4 @@
-import Image from "next/image";
-import { useState, useEffect, useRef, MouseEvent } from "react";
 import styled from "styled-components";
-import { useRecoilState } from "recoil";
-import produce from "immer";
-
-import {
-  doc,
-  collection,
-  getDoc,
-  setDoc,
-  updateDoc,
-  onSnapshot,
-  DocumentData,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "../../config/firebase";
-import { storage } from "../../config/firebase";
-import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
-import {
-  tracksDataState,
-  projectDataState,
-  selectedTrackIdState,
-  selectedTrackIndexState,
-  barWidthState,
-  progressState,
-  TrackData,
-} from "../../store/atoms";
 
 const Container = styled.div`
   min-width: 200px;

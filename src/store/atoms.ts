@@ -1,6 +1,5 @@
 import { Timestamp } from "firebase/firestore";
-import { useState, useEffect, useRef, MouseEvent } from "react";
-import { atom, selector } from "recoil";
+import { atom } from "recoil";
 
 export interface ProjectData {
   id: string;
@@ -51,6 +50,7 @@ export interface ClipData extends MidiData, AudioData {}
 
 export interface TrackData {
   clips: ClipData[];
+  // clips: AudioData[] | MidiData[];
   id: string;
   isMuted: boolean;
   isSolo: boolean;
@@ -72,13 +72,11 @@ export interface NoteRulerInfo {
   octaveIndex: number;
 }
 
-export interface hoverMidiInfoState {
+export interface hoverMidiInfo {
   notation: string;
   notationIndex: number;
   octaveIndex: number;
 }
-
-export type AddFunctionType = (msg: string) => void;
 
 export const projectDataState = atom({
   key: "projectDataState",

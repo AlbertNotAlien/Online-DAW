@@ -1,11 +1,10 @@
-import React, { useState } from "react";
 import { useAuth } from "../../src/context/AuthContext";
+import Header from "../../src/components/Header";
+import React, { useState } from "react";
 
 import styled from "styled-components";
-import { useRouter } from "next/router";
 import Link from "next/link";
 
-import Header from "../../src/components/Header";
 import Head from "next/head";
 
 const Container = styled.div`
@@ -67,7 +66,7 @@ const Switch = styled.div`
 
 export default function Signup() {
   //   const router = useRouter();
-  const { user, signup } = useAuth();
+  const { signup } = useAuth();
   const [data, setData] = useState({
     email: "",
     password: "",
@@ -94,7 +93,7 @@ export default function Signup() {
       </Head>
       <Header />
       <Container>
-        <Title>singup</Title>
+        <Title>signup</Title>
         <Form onSubmit={handleSignup}>
           <Input
             id="display-name"

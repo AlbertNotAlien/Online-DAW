@@ -1,21 +1,18 @@
-import { useState, useEffect, ReactNode } from "react";
+import { useAuth } from "../../src/context/AuthContext";
+import { db } from "../../src/config/firebase";
+import Header from "../../src/components/Header";
+import { useEffect } from "react";
 import { useRouter } from "next/router";
 import styled from "styled-components";
-import Image from "next/image";
 
-import { useAuth } from "../../src/context/AuthContext";
-import { db, auth } from "../../src/config/firebase";
 import {
-  doc,
   collection,
   query,
   orderBy,
   limit,
-  getDoc,
   onSnapshot,
 } from "firebase/firestore";
 import Avatar from "boring-avatars";
-import Header from "../../src/components/Header";
 import Link from "next/link";
 import Head from "next/head";
 
@@ -36,8 +33,6 @@ const Container = styled.div`
   margin: 0 auto;
   margin-top: 100px;
 `;
-
-const Logo = styled.div``;
 
 const Title = styled.h1`
   font-size: 36px;
@@ -87,39 +82,38 @@ const Button = styled.button`
   background-color: #535353;
 `;
 
-const MembersWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  row-gap: 20px;
-`;
+// const MembersWrapper = styled.div`
+//   display: flex;
+//   flex-direction: column;
+//   align-items: center;
+//   width: 100%;
+//   row-gap: 20px;
+// `;
 
-const Member = styled.div`
-  width: 100%;
-  height: 80px;
-  background-color: #585858;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  column-gap: 20px;
-  padding-left: 20px;
-`;
+// const Member = styled.div`
+//   width: 100%;
+//   height: 80px;
+//   background-color: #585858;
+//   border-radius: 20px;
+//   display: flex;
+//   align-items: center;
+//   column-gap: 20px;
+//   padding-left: 20px;
+// `;
 
-const MemberName = styled.p`
-  width: 80px;
-`;
-const MemberEmail = styled.p`
-  width: 200px;
-`;
-const MemberState = styled.p`
-  width: 80px;
-`;
+// const MemberName = styled.p`
+//   width: 80px;
+// `;
+// const MemberEmail = styled.p`
+//   width: 200px;
+// `;
+// const MemberState = styled.p`
+//   width: 80px;
+// `;
 
 export default function Profile() {
   const router = useRouter();
   const { user, logout } = useAuth();
-  const [points, setPoints] = useState(0);
 
   const handleLogout = async () => {
     logout();
@@ -132,13 +126,13 @@ export default function Profile() {
     }
   }, []);
 
-  const [members, setMembers] = useState<
-    {
-      email: string;
-      displayName: string;
-      state: string;
-    }[]
-  >([]);
+  // const [members, setMembers] = useState<
+  //   {
+  //     email: string;
+  //     displayName: string;
+  //     state: string;
+  //   }[]
+  // >([]);
 
   useEffect(() => {
     const q = query(
@@ -155,10 +149,9 @@ export default function Profile() {
         const displayName = doc.data().displayName;
         const state = doc.data().state;
         newMembers.push({ email, displayName, state });
-        setMembers(newMembers);
+        // setMembers(newMembers);
       });
       // newMembers = newMembers.filter((member) => member.email !== user.email);
-      console.log("newMembers", newMembers);
     });
     return () => {
       unsubscribe();
@@ -188,7 +181,7 @@ export default function Profile() {
               <UserEmail>{user?.email}</UserEmail>
             </UserInfo>
             <Buttons>
-              <Link href={"/dashboard"}>
+              <Link href="/dashboard">
                 <Button>dashboard</Button>
               </Link>
               <Button onClick={handleLogout}>logout</Button>

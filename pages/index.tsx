@@ -1,9 +1,8 @@
+import Footer from "../src/components/Footer";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import styled from "styled-components";
-import Footer from "../src/components/Footer";
-import Header from "../src/components/Header";
 
 const Window = styled.div`
   width: 100vw;
@@ -141,8 +140,8 @@ export default function Home() {
           <Titles>
             <TitleWrapper>
               <Image
-                src={"/logo-pattern-orange.svg"}
-                alt={"logo"}
+                src="/logo-pattern-orange.svg"
+                alt="logo"
                 width={192 * 1.5}
                 height={108 * 1.5}
               />
@@ -159,8 +158,8 @@ export default function Home() {
           <DemoBlocks>
             <DemoBlock>
               <Image
-                src={"/demo-audio-track.png"}
-                alt={"demo-audio-track"}
+                src="/demo-audio-track.png"
+                alt="demo-audio-track"
                 width={192 * 1.5}
                 height={108 * 1.5}
               />
@@ -173,8 +172,8 @@ export default function Home() {
             </DemoBlock>
             <DemoBlock>
               <Image
-                src={"/demo-midi-track.png"}
-                alt={"demo-midi-track"}
+                src="/demo-midi-track.png"
+                alt="demo-midi-track"
                 width={192 * 1.5}
                 height={108 * 1.5}
               />
@@ -187,8 +186,8 @@ export default function Home() {
             </DemoBlock>
             <DemoBlock>
               <Image
-                src={"/demo-export.png"}
-                alt={"demo-export"}
+                src="/demo-export.png"
+                alt="demo-export"
                 width={192 * 1.5}
                 height={108 * 1.5}
               />

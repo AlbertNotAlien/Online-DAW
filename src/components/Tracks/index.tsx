@@ -1,37 +1,10 @@
-import Image from "next/image";
-import {
-  useState,
-  useEffect,
-  useRef,
-  MouseEvent,
-  SetStateAction,
-  Dispatch,
-  MutableRefObject,
-} from "react";
-import styled from "styled-components";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
-import produce from "immer";
-import * as Tone from "tone";
-import Loader from "../Loader";
-
-import {
-  doc,
-  collection,
-  getDoc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  onSnapshot,
-  DocumentData,
-  orderBy,
-  arrayUnion,
-} from "firebase/firestore";
+import Measures from "./Measures";
+import WaveSurfer from "./WaveSurfer";
+import MidiBar from "./MidiBar";
+import TrackControls from "./TrackControls";
+import TimeRuler from "./TimeRuler";
 import { db } from "../../config/firebase";
-import { storage } from "../../config/firebase";
-import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useAuth } from "../../context/AuthContext";
-
 import {
   tracksDataState,
   projectDataState,
@@ -44,23 +17,29 @@ import {
   isMetronomeState,
   isLoadingState,
   playerStatusState,
-  TrackData,
-  NoteData,
-  AudioData,
   ClipData,
   inputProgressState,
   isRecordingState,
 } from "../../store/atoms";
-import Measures from "./Measures";
-import WaveSurfer from "./WaveSurfer";
-import MidiBar from "./MidiBar";
-import TrackControls from "./TrackControls";
-import TimeRuler from "./TimeRuler";
-import { style } from "wavesurfer.js/src/util";
-import { Channel, PanVol, Volume } from "tone";
-import { useOnClickOutside } from "../../utils/useOnClickOutside";
-import Modal from "../Modal";
 import useRecorder from "../../utils/useRecorder";
+import Image from "next/image";
+import {
+  useState,
+  useEffect,
+  useRef,
+  SetStateAction,
+  Dispatch,
+  MutableRefObject,
+} from "react";
+import styled from "styled-components";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
+import { produce } from "immer";
+import * as Tone from "tone";
+
+import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+
+import { Channel } from "tone";
 
 interface TrackProps {
   trackHeight: number;
@@ -68,7 +47,7 @@ interface TrackProps {
   selectedByOthers: boolean;
 }
 
-interface ProgresslineProps {
+interface ProgressLineProps {
   progress: {
     bars: number;
     quarters: number;
@@ -93,7 +72,7 @@ const TracksPanel = styled.div`
   width: 100%;
 `;
 
-const ProgressLine = styled.div<ProgresslineProps>`
+const ProgressLine = styled.div<ProgressLineProps>`
   width: 1px;
   background-color: #c08a1e;
   height: ${(props) =>
@@ -202,7 +181,6 @@ interface TracksProps {
 }
 
 const Tracks = (props: TracksProps) => {
-  const [_isHoverClipContent, _setIsHoverClipContent] = useState(false);
   const [isHoverClipContent, setIsHoverClipContent] = useState(false);
   const projectData = useRecoilValue(projectDataState);
 
@@ -211,31 +189,32 @@ const Tracks = (props: TracksProps) => {
 
   const projectId = props.projectId;
 
-  const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState);
-  const [isLoading, setIsLoading] = useRecoilState(isLoadingState);
-  const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
+  const isPlaying = useRecoilValue(isPlayingState);
+  const setIsLoading = useSetRecoilState(isLoadingState);
+  const playerStatus = useRecoilValue(playerStatusState);
 
   const [progress, setProgress] = useRecoilState(progressState);
-  const [inputProgress, setInputProgress] = useRecoilState(inputProgressState);
+  const setInputProgress = useSetRecoilState(inputProgressState);
 
   const [selectedTrackId, setSelectedTrackId] =
     useRecoilState(selectedTrackIdState);
   const [selectedTrackIndex, setSelectedTrackIndex] = useRecoilState(
     selectedTrackIndexState
   );
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isMetronome = useRecoilValue(isMetronomeState);
   const isRecording = useRecoilValue(isRecordingState);
 
   const TracksPanelRef = useRef(null);
 
-  const [recordFile, setRecordFile, recordURL, startRecording, stopRecording] =
-    useRecorder();
+  const [recordFile, , , ,] = useRecorder();
 
   const channelsRef = useRef<Channel[]>([]);
   const tracksRef = useRef<
     (Tone.Synth | Tone.Player | undefined)[] | undefined
   >();
+
+  const playingNote = useRecoilValue(playingNoteState);
 
   // if (selectedTrackId !== null || selectedTrackIndex !== null) {
   //   window.addEventListener("beforeunload", function (e) {
@@ -246,17 +225,13 @@ const Tracks = (props: TracksProps) => {
   // }
 
   useEffect(() => {
-    // console.log("tracksRef useEffect");
-    const urls = tracksData.filter((track) => track.clips[0].url !== "");
-    // console.log("urls", urls);
-
     if (
       !Array.isArray(channelsRef.current) ||
       channelsRef.current.length === 0 ||
       channelsRef.current.length !== tracksData.length ||
       recordFile //////////////////////////////////////////////////////////////////
     ) {
-      tracksRef.current = tracksData?.map((track, index) => {
+      tracksRef.current = tracksData?.map((track) => {
         if (track.type === "midi" && channelsRef.current) {
           const newSynth = new Tone.Synth();
           return newSynth;
@@ -271,7 +246,7 @@ const Tracks = (props: TracksProps) => {
         }
       });
 
-      channelsRef.current = tracksData?.map((track, index) => {
+      channelsRef.current = tracksData?.map((track) => {
         const channel = new Tone.Channel().toDestination();
         channel.mute = track.isMuted;
         return channel;
@@ -413,14 +388,7 @@ const Tracks = (props: TracksProps) => {
     }
   };
 
-  const [dragX, setDragX] = useState<number[]>(
-    tracksData?.map(
-      (track) =>
-        (track.clips[0].startPoint.bars * 4 +
-          track.clips[0].startPoint.quarters) *
-        barWidth
-    )
-  );
+  const [dragX, setDragX] = useState<number[]>([]);
 
   useEffect(() => {
     setDragX(
@@ -451,8 +419,7 @@ const Tracks = (props: TracksProps) => {
   const handleClipDraggable = (
     event: DraggableEvent,
     dragElement: { x: number; y: number },
-    trackIndex: number,
-    trackId: string
+    trackIndex: number
   ) => {
     console.log("dragElement.x", dragElement.x);
     const newClipsPosition = produce(dragX, (draft) => {
@@ -499,8 +466,6 @@ const Tracks = (props: TracksProps) => {
     }
   };
 
-  const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
-
   const playNote = (trackRef: Tone.Synth, notation: string, octave: number) => {
     const now = Tone.now();
     if (trackRef) {
@@ -523,7 +488,7 @@ const Tracks = (props: TracksProps) => {
     }
   }, [playingNote, selectedTrackIndex]);
 
-  const handleDeleteTrack = async (trackId: string, event: KeyboardEvent) => {
+  const handleDeleteTrack = async (trackId: string) => {
     setSelectedTrackIndex(null);
     setSelectedTrackId(null);
     await deleteDoc(doc(db, "projects", projectId, "tracks", trackId));
@@ -533,7 +498,7 @@ const Tracks = (props: TracksProps) => {
     if (selectedTrackId !== null) {
       const handleKeydown = (event: KeyboardEvent) => {
         if (event.key === "Backspace" || event.key === "Delete") {
-          handleDeleteTrack(selectedTrackId, event);
+          handleDeleteTrack(selectedTrackId);
         }
       };
       document.addEventListener("keydown", handleKeydown);
@@ -547,7 +512,7 @@ const Tracks = (props: TracksProps) => {
       isMetronome
     ) {
       const synth = new Tone.Synth().toDestination();
-      Tone.Transport.scheduleRepeat((time) => {
+      Tone.Transport.scheduleRepeat(() => {
         synth.triggerAttackRelease("C6", 0.01);
       }, "4n");
     }
@@ -611,12 +576,7 @@ const Tracks = (props: TracksProps) => {
                       event: DraggableEvent,
                       dragElement: DraggableData
                     ) => {
-                      handleClipDraggable(
-                        event,
-                        dragElement,
-                        trackIndex,
-                        track.id
-                      );
+                      handleClipDraggable(event, dragElement, trackIndex);
                     }}
                     onStop={(
                       event: DraggableEvent,
@@ -679,7 +639,7 @@ const Tracks = (props: TracksProps) => {
                       </ClipContent>
                     </Clip>
                   </Draggable>
-                  <Measures projectData={projectData} />
+                  <Measures />
                 </Timeline>
               </Track>
             );

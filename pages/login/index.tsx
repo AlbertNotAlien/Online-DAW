@@ -1,11 +1,10 @@
-import { useRouter } from "next/router";
+import { useAuth } from "../../src/context/AuthContext";
+import Header from "../../src/components/Header";
 import Link from "next/link";
 
 import styled from "styled-components";
-import React, { useState, useEffect } from "react";
-import { useAuth } from "../../src/context/AuthContext";
+import React, { useState } from "react";
 
-import Header from "../../src/components/Header";
 import Head from "next/head";
 
 const Container = styled.div`

@@ -1,31 +1,4 @@
-import Image from "next/image";
-import {
-  useState,
-  useEffect,
-  useRef,
-  MouseEvent,
-  SetStateAction,
-  Dispatch,
-} from "react";
-import styled, { keyframes } from "styled-components";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import produce from "immer";
-const { v4: uuidv4 } = require("uuid");
-
-import {
-  doc,
-  collection,
-  getDoc,
-  setDoc,
-  updateDoc,
-  onSnapshot,
-  DocumentData,
-  orderBy,
-} from "firebase/firestore";
 import { db } from "../../../config/firebase";
-import { storage } from "../../../config/firebase";
-import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
 import {
   tracksDataState,
   projectDataState,
@@ -33,16 +6,16 @@ import {
   selectedTrackIndexState,
   barWidthState,
   progressState,
-  isPlayingState,
-  isPausedState,
-  isRecordingState,
-  isMetronomeState,
-  playerStatusState,
-  isLoadingState,
-  TrackData,
   inputProgressState,
 } from "../../../store/atoms";
 import Modal from "../../Modal";
+import Image from "next/image";
+import { useRef, SetStateAction, Dispatch } from "react";
+import styled from "styled-components";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+
+import { doc, setDoc } from "firebase/firestore";
+const { v4: uuidv4 } = require("uuid");
 
 const Container = styled.div`
   width: 10200px;
@@ -127,7 +100,7 @@ const ModalWrapper = styled.div`
   column-gap: 10px;
 `;
 
-interface TimeRuler {
+interface TimeRulerProps {
   handleUploadAudio: Function;
   updateSelectedTrackIndex: Function;
   isModalOpen: boolean;
@@ -135,18 +108,17 @@ interface TimeRuler {
   appendToFilename: Function;
 }
 
-const TimeRuler = (props: TimeRuler) => {
-  const [tracksData, setTracksData] = useRecoilState(tracksDataState);
-  const [projectData, setProjectData] = useRecoilState(projectDataState);
+const TimeRuler = (props: TimeRulerProps) => {
+  const tracksData = useRecoilValue(tracksDataState);
+  const projectData = useRecoilValue(projectDataState);
   const [selectedTrackIndex, setSelectedTrackIndex] = useRecoilState(
     selectedTrackIndexState
   );
-  const [selectedTrackId, setSelectedTrackId] =
-    useRecoilState(selectedTrackIdState);
+  const selectedTrackId = useRecoilValue(selectedTrackIdState);
   const uploadRef = useRef<HTMLInputElement>(null);
-  const [barWidth, setBarWidth] = useRecoilState(barWidthState);
+  const barWidth = useRecoilValue(barWidthState);
   const [progress, setProgress] = useRecoilState(progressState);
-  const [inputProgress, setInputProgress] = useRecoilState(inputProgressState);
+  const setInputProgress = useSetRecoilState(inputProgressState);
 
   const addMidiTrack = async (projectId: string) => {
     try {

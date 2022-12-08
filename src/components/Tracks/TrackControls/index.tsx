@@ -1,47 +1,11 @@
-import {
-  useState,
-  useEffect,
-  useRef,
-  MouseEvent,
-  MutableRefObject,
-} from "react";
-import styled from "styled-components";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
-import produce from "immer";
-import * as Tone from "tone";
-
-import {
-  doc,
-  collection,
-  getDoc,
-  setDoc,
-  updateDoc,
-  onSnapshot,
-  DocumentData,
-  orderBy,
-} from "firebase/firestore";
 import { db } from "../../../config/firebase";
-import { storage } from "../../../config/firebase";
-import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { tracksDataState, TrackData } from "../../../store/atoms";
+import { useState, useEffect, MutableRefObject } from "react";
+import styled from "styled-components";
+import { useRecoilState } from "recoil";
+import { produce } from "immer";
 
-import {
-  tracksDataState,
-  projectDataState,
-  playingNoteState,
-  selectedTrackIdState,
-  selectedTrackIndexState,
-  barWidthState,
-  progressState,
-  isPlayingState,
-  isMetronomeState,
-  isLoadingState,
-  playerStatusState,
-  TrackData,
-  NoteData,
-  AudioData,
-} from "../../../store/atoms";
-import { style } from "wavesurfer.js/src/util";
+import { doc, updateDoc } from "firebase/firestore";
 import { Channel } from "tone";
 
 const Container = styled.div`
@@ -89,14 +53,6 @@ const RangePanel = styled.div`
   column-gap: 10px;
 `;
 
-const VolumeControl = styled.div`
-  height: 100%;
-  width: 80%;
-  background-color: #9ec3ba;
-  position: absolute;
-  left: 0px;
-`;
-
 const RangeInput = styled.input`
   text-align: center;
   color: white;
@@ -114,17 +70,9 @@ const RangeInput = styled.input`
   }
 `;
 
-interface IsSoloButtonProps {
-  isSolo: boolean;
-}
-
 interface IsMutedButtonProps {
   isMuted: boolean;
 }
-
-// const IsSoloButton = styled(TrackButton)<IsSoloButtonProps>`
-//   background-color: ${(props) => (props.isSolo ? "#F6DDCD" : "#7c7c7c")};
-// `;
 
 const RangeValue = styled.p`
   font-size: 10px;
@@ -161,10 +109,6 @@ const TrackControls = (props: TrackControlsProps) => {
     trackId: string,
     trackIndex: number
   ) => {
-    console.log("isMuted", isMuted);
-    console.log("projectId", projectId);
-    console.log("trackId", trackId);
-
     setTracksData(
       produce(tracksData, (draft) => {
         draft[props.trackIndex].isMuted = !isMuted;
@@ -189,28 +133,6 @@ const TrackControls = (props: TrackControlsProps) => {
       console.log(err);
     }
   };
-
-  // const handleTrackSolo = async (
-  //   isSolo: boolean,
-  //   trackId: string,
-  //   trackIndex: number
-  // ) => {
-  //   // try {
-  //   //   const trackRef = doc(db, "projects", projectId, "tracks", trackId);
-  //   //   const newData = {
-  //   //     isSolo: !isSolo,
-  //   //   };
-  //   //   await updateDoc(trackRef, newData);
-  //   //   console.log("info updated");
-  //   // } catch (err) {
-  //   //   console.log(err);
-  //   // }
-
-  //   // console.log(props.channelsRef.current[trackIndex]);
-
-  //   props.channelsRef.current[trackIndex].solo =
-  //     !props.channelsRef.current[trackIndex].solo;
-  // };
 
   const handleTrackVolume = async (
     volume: number,
@@ -295,7 +217,6 @@ const TrackControls = (props: TrackControlsProps) => {
           </TrackButtons>
         </TitleAndMute>
 
-        {/* {props.channelsRef.current !== false && ( */}
         <RangePanels>
           <RangePanel>
             <RangeValue>{`${Math.floor(volume)}db`}</RangeValue>
@@ -336,7 +257,6 @@ const TrackControls = (props: TrackControlsProps) => {
             />
           </RangePanel>
         </RangePanels>
-        {/* )} */}
       </Container>
     </>
   );

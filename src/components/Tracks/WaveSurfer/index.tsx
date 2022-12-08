@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
-import styled from "styled-components";
 import { ProjectData, TrackData } from "../../../store/atoms";
+import React, { useEffect, useRef } from "react";
+import styled from "styled-components";
+
+import type WaveSurferType from "wavesurfer.js";
 
 const Clip = styled.div`
   position: relative;
@@ -24,8 +26,8 @@ interface Options {
   zIndex: number;
 }
 
-const formWaveSurferOptions = (waveformRef: HTMLDivElement) => ({
-  container: waveformRef,
+const formWaveSurferOptions = (containerRef: HTMLDivElement) => ({
+  container: containerRef,
   waveColor: "#eee",
   progressColor: "#eee",
   cursorColor: "OrangeRed",
@@ -40,43 +42,39 @@ const formWaveSurferOptions = (waveformRef: HTMLDivElement) => ({
   zIndex: 2,
 });
 
-interface WaveSurferProps {
+interface WaveSurferCompProps {
   projectData: ProjectData;
   trackData: TrackData;
 }
 
-const WaveSurfer = (props: WaveSurferProps) => {
-  const waveformRef = useRef<HTMLDivElement | null>(null);
-  const wavesurfer = useRef<WaveSurfer>();
-
-  const clipUrl = props.trackData.clips[0].url;
+const WaveSurferComp = (props: WaveSurferCompProps) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const wavesurferRef = useRef<WaveSurferType>();
+  const url = props.trackData.clips[0].url;
 
   useEffect(() => {
     const create = async () => {
-      if (!waveformRef.current) return;
+      if (!containerRef.current) return;
 
       const WaveSurfer = (await import("wavesurfer.js")).default;
-      const options: Options = formWaveSurferOptions(waveformRef.current);
+      const options: Options = formWaveSurferOptions(containerRef.current);
+      wavesurferRef.current = WaveSurfer.create(options);
 
-      wavesurfer.current = WaveSurfer.create(options);
-      const w = WaveSurfer.create(options);
-
-      if (clipUrl) {
-        wavesurfer.current.load(clipUrl);
+      if (url) {
+        wavesurferRef.current.load(url);
       }
     };
 
     setTimeout(create, 10);
 
     return () => {
-      if (wavesurfer.current) {
-        console.log("destroy");
-        wavesurfer.current.destroy();
+      if (wavesurferRef.current) {
+        wavesurferRef.current.destroy();
       }
     };
-  }, [clipUrl]);
+  }, [url]);
 
-  return <Clip id="waveform" ref={waveformRef} />;
+  return <Clip id="waveform" ref={containerRef} />;
 };
 
-export default WaveSurfer;
+export default WaveSurferComp;

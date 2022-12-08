@@ -1,27 +1,4 @@
-import Image from "next/image";
-import { useState, useEffect, useRef, MouseEvent } from "react";
-import styled, { keyframes } from "styled-components";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import produce from "immer";
-import ReactTooltip from "react-tooltip";
-const { v4: uuidv4 } = require("uuid");
-
-import {
-  doc,
-  collection,
-  getDoc,
-  getDocs,
-  setDoc,
-  updateDoc,
-  onSnapshot,
-  DocumentData,
-  orderBy,
-  query,
-  limit,
-} from "firebase/firestore";
-import { db } from "../../config/firebase";
-import { storage } from "../../config/firebase";
-import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { db, storage } from "../../config/firebase";
 import { useAuth } from "../../context/AuthContext";
 
 import {
@@ -31,8 +8,6 @@ import {
   selectedTrackIndexState,
   barWidthState,
   progressState,
-  isPlayingState,
-  isPausedState,
   isRecordingState,
   isMetronomeState,
   playerStatusState,
@@ -41,7 +16,6 @@ import {
   ProjectData,
   inputProgressState,
 } from "../../../src/store/atoms";
-import WaveSurfer from "../Tracks/WaveSurfer";
 
 import useRecorder from "../../utils/useRecorder";
 import Modal from "../Modal";
@@ -49,10 +23,27 @@ import Tracks from "../Tracks";
 import PianoRoll from "../PianoRoll";
 import Library from "../Library";
 import Export from "../Export";
-import Link from "next/link";
-import Avatar from "boring-avatars";
 import Loader from "../Loader";
 import { useOnClickOutside } from "../../utils/useOnClickOutside";
+import Avatar from "boring-avatars";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import Link from "next/link";
+import {
+  doc,
+  collection,
+  getDocs,
+  setDoc,
+  updateDoc,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
+import ReactTooltip from "react-tooltip";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import styled from "styled-components";
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
+const { v4: uuidv4 } = require("uuid");
 
 const Container = styled.div`
   width: calc(100vw);
@@ -172,7 +163,7 @@ const ProgressInputs = styled.div`
   background-color: #323232;
   border-radius: 10px;
   width: 100px;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
 `;
 
@@ -282,12 +273,10 @@ const ProjectNameWrapper = styled.p`
 const AllPanels = ({ projectId }: { projectId: string }) => {
   const [projectData, setProjectData] = useRecoilState(projectDataState);
   const [tracksData, setTracksData] = useRecoilState(tracksDataState);
-  const [barWidth, setBarWidth] = useRecoilState(barWidthState);
+  const setBarWidth = useSetRecoilState(barWidthState);
 
   const [isLoading, setIsLoading] = useRecoilState(isLoadingState);
   const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
-
-  const [audioList, setAudioList] = useState<string[]>([]);
 
   const [selectedTrackId, setSelectedTrackId] =
     useRecoilState(selectedTrackIdState);
@@ -299,31 +288,31 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
   const [tempo, setTempo] = useState<string>("");
   const isRecording = useRecoilValue(isRecordingState);
 
-  const [recordFile, setRecordFile, recordURL, startRecording, stopRecording] =
+  const [recordFile, setRecordFile, , startRecording, stopRecording] =
     useRecorder();
 
   const [isMetronome, setIsMetronome] = useRecoilState(isMetronomeState);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    if (projectId) {
-      const docRef = doc(db, "projects", projectId);
-      const unsubscribe = onSnapshot(docRef, (snapshot) => {
-        const newData = snapshot.data() as ProjectData;
-        setProjectData(newData);
-      });
+    if (!projectId) return;
 
-      return () => {
-        unsubscribe();
-      };
-    }
+    const docRef = doc(db, "projects", projectId);
+    const unsubscribe = onSnapshot(docRef, (snapshot) => {
+      const newData = snapshot.data() as ProjectData;
+      setProjectData(newData);
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
     if (!projectId) return;
-    console.log("useEffect");
+
     const colRef = collection(db, "projects", projectId, "tracks");
     const q = query(colRef, orderBy("createdTime"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -423,7 +412,7 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
     try {
       const docRef = doc(db, "projects", projectId, "tracks", trackId);
       const newData = {
-        id: trackId, ///////////////////////////////////////////////////////////////////////////////////////////////
+        id: trackId,
         name: name,
         type: type,
         clips: [
@@ -480,8 +469,6 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
       uploadBytes(audioRef, file)
         .then((snapshot) => {
           getDownloadURL(snapshot.ref).then(async (url) => {
-            setAudioList((prev) => [...prev, url]);
-
             // const trackId = uuidv4().split("-")[0];
             await uploadFileInfo(
               trackName,
@@ -639,7 +626,7 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
   return (
     <Container>
       <HeadBarPanel>
-        <Link href={"/"}>
+        <Link href="/">
           <Logo>
             <Image
               src="/logo-combine.svg"
@@ -691,7 +678,7 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
                       ? "/metronome-button-activated.svg"
                       : "/metronome-button.svg"
                   }
-                  alt={""}
+                  alt="metronome"
                   width={20}
                   height={20}
                   onClick={() => {
@@ -706,22 +693,24 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
               <ProgressInput
                 value={`${inputProgress.bars + 1}`}
                 onChange={(event) => {
-                  const regex = /^[0-9\s]*$/;
-                  if (
-                    regex.test(event.currentTarget.value) &&
-                    event.currentTarget.value !== ""
-                  ) {
-                    setInputProgress((prev) => ({
-                      ...prev,
-                      bars: Number(event.currentTarget.value) - 1,
-                    }));
-                  } else if (event.currentTarget.value === "") {
-                    console.log("inputProgress.bars", inputProgress.bars);
-                    setInputProgress((prev) => ({
-                      ...prev,
-                      bars: inputProgress.bars,
-                    }));
-                  }
+                  const handleProgressInput = () => {
+                    const regex = /^[0-9\s]*$/;
+                    if (
+                      regex.test(event.currentTarget.value) &&
+                      event.currentTarget.value !== ""
+                    ) {
+                      setInputProgress((prev) => ({
+                        ...prev,
+                        bars: Number(event.currentTarget.value) - 1,
+                      }));
+                    } else if (event.currentTarget.value === "") {
+                      setInputProgress((prev) => ({
+                        ...prev,
+                        bars: inputProgress.bars,
+                      }));
+                    }
+                  };
+                  handleProgressInput();
                 }}
                 onKeyPress={(event) => {
                   if (
@@ -828,7 +817,7 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
                       ? "/play-button-activated.svg"
                       : "/play-button.svg"
                   }
-                  alt={""}
+                  alt="play"
                   width={18}
                   height={18}
                 />
@@ -837,7 +826,7 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
               <Button onClick={handlePause}>
                 <Image
                   src="/pause-button.svg"
-                  alt={""}
+                  alt="pause"
                   width={16}
                   height={16}
                 />
@@ -850,7 +839,7 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
                       ? "/record-button-activated.svg"
                       : "/record-button.svg"
                   }
-                  alt={""}
+                  alt="record"
                   width={18}
                   height={18}
                 />
@@ -870,7 +859,7 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
               <Export />
             </ExportControls>
 
-            <Link href={"/profile"}>
+            <Link href="/profile">
               <Profile>
                 {user ? (
                   <Avatar

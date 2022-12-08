@@ -1,28 +1,13 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import * as Tone from "tone";
-
-import {
-  tracksDataState,
-  projectDataState,
-  selectedTrackIdState,
-  selectedTrackIndexState,
-  playerStatusState,
-  barWidthState,
-  progressState,
-  isPlayingState,
-  isPausedState,
-  isRecordingState,
-  isMetronomeState,
-  TrackData,
-} from "../../store/atoms";
+import { isRecordingState, playerStatusState } from "../../store/atoms";
+import { useEffect, useState, useRef } from "react";
+import { useRecoilState } from "recoil";
 
 const useRecorder = () => {
   const [recordURL, setRecordURL] = useState("");
-  const [recordFile, setRecordFile] = useState<null | Blob>(null);
-  const [recorder, setRecorder] = useState<null | MediaRecorder>(null);
+  const [recordFile, setRecordFile] = useState<Blob | null>(null);
+  const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
   const [isRecording, setIsRecording] = useRecoilState(isRecordingState);
-  const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
+  const setPlayerStatus = useSetRecoilState(playerStatusState);
 
   console.log("recordFile", recordFile);
 

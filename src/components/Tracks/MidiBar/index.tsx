@@ -1,13 +1,11 @@
-import styled from "styled-components";
-import { useRecoilState, useRecoilValue } from "recoil";
-
 import {
   barWidthState,
-  projectDataState,
   NoteData,
   ProjectData,
   TrackData,
 } from "../../../store/atoms";
+import styled from "styled-components";
+import { useRecoilValue } from "recoil";
 
 interface MidiRegionProps {
   barWidth: number;
@@ -69,27 +67,24 @@ interface MidiBarProps {
 }
 
 const MidiBar = (props: MidiBarProps) => {
-  const [barWidth, setBarWidth] = useRecoilState(barWidthState);
-  const projectData = useRecoilValue(projectDataState);
+  const barWidth = useRecoilValue(barWidthState);
 
   return (
     <>
       <Clip barWidth={barWidth} length={100}>
         {props.trackData.clips[0].notes.length > 0 &&
-          props.trackData.clips[0].notes.map(
-            (note: NoteData, index: number) => {
-              return (
-                <MidiNote
-                  key={`${note.notation}-${note.octave}-${note.start.bars}-${note.start.quarters}-${note.start.sixteenths}`}
-                  start={note.start}
-                  length={note.length}
-                  barWidth={barWidth}
-                  pitch={(note.octave - 1) * 12 + note.notationIndex}
-                  trackHeight={150}
-                />
-              );
-            }
-          )}
+          props.trackData.clips[0].notes.map((note: NoteData) => {
+            return (
+              <MidiNote
+                key={`${note.notation}-${note.octave}-${note.start.bars}-${note.start.quarters}-${note.start.sixteenths}`}
+                start={note.start}
+                length={note.length}
+                barWidth={barWidth}
+                pitch={(note.octave - 1) * 12 + note.notationIndex}
+                trackHeight={150}
+              />
+            );
+          })}
       </Clip>
     </>
   );

@@ -1,7 +1,20 @@
-import { createContext, useContext, useEffect } from "react";
+import { db, auth, firebaseConfig } from "../config/firebase";
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useRouter } from "next/router";
-import { updateProfile } from "firebase/auth";
-import { doc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import {
+  updateProfile,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
+import { doc, setDoc, updateDoc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 import {
   getDatabase,
@@ -10,33 +23,16 @@ import {
   serverTimestamp,
   ref,
   onValue,
-  push,
 } from "firebase/database";
-import { db, auth, firebaseConfig } from "../config/firebase";
-
-import {
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-} from "firebase/auth";
-import { useState } from "react";
-import {
-  projectDataState,
-  selectedTrackIdState,
-  selectedTrackIndexState,
-  tracksDataState,
-} from "../../src/store/atoms";
-import produce from "immer";
 
 interface UserType {
-  uid: string | null;
-  email: string | null;
-  displayName: string | null;
+  uid: string;
+  email: string;
+  displayName: string;
 }
 
 interface CreateContextType {
-  user: UserType | null;
+  user: UserType;
   isLoadingLogin: boolean;
   login: Function;
   signup: Function;
@@ -47,11 +43,7 @@ const AuthContext = createContext<CreateContextType>({} as CreateContextType);
 
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthContextProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserType | null>(null);
   const [isLoadingLogin, setIsLoadingLogin] = useState(true);
   const router = useRouter();
@@ -61,8 +53,8 @@ export const AuthContextProvider = ({
       if (user) {
         setUser({
           uid: user.uid,
-          email: user.email,
-          displayName: user.displayName,
+          email: user.email as string,
+          displayName: user.displayName as string,
         });
       } else {
         setUser(null);
@@ -87,7 +79,7 @@ export const AuthContextProvider = ({
 
     setUser({
       uid: res.user.uid,
-      email: res.user.email,
+      email: res.user.email as string,
       displayName: displayName,
     });
 
@@ -112,7 +104,7 @@ export const AuthContextProvider = ({
 
   const logout = async () => {
     alert("已登出");
-    const res = await signOut(auth);
+    await signOut(auth);
     console.log("user", user);
 
     const app = initializeApp(firebaseConfig);
@@ -159,10 +151,14 @@ export const AuthContextProvider = ({
   }, [user?.uid]);
 
   return (
-    <AuthContext.Provider
-      value={{ user, isLoadingLogin, login, signup, logout }}
-    >
-      {isLoadingLogin ? null : children}
-    </AuthContext.Provider>
+    <>
+      {user && (
+        <AuthContext.Provider
+          value={{ user, isLoadingLogin, login, signup, logout }}
+        >
+          {isLoadingLogin ? null : children}
+        </AuthContext.Provider>
+      )}
+    </>
   );
 };

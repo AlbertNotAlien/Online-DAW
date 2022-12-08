@@ -1,50 +1,17 @@
 import {
-  useState,
-  useEffect,
-  useRef,
-  memo,
-  SetStateAction,
-  Dispatch,
-} from "react";
-import styled from "styled-components";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import produce from "immer";
-
-import {
   tracksDataState,
   projectDataState,
-  selectedTrackIdState,
-  selectedTrackIndexState,
-  barWidthState,
-  progressState,
-  isPlayingState,
-  isPausedState,
-  isRecordingState,
-  isMetronomeState,
-  playerStatusState,
-  hoverMidiInfoState,
   playingNoteState,
-  isLoadingState,
-  TrackData,
+  hoverMidiInfo,
   ProjectData,
-  NoteData,
 } from "../../../src/store/atoms";
-
-import {
-  doc,
-  collection,
-  getDoc,
-  setDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  onSnapshot,
-  DocumentData,
-  orderBy,
-} from "firebase/firestore";
 import { db } from "../../config/firebase";
-import { storage } from "../../config/firebase";
-import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useState, memo, SetStateAction, Dispatch } from "react";
+import styled from "styled-components";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { produce } from "immer";
+
+import { doc, updateDoc } from "firebase/firestore";
 
 interface PianoKeysProps {
   notation: string;
@@ -137,16 +104,15 @@ const SixteenthBlock = styled(MidiBlock)<SixteenthBlockProps>`
   cursor: pointer;
 `;
 
-interface NotesPanel {
+interface NotesPanelProps {
   NOTATIONS: string[];
   selectedTrackIndex: number;
-  setHoverNote: Dispatch<SetStateAction<hoverMidiInfoState | null>>;
+  setHoverNote: Dispatch<SetStateAction<hoverMidiInfo | null>>;
 }
 
-const NotesPanel = (props: NotesPanel) => {
+const NotesPanel = (props: NotesPanelProps) => {
   const BARS: number = 8;
-  const [projectData, setProjectData] =
-    useRecoilState<ProjectData>(projectDataState);
+  const projectData = useRecoilValue<ProjectData>(projectDataState);
   const [tracksData, setTracksData] = useRecoilState(tracksDataState);
   const [playingNote, setPlayingNote] = useRecoilState(playingNoteState);
   const [isMouseDownPianoRoll, setIsMouseDownPianoRoll] = useState(false);

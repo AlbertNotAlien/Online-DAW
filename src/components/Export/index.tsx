@@ -1,46 +1,21 @@
-import Image from "next/image";
-
-import { useState, useEffect, useRef, MouseEvent } from "react";
-import styled from "styled-components";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import Draggable, { DraggableData, DraggableEvent } from "react-draggable";
-import produce from "immer";
-import * as Tone from "tone";
-
-import {
-  doc,
-  collection,
-  getDoc,
-  setDoc,
-  updateDoc,
-  onSnapshot,
-  DocumentData,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "../../config/firebase";
-import { storage } from "../../config/firebase";
-import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
 import {
   tracksDataState,
   projectDataState,
-  playingNoteState,
-  selectedTrackIdState,
-  selectedTrackIndexState,
-  isPlayingState,
-  isMetronomeState,
-  barWidthState,
   progressState,
   playerStatusState,
   isLoadingState,
-  TrackData,
   NoteData,
   AudioData,
   inputProgressState,
-  AddFunctionType,
 } from "../../../src/store/atoms";
 import Modal from "../Modal";
-import NotificationHub from "../NotificationHub";
+import NotificationHub, { AddFunction } from "../NotificationHub";
+import Image from "next/image";
+
+import { useState, useEffect, useRef } from "react";
+import styled from "styled-components";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import * as Tone from "tone";
 
 const ExportButton = styled.a`
   color: black;
@@ -113,19 +88,13 @@ const ModalButton = styled.button`
 
 const Export = () => {
   const projectData = useRecoilValue(projectDataState);
-  const [tracksData, setTracksData] = useRecoilState(tracksDataState);
-  const [isPlaying, setIsPlaying] = useRecoilState(isPlayingState);
-  const [isMetronome, setIsMetronome] = useRecoilState(isMetronomeState);
+  const tracksData = useRecoilValue(tracksDataState);
   const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
 
-  const wavesurfer = useRef(null);
-  const [duration, setDuration] = useState(0);
-
   const [isExporting, setIsExporting] = useState(false);
-  const [progress, setProgress] = useRecoilState(progressState);
-  const [inputProgress, setInputProgress] = useRecoilState(inputProgressState);
-
-  const [isLoading, setIsLoading] = useRecoilState(isLoadingState);
+  const setProgress = useSetRecoilState(progressState);
+  const setInputProgress = useSetRecoilState(inputProgressState);
+  const setIsLoading = useSetRecoilState(isLoadingState);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [instrument, setInstrument] = useState<Tone.Synth>();
@@ -137,63 +106,63 @@ const Export = () => {
     Tone.Transport.bpm.value = 58; //////////////////////////////////////////////////////////
   }, []);
 
-  const getAudioEnd = (track: TrackData) => {
-    return new Promise((resolve, reject) => {
-      if (track.type === "audio" || track.type === "record") {
-        const startPoint = track.clips[0].startPoint;
-        const startTime =
-          startPoint.bars * 16 +
-          startPoint.quarters * 4 +
-          startPoint.sixteenths;
+  // const getAudioEnd = (track: TrackData) => {
+  //   return new Promise((resolve, reject) => {
+  //     if (track.type === "audio" || track.type === "record") {
+  //       const startPoint = track.clips[0].startPoint;
+  //       const startTime =
+  //         startPoint.bars * 16 +
+  //         startPoint.quarters * 4 +
+  //         startPoint.sixteenths;
 
-        const getBuffer = (url: string, fn: Function) => {
-          const buffer = new Tone.Buffer(url, function () {
-            const buff = buffer.get();
-            fn(buff);
-          });
-        };
+  //       const getBuffer = (url: string, fn: Function) => {
+  //         const buffer = new Tone.Buffer(url, function () {
+  //           const buff = buffer.get();
+  //           fn(buff);
+  //         });
+  //       };
 
-        Tone.loaded().then(() => {
-          getBuffer(track.clips[0].url, function (buff: Tone.ToneAudioBuffer) {
-            const duration = Tone.Time(buff.duration).toBarsBeatsSixteenths();
-            resolve(duration);
-          });
-        });
+  //       Tone.loaded().then(() => {
+  //         getBuffer(track.clips[0].url, function (buff: Tone.ToneAudioBuffer) {
+  //           const duration = Tone.Time(buff.duration).toBarsBeatsSixteenths();
+  //           resolve(duration);
+  //         });
+  //       });
 
-        // getBuffer.then((data) => console.log(data));
-      }
-    });
-  };
+  //       // getBuffer.then((data) => console.log(data));
+  //     }
+  //   });
+  // };
 
-  const getMidiEnd = (track: TrackData) => {
-    console.log(track.type);
-    if (track.type === "midi") {
-      const startPoint = track.clips[0].startPoint;
-      console.log("startPoint", startPoint);
-      console.log("notes", track.clips[0].notes);
-      const startPoiSixteenths =
-        startPoint.bars * 16 + startPoint.quarters * 4 + startPoint.sixteenths;
-      // const durationTime =
-      const sixteenthsArr = track.clips[0].notes.map((note, index) => {
-        console.log(note);
-        const sumSixteenths =
-          (note.start.bars + note.length.bars) * 16 +
-          (note.start.quarters + note.length.quarters) * 4 +
-          (note.start.sixteenths + note.length.sixteenths) * 1;
-        // console.log(sumSixteenths);
-        return sumSixteenths;
-      });
-      const maxLengthSixteenths = Math.max(...sixteenthsArr);
-      console.log(maxLengthSixteenths);
-      const EndPointSixteenths = startPoiSixteenths + maxLengthSixteenths;
-      const EndPoint = {
-        bars: Math.floor(EndPointSixteenths / 16),
-        quarters: Math.floor(EndPointSixteenths / 4),
-        sixteenths: EndPointSixteenths % 4,
-      };
-      console.log("EndPoint", EndPoint);
-    }
-  };
+  // const getMidiEnd = (track: TrackData) => {
+  //   console.log(track.type);
+  //   if (track.type === "midi") {
+  //     const startPoint = track.clips[0].startPoint;
+  //     console.log("startPoint", startPoint);
+  //     console.log("notes", track.clips[0].notes);
+  //     const startPoiSixteenths =
+  //       startPoint.bars * 16 + startPoint.quarters * 4 + startPoint.sixteenths;
+  //     // const durationTime =
+  //     const sixteenthsArr = track.clips[0].notes.map((note, index) => {
+  //       console.log(note);
+  //       const sumSixteenths =
+  //         (note.start.bars + note.length.bars) * 16 +
+  //         (note.start.quarters + note.length.quarters) * 4 +
+  //         (note.start.sixteenths + note.length.sixteenths) * 1;
+  //       // console.log(sumSixteenths);
+  //       return sumSixteenths;
+  //     });
+  //     const maxLengthSixteenths = Math.max(...sixteenthsArr);
+  //     console.log(maxLengthSixteenths);
+  //     const EndPointSixteenths = startPoiSixteenths + maxLengthSixteenths;
+  //     const EndPoint = {
+  //       bars: Math.floor(EndPointSixteenths / 16),
+  //       quarters: Math.floor(EndPointSixteenths / 4),
+  //       sixteenths: EndPointSixteenths % 4,
+  //     };
+  //     console.log("EndPoint", EndPoint);
+  //   }
+  // };
 
   const handlePlayMidi = (
     note: NoteData,
@@ -204,7 +173,7 @@ const Export = () => {
       instrument.connect(dest);
       console.log(note.start);
       console.log(Tone.Transport.position);
-      Tone.Transport.schedule(function (time) {
+      Tone.Transport.schedule(function () {
         instrument.triggerAttackRelease(
           `${note.notation}${note.octave}`,
           `${note.length.bars}:${note.length.quarters}:${note.length.sixteenths}`
@@ -221,7 +190,7 @@ const Export = () => {
     const player = new Tone.Player(clip.url).toDestination();
     player.connect(dest);
     Tone.loaded().then(() => {
-      Tone.Transport.schedule(function (time) {
+      Tone.Transport.schedule(function () {
         player.sync().start();
       }, `${clip.startPoint.bars}:${clip.startPoint.quarters}:${clip.startPoint.sixteenths}`);
     });
@@ -285,7 +254,7 @@ const Export = () => {
 
     // console.log(recorder.state);
 
-    Tone.Transport.schedule(function (time) {
+    Tone.Transport.schedule(function () {
       if (recorder.state === "recording") {
         console.log("stop exporting");
         recorder.stop();
@@ -295,9 +264,9 @@ const Export = () => {
       }
     }, `${exportEndPoint.bars}:${exportEndPoint.quarters}:${exportEndPoint.sixteenths}`);
 
-    const chunks: BlobPart[] | undefined = [];
+    const chunks: Blob[] | undefined = [];
     recorder.ondataavailable = (event) => chunks.push(event.data);
-    recorder.onstop = (event) => {
+    recorder.onstop = () => {
       // let blob = new Blob(chunks, { type: "audio/wav; codecs=0" });
       let blob = new Blob(chunks, { type: "audio/mp3" });
       const blobUrl = window.URL.createObjectURL(blob);
@@ -339,13 +308,13 @@ const Export = () => {
     } else if (instrument && playerStatus === "paused") {
       Tone.Transport.pause();
     }
-  }, [instrument, playerStatus, isMetronome]);
+  }, [instrument, playerStatus, setInputProgress, setProgress]);
 
   const endBarsRef = useRef<HTMLInputElement | null>(null);
   const endQuartersRef = useRef<HTMLInputElement | null>(null);
   const endSixteenthsRef = useRef<HTMLInputElement | null>(null);
 
-  const notificationRef = useRef<null | AddFunctionType>(null);
+  const notificationRef = useRef<Function | null>(null);
 
   const handleConfirmError = (message: string) => {
     notificationRef.current?.(message);
@@ -354,7 +323,7 @@ const Export = () => {
   return (
     <>
       <NotificationHub
-        notificationChildren={(add: AddFunctionType) => {
+        notificationChildren={(add: AddFunction) => {
           notificationRef.current = add;
         }}
       />
@@ -462,7 +431,7 @@ const Export = () => {
           // exportAudio();
         }}
       >
-        <Image src="/export-button.svg" alt={""} width={24} height={24} />
+        <Image src="/export-button.svg" alt="export" width={24} height={24} />
       </ExportButton>
       {isExporting && <p>converting</p>}
     </>

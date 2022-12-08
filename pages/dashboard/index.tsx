@@ -1,44 +1,28 @@
-import { useRouter } from "next/router";
-import React, {
-  useState,
-  useEffect,
-  ReactNode,
-  useCallback,
-  useRef,
-} from "react";
-import styled from "styled-components";
-
-const { v4: uuidv4 } = require("uuid");
-const { CopyToClipboard } = require("react-copy-to-clipboard");
-
 import { useAuth } from "../../src/context/AuthContext";
-import { db, auth } from "../../src/config/firebase";
+import { db } from "../../src/config/firebase";
+import Header from "../../src/components/Header";
+import Footer from "../../src/components/Footer";
+import Modal from "../../src/components/Modal";
 import {
   doc,
   collection,
-  query,
-  orderBy,
-  limit,
   getDoc,
   setDoc,
-  onSnapshot,
-  addDoc,
   updateDoc,
   arrayUnion,
   arrayRemove,
   deleteDoc,
   Timestamp,
 } from "firebase/firestore";
-import Avatar from "boring-avatars";
 import Link from "next/link";
-import { set } from "firebase/database";
-import produce from "immer";
+import { produce } from "immer";
 
-import Header from "../../src/components/Header";
-import Footer from "../../src/components/Footer";
-import Modal from "../../src/components/Modal";
 import Head from "next/head";
-import { ProjectData } from "../../src/store/atoms";
+import styled from "styled-components";
+import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/router";
+const { CopyToClipboard } = require("react-copy-to-clipboard");
+const { v4: uuidv4 } = require("uuid");
 
 interface ProjectInfo {
   id: string;
@@ -266,17 +250,17 @@ const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
     if (!user && !isLoadingLogin) {
       router.push("/login");
     }
-  }, [isLoadingLogin]);
+  }, [isLoadingLogin, router, user]);
   return !user ? null : children;
 };
 
 const Dashboard = () => {
   const [userProjectList, setUserProjectList] = useState<ProjectInfo[]>([]);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean[]>([]);
-  const [copied, setCopied] = useState(false);
+  // const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const convertTimeStamp = (createdTime: Timestamp) => {
     const months = [
@@ -302,9 +286,9 @@ const Dashboard = () => {
     return `${months[dateArray[1] - 1]} ${dateArray[2]}, ${dateArray[0]}`;
   };
 
-  const onCopy = useCallback(() => {
-    setCopied(true);
-  }, []);
+  // const onCopy = useCallback(() => {
+  //   setCopied(true);
+  // }, []);
 
   const convertTimeStampToNumber = (timestamp: Timestamp) => {
     const timeArray = timestamp
@@ -316,6 +300,7 @@ const Dashboard = () => {
   };
 
   const getProjectsData = async () => {
+    if (!user || !user.uid) return;
     const docRef = doc(db, "users", user.uid);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
@@ -341,7 +326,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (userProjectList) {
-      setIsProjectModalOpen(userProjectList.map((project) => false));
+      setIsProjectModalOpen(userProjectList.map(() => false));
     }
   }, [userProjectList]);
 
@@ -378,6 +363,7 @@ const Dashboard = () => {
   };
 
   const addNewProject = async (projectName: string, projectBpm: number) => {
+    if (!user) return;
     let projectId = "";
     const createdTime = new Date();
 
@@ -401,7 +387,7 @@ const Dashboard = () => {
       console.log(err);
     }
 
-    // add subcollection "tracks"
+    // add subCollection "tracks"
     addDefaultMidiTrack(projectId);
 
     // add project-info to users collection
@@ -432,6 +418,8 @@ const Dashboard = () => {
     ownerName: string,
     createdTime: Timestamp
   ) => {
+    if (!user) return;
+
     try {
       const docRef = doc(db, "users", user.uid);
       const newData = {
@@ -563,7 +551,7 @@ const Dashboard = () => {
                       rename
                     </ProjectOption>
                     <CopyToClipboard
-                      onCopy={onCopy}
+                      // onCopy={onCopy}
                       text={`${window.location.protocol}//${window.location.host}/project/${project.id}`}
                     >
                       <ProjectOption>copy link</ProjectOption>

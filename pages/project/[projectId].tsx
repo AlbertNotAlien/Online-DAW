@@ -1,32 +1,10 @@
+import AllPanels from "../../src/components/AllPanels";
+import { useAuth } from "../../src/context/AuthContext";
+import { ProjectData } from "../../src/store/atoms";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import AllPanels from "../../src/components/AllPanels";
-import { useAuth } from "../../src/context/AuthContext";
-import {
-  tracksDataState,
-  // projectDataState,
-  playingNoteState,
-  selectedTrackIdState,
-  selectedTrackIndexState,
-  barWidthState,
-  progressState,
-  isPlayingState,
-  isMetronomeState,
-  isLoadingState,
-  playerStatusState,
-  TrackData,
-  NoteData,
-  AudioData,
-  ClipData,
-  ProjectData,
-} from "../../src/store/atoms";
-import {
-  useRecoilState,
-  useRecoilValue,
-  useSetRecoilState,
-  atom,
-} from "recoil";
+import { useRecoilValue, atom } from "recoil";
 
 const projectDataState = atom({
   key: "projectDataState",

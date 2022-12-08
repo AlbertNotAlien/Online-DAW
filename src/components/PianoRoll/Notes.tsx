@@ -1,32 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import { db } from "../../config/firebase";
+import {
+  playingNoteState,
+  ProjectData,
+  projectDataState,
+  selectedTrackIndexState,
+  tracksDataState,
+} from "../../store/atoms";
+import { useRef } from "react";
 import styled from "styled-components";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import Draggable, { DraggableEvent } from "react-draggable";
 import produce from "immer";
 
-import {
-  tracksDataState,
-  playingNoteState,
-  selectedTrackIndexState,
-  projectDataState,
-  ProjectData,
-} from "../../store/atoms";
-
-import {
-  doc,
-  collection,
-  getDoc,
-  setDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  onSnapshot,
-  DocumentData,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "../../config/firebase";
-import { storage } from "../../config/firebase";
-import { listAll, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { doc, updateDoc } from "firebase/firestore";
 
 interface DraggableData {
   node: HTMLElement;
@@ -94,8 +80,7 @@ const Notes = (props: NotesProps) => {
   const [tracksData, setTracksData] = useRecoilState(tracksDataState);
   const setPlayingNote = useSetRecoilState(playingNoteState);
   const selectedTrackIndex = useRecoilValue(selectedTrackIndexState);
-  const [projectData, setProjectData] =
-    useRecoilState<ProjectData>(projectDataState);
+  const projectData = useRecoilValue<ProjectData>(projectDataState);
 
   const prevNoteLengthRef = useRef(0);
   const prevNoteStartIndexRef = useRef(0);
@@ -106,10 +91,7 @@ const Notes = (props: NotesProps) => {
     octave: number,
     startBars: number,
     startQuarters: number,
-    startSixteenths: number,
-    lengthBars: number,
-    lengthQuarters: number,
-    lengthSixteenths: number
+    startSixteenths: number
   ) => {
     if (tracksData && selectedTrackIndex !== null) {
       const newTracksData = produce(tracksData, (draft) => {
@@ -245,10 +227,7 @@ const Notes = (props: NotesProps) => {
     octave: number,
     startBars: number,
     startQuarters: number,
-    startSixteenths: number,
-    lengthBars: number,
-    lengthQuarters: number,
-    lengthSixteenths: number
+    startSixteenths: number
   ) => {
     if (tracksData && selectedTrackIndex !== null) {
       const pitchIndex = -dragElement.y / 10;
@@ -481,10 +460,7 @@ const Notes = (props: NotesProps) => {
                     note.octave,
                     note.start.bars,
                     note.start.quarters,
-                    note.start.sixteenths,
-                    note.length.bars,
-                    note.length.quarters,
-                    note.length.sixteenths
+                    note.start.sixteenths
                   );
                 }}
                 grid={[25, 10]}
@@ -520,10 +496,7 @@ const Notes = (props: NotesProps) => {
                         note.octave,
                         note.start.bars,
                         note.start.quarters,
-                        note.start.sixteenths,
-                        note.length.bars,
-                        note.length.quarters,
-                        note.length.sixteenths
+                        note.start.sixteenths
                       );
                     }}
                     className="handle-NoteBar"

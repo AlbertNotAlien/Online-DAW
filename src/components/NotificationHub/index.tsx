@@ -1,9 +1,7 @@
-import React, { useRef, useState, useMemo, useEffect, MouseEvent } from "react";
+import React, { useState, useMemo, useEffect, MouseEvent } from "react";
 import { X } from "react-feather";
 import { useTransition, animated } from "@react-spring/web";
 import styled from "styled-components";
-
-import { AddFunctionType } from "../../store/atoms";
 
 export const Main = styled.div`
   cursor: pointer;
@@ -87,14 +85,18 @@ export const Life = styled(animated.div)`
 
 let id = 0;
 
-interface MessageHubProps {
+// export type AddFunction = (msg: string) => void;
+export type AddFunction = Function;
+
+export interface MessageHubProps {
   config?: {
     tension: number;
     friction: number;
     precision: number;
   };
   timeout?: number;
-  notificationChildren: (add: AddFunctionType) => void;
+  // notificationChildren: (add: AddFunction) => void;
+  notificationChildren: Function;
 }
 
 interface Item {
@@ -135,7 +137,7 @@ export default function MessageHub({
     notificationChildren((msg: string) => {
       setItems((state) => [...state, { key: id++, msg }]);
     });
-  }, []);
+  }, [notificationChildren]);
 
   return (
     <Container>
