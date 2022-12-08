@@ -316,23 +316,20 @@ const Dashboard = () => {
   };
 
   const getProjectsData = async () => {
+    if (!user || !user.uid) return;
     const docRef = doc(db, "users", user.uid);
     const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const projects = docSnap.data().projects as ProjectInfo[];
 
-      const newProjects = produce(projects, (draft) => {
-        draft.sort(function (projectA: ProjectInfo, projectB: ProjectInfo) {
-          return (
-            convertTimeStampToNumber(projectA.createdTime) -
-            convertTimeStampToNumber(projectB.createdTime)
-          );
-        });
-      });
-      setUserProjectList(newProjects);
-    } else {
-      console.log("No such document!");
-    }
+    if (!docSnap.exists()) return;
+    const projects = docSnap.data().projects as ProjectInfo[];
+    const newProjects = produce(projects, (draft) => {
+      draft.sort(
+        (projectA: ProjectInfo, projectB: ProjectInfo) =>
+          convertTimeStampToNumber(projectA.createdTime) -
+          convertTimeStampToNumber(projectB.createdTime)
+      );
+    });
+    setUserProjectList(newProjects);
   };
 
   useEffect(() => {
