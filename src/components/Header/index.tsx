@@ -1,8 +1,8 @@
-import { useAuth } from "../../context/AuthContext";
 import styled from "styled-components";
 import Link from "next/link";
 import Image from "next/image";
 import Avatar from "boring-avatars";
+import { useAuth } from "../../context/AuthContext";
 
 const Container = styled.div`
   height: 50px;

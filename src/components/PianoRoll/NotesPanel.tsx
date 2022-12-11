@@ -1,3 +1,10 @@
+import { useState, memo, SetStateAction, Dispatch } from "react";
+import styled from "styled-components";
+import { useRecoilState, useRecoilValue } from "recoil";
+import { produce } from "immer";
+
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "../../config/firebase";
 import {
   tracksDataState,
   projectDataState,
@@ -5,13 +12,6 @@ import {
   hoverMidiInfo,
   ProjectData,
 } from "../../../src/store/atoms";
-import { db } from "../../config/firebase";
-import { useState, memo, SetStateAction, Dispatch } from "react";
-import styled from "styled-components";
-import { useRecoilState, useRecoilValue } from "recoil";
-import { produce } from "immer";
-
-import { doc, updateDoc } from "firebase/firestore";
 
 interface PianoKeysProps {
   notation: string;
@@ -126,51 +126,47 @@ const NotesPanel = (props: NotesPanelProps) => {
     startSixteenths: number,
     selectedTrackIndex: number
   ) => {
-    console.log("handleAddNote");
+    if (!tracksData || selectedTrackIndex === null) return;
+    try {
+      const newNote = {
+        notation: notation,
+        notationIndex: notationIndex,
+        octave: octave,
+        start: {
+          bars: startBars,
+          quarters: startQuarters,
+          sixteenths: startSixteenths,
+        },
+        length: {
+          bars: 0,
+          quarters: 0,
+          sixteenths: 1,
+        },
+      };
 
-    if (tracksData && selectedTrackIndex !== null) {
-      try {
-        const newNote = {
-          notation: notation,
-          notationIndex: notationIndex,
-          octave: octave,
-          start: {
-            bars: startBars,
-            quarters: startQuarters,
-            sixteenths: startSixteenths,
-          },
-          length: {
-            bars: 0,
-            quarters: 0,
-            sixteenths: 1,
-          },
-        };
+      const newTracksData = produce(tracksData, (draft) => {
+        draft[selectedTrackIndex].clips[0].notes.push(newNote);
+      });
+      setTracksData(newTracksData);
 
-        const newTracksData = produce(tracksData, (draft) => {
-          draft[selectedTrackIndex].clips[0].notes.push(newNote);
-        });
-        setTracksData(newTracksData);
+      const trackRef = doc(
+        db,
+        "projects",
+        projectData.id,
+        "tracks",
+        tracksData[selectedTrackIndex].id
+      );
 
-        const trackRef = doc(
-          db,
-          "projects",
-          projectData.id,
-          "tracks",
-          tracksData[selectedTrackIndex].id
-        );
+      const newClips = produce(
+        tracksData[selectedTrackIndex].clips,
+        (draft) => {
+          draft[0].notes.push(newNote);
+        }
+      );
 
-        const newClips = produce(
-          tracksData[selectedTrackIndex].clips,
-          (draft) => {
-            draft[0].notes.push(newNote);
-          }
-        );
-
-        await updateDoc(trackRef, { clips: newClips });
-        console.log("info uploaded");
-      } catch (err) {
-        console.log(err);
-      }
+      await updateDoc(trackRef, { clips: newClips });
+    } catch (err) {
+      console.log(err);
     }
   };
 

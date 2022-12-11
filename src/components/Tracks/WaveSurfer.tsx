@@ -1,6 +1,6 @@
-import { ProjectData, TrackData } from "../../../store/atoms";
 import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
+import { ProjectData, TrackData } from "../../store/atoms";
 
 import type WaveSurferType from "wavesurfer.js";
 

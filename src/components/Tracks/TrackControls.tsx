@@ -1,5 +1,3 @@
-import { db } from "../../../config/firebase";
-import { tracksDataState, TrackData } from "../../../store/atoms";
 import { useState, useEffect, MutableRefObject } from "react";
 import styled from "styled-components";
 import { useRecoilState } from "recoil";
@@ -7,6 +5,8 @@ import { produce } from "immer";
 
 import { doc, updateDoc } from "firebase/firestore";
 import { Channel } from "tone";
+import { tracksDataState, TrackData } from "../../store/atoms";
+import { db } from "../../config/firebase";
 
 const Container = styled.div`
   max-width: 200px;

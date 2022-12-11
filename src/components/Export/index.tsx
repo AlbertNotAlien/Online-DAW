@@ -1,3 +1,11 @@
+import Image from "next/image";
+
+import { useState, useEffect, useRef } from "react";
+import styled from "styled-components";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import * as Tone from "tone";
+import NotificationHub, { AddFunction } from "../NotificationHub";
+import Modal from "../Modal";
 import {
   tracksDataState,
   projectDataState,
@@ -8,14 +16,6 @@ import {
   AudioData,
   inputProgressState,
 } from "../../../src/store/atoms";
-import Modal from "../Modal";
-import NotificationHub, { AddFunction } from "../NotificationHub";
-import Image from "next/image";
-
-import { useState, useEffect, useRef } from "react";
-import styled from "styled-components";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import * as Tone from "tone";
 
 const ExportButton = styled.a`
   color: black;
@@ -86,24 +86,63 @@ const ModalButton = styled.button`
   }
 `;
 
+const checkIsPositiveInteger = (value: string) => {
+  const regex = /^[0-9\s]*$/;
+  console.log("regex.test(value)", regex.test(value));
+  console.log("Number.isInteger(value)", Number.isInteger(Number(value)));
+  console.log("Number(value) > 0", Number(value) > 0);
+
+  if (
+    regex.test(value) &&
+    Number.isInteger(Number(value)) &&
+    Number(value) > 0
+  ) {
+    return true;
+  } else {
+    throw new Error("請輸入正整數");
+  }
+};
+
+const checkIsNotEqualOne = (value: string) => {
+  console.log("Number(value)", Number(value));
+  if (Number(value) !== 1) {
+    return true;
+  } else {
+    throw new Error("輸入數值不得皆為1");
+  }
+};
+
+interface ExportEndPointType {
+  bars: number | null;
+  quarters: number | null;
+  sixteenths: number | null;
+}
+
 const Export = () => {
   const projectData = useRecoilValue(projectDataState);
   const tracksData = useRecoilValue(tracksDataState);
   const [playerStatus, setPlayerStatus] = useRecoilState(playerStatusState);
-
   const [isExporting, setIsExporting] = useState(false);
   const setProgress = useSetRecoilState(progressState);
   const setInputProgress = useSetRecoilState(inputProgressState);
   const setIsLoading = useSetRecoilState(isLoadingState);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [instrument, setInstrument] = useState<Tone.Synth>();
+  const exportEndPointRef = useRef<ExportEndPointType>({
+    bars: 2,
+    quarters: 1,
+    sixteenths: 1,
+  });
+  const endBarsRef = useRef<HTMLInputElement | null>(null);
+  const endQuartersRef = useRef<HTMLInputElement | null>(null);
+  const endSixteenthsRef = useRef<HTMLInputElement | null>(null);
+  const notificationRef = useRef<Function | null>(null);
 
   useEffect(() => {
     const vol = new Tone.Volume(-50).toDestination();
     const newSynth = new Tone.Synth().connect(vol).toDestination();
     setInstrument(newSynth);
-    Tone.Transport.bpm.value = 58; //////////////////////////////////////////////////////////
+    Tone.Transport.bpm.value = projectData.tempo;
   }, []);
 
   // const getAudioEnd = (track: TrackData) => {
@@ -168,18 +207,16 @@ const Export = () => {
     note: NoteData,
     dest: MediaStreamAudioDestinationNode
   ) => {
-    console.log("handlePlayMidi");
-    if (instrument) {
-      instrument.connect(dest);
-      console.log(note.start);
-      console.log(Tone.Transport.position);
-      Tone.Transport.schedule(function () {
-        instrument.triggerAttackRelease(
-          `${note.notation}${note.octave}`,
-          `${note.length.bars}:${note.length.quarters}:${note.length.sixteenths}`
-        );
-      }, `${note.start.bars}:${note.start.quarters}:${note.start.sixteenths}`);
-    }
+    if (!instrument) return;
+    instrument.connect(dest);
+    console.log(note.start);
+    console.log(Tone.Transport.position);
+    Tone.Transport.schedule(function () {
+      instrument.triggerAttackRelease(
+        `${note.notation}${note.octave}`,
+        `${note.length.bars}:${note.length.quarters}:${note.length.sixteenths}`
+      );
+    }, `${note.start.bars}:${note.start.quarters}:${note.start.sixteenths}`);
   };
 
   const handlePlayAudio = (
@@ -241,7 +278,7 @@ const Export = () => {
           setIsLoading(false);
         });
 
-      await Tone.start(); /////////////////////////////////
+      await Tone.start();
     };
 
     startPlaying();
@@ -252,26 +289,21 @@ const Export = () => {
       sixteenths: endSixteenths,
     };
 
-    // console.log(recorder.state);
-
     Tone.Transport.schedule(function () {
-      if (recorder.state === "recording") {
-        console.log("stop exporting");
-        recorder.stop();
-        Tone.Transport.stop();
-        setPlayerStatus("paused");
-        setIsExporting(false);
-      }
+      if (recorder.state !== "recording") return;
+      console.log("stop exporting");
+      recorder.stop();
+      Tone.Transport.stop();
+      setPlayerStatus("paused");
+      setIsExporting(false);
     }, `${exportEndPoint.bars}:${exportEndPoint.quarters}:${exportEndPoint.sixteenths}`);
 
     const chunks: Blob[] | undefined = [];
     recorder.ondataavailable = (event) => chunks.push(event.data);
     recorder.onstop = () => {
-      // let blob = new Blob(chunks, { type: "audio/wav; codecs=0" });
       let blob = new Blob(chunks, { type: "audio/mp3" });
       const blobUrl = window.URL.createObjectURL(blob);
       console.log(blob);
-      // window.open(blobUrl);
 
       const tempLink = document.createElement("a");
       tempLink.href = blobUrl;
@@ -301,8 +333,6 @@ const Export = () => {
       }, 100);
 
       return () => {
-        // Tone.Transport.stop();
-        // Tone.Transport.cancel();
         clearInterval(timer);
       };
     } else if (instrument && playerStatus === "paused") {
@@ -310,14 +340,53 @@ const Export = () => {
     }
   }, [instrument, playerStatus, setInputProgress, setProgress]);
 
-  const endBarsRef = useRef<HTMLInputElement | null>(null);
-  const endQuartersRef = useRef<HTMLInputElement | null>(null);
-  const endSixteenthsRef = useRef<HTMLInputElement | null>(null);
-
-  const notificationRef = useRef<Function | null>(null);
-
   const handleConfirmError = (message: string) => {
     notificationRef.current?.(message);
+  };
+
+  const handleExportConfirm = () => {
+    if (
+      !endBarsRef.current ||
+      !endQuartersRef.current ||
+      !endSixteenthsRef.current
+    )
+      return;
+
+    try {
+      const validInput = [
+        endBarsRef.current.value,
+        endQuartersRef.current.value,
+        endSixteenthsRef.current.value,
+      ];
+
+      console.log(
+        validInput.some((value) => {
+          checkIsPositiveInteger(value);
+        })
+      );
+
+      const isValidInput =
+        validInput.every(checkIsPositiveInteger) &&
+        validInput.some((value) => {
+          return checkIsNotEqualOne(value);
+        });
+
+      console.log("isValidInput", isValidInput);
+
+      if (!isValidInput) return;
+
+      exportAudio(
+        Math.floor(Number(endBarsRef.current.value) - 1),
+        Math.floor(Number(endQuartersRef.current.value) - 1),
+        Math.floor(Number(endSixteenthsRef.current.value) - 1)
+      );
+      setIsModalOpen(false);
+    } catch (err: unknown) {
+      console.log("err", err);
+      if (err instanceof Error) {
+        handleConfirmError(err.message);
+      }
+    }
   };
 
   return (
@@ -362,54 +431,7 @@ const Export = () => {
             </EndPointInputs>
             <div>
               <ModalButtons>
-                <ModalButton
-                  onClick={() => {
-                    const regex = /^[0-9\s]*$/;
-                    if (
-                      endBarsRef.current &&
-                      endQuartersRef.current &&
-                      endSixteenthsRef.current &&
-                      !regex.test(endBarsRef.current.value) &&
-                      !regex.test(endQuartersRef.current.value) &&
-                      !regex.test(endSixteenthsRef.current.value)
-                    ) {
-                      handleConfirmError("請輸入正確的數值");
-                    } else if (
-                      (endBarsRef.current &&
-                        Number(endBarsRef.current.value) < 1) ||
-                      (endQuartersRef.current &&
-                        Number(endQuartersRef.current.value) < 1) ||
-                      (endSixteenthsRef.current &&
-                        Number(endSixteenthsRef.current.value) < 1)
-                    ) {
-                      handleConfirmError("輸入值不得小於 1");
-                    } else if (
-                      endBarsRef.current &&
-                      endQuartersRef.current &&
-                      endSixteenthsRef.current &&
-                      endBarsRef.current.value === "1" &&
-                      endQuartersRef.current.value === "1" &&
-                      endSixteenthsRef.current.value === "1"
-                    ) {
-                      console.log("alert");
-                      handleConfirmError("輸入值不得皆為 1");
-                    } else if (
-                      endBarsRef.current !== null &&
-                      endQuartersRef.current !== null &&
-                      endSixteenthsRef.current !== null
-                    ) {
-                      console.log(endBarsRef.current.value);
-                      exportAudio(
-                        Math.floor(Number(endBarsRef.current.value) - 1),
-                        Math.floor(Number(endQuartersRef.current.value) - 1),
-                        Math.floor(Number(endSixteenthsRef.current.value) - 1)
-                      );
-                      setIsModalOpen(false);
-                    }
-                  }}
-                >
-                  Confirm
-                </ModalButton>
+                <ModalButton onClick={handleExportConfirm}>Confirm</ModalButton>
                 <ModalButton
                   onClick={() => {
                     endBarsRef.current = null;

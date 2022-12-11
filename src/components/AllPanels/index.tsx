@@ -1,3 +1,21 @@
+import Avatar from "boring-avatars";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import Link from "next/link";
+import {
+  doc,
+  collection,
+  getDocs,
+  setDoc,
+  updateDoc,
+  onSnapshot,
+  orderBy,
+  query,
+} from "firebase/firestore";
+import ReactTooltip from "react-tooltip";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+import styled from "styled-components";
+import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { db, storage } from "../../config/firebase";
 import { useAuth } from "../../context/AuthContext";
 
@@ -25,24 +43,6 @@ import Library from "../Library";
 import Export from "../Export";
 import Loader from "../Loader";
 import { useOnClickOutside } from "../../utils/useOnClickOutside";
-import Avatar from "boring-avatars";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import Link from "next/link";
-import {
-  doc,
-  collection,
-  getDocs,
-  setDoc,
-  updateDoc,
-  onSnapshot,
-  orderBy,
-  query,
-} from "firebase/firestore";
-import ReactTooltip from "react-tooltip";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-import styled from "styled-components";
-import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
 const { v4: uuidv4 } = require("uuid");
 
 const Container = styled.div`
@@ -357,18 +357,16 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
       date.getMonth() + 1
     }-${date.getDate()}_${date.getHours()}-${date.getMinutes()}-${date.getSeconds()}-${date.getMilliseconds()}`;
 
-    if (filename?.lastIndexOf(".")) {
-      const dotIndex = filename.lastIndexOf(".");
-      if (dotIndex === -1) {
-        return filename + "_" + fileDate;
-      } else {
-        return (
-          filename.substring(0, dotIndex) +
-          "_" +
-          fileDate +
-          filename.substring(dotIndex)
-        );
-      }
+    const dotIndex = filename.lastIndexOf(".");
+    if (filename?.lastIndexOf(".") && dotIndex === -1) {
+      return filename + "_" + fileDate;
+    } else if (filename?.lastIndexOf(".") && dotIndex !== -1) {
+      return (
+        filename.substring(0, dotIndex) +
+        "_" +
+        fileDate +
+        filename.substring(dotIndex)
+      );
     } else {
       return filename + "_" + fileDate;
     }
@@ -429,15 +427,9 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
         selectedBy: selectedBy,
         createdTime: createdTime,
       };
-      if (recordFile && type === "record") {
-        console.log("trackId", trackId);
-        console.log("updateDoc");
-        await updateDoc(docRef, newData);
-      } else {
-        console.log("setDoc");
-        await setDoc(docRef, newData);
-      }
-      console.log("info uploaded");
+      recordFile && type === "record"
+        ? await updateDoc(docRef, newData)
+        : await setDoc(docRef, newData);
     } catch (err) {
       console.log(err);
     }
@@ -455,50 +447,47 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
     trackName: string,
     fileName: string
   ) => {
+    if (file === null || !tracksData) return;
+
     setIsLoading(true);
 
-    if (file !== null && tracksData) {
-      const newStartPoint = {
-        bars: startPoint.bars,
-        quarters: startPoint.quarters,
-        sixteenths: startPoint.sixteenths,
-      };
+    const newStartPoint = {
+      bars: startPoint.bars,
+      quarters: startPoint.quarters,
+      sixteenths: startPoint.sixteenths,
+    };
 
-      const audioRef = ref(storage, `projects/${projectId}/audios/${fileName}`);
+    const audioRef = ref(storage, `projects/${projectId}/audios/${fileName}`);
 
-      uploadBytes(audioRef, file)
-        .then((snapshot) => {
-          getDownloadURL(snapshot.ref).then(async (url) => {
-            // const trackId = uuidv4().split("-")[0];
-            await uploadFileInfo(
-              trackName,
-              type,
-              fileName,
-              newStartPoint,
-              url,
-              false,
-              false,
-              0,
-              0,
-              "",
-              new Date(),
-              trackId
-            );
-          });
-          updateSelectedTrackIndex();
-        })
-        .catch((err) => {
-          console.log(err);
-        })
-        .finally(() => {
-          setIsLoading(false);
-          if (recordFile) {
-            // cleanupRecordFile();
-            console.log("setRecordFile");
-            setRecordFile(null);
-          }
+    uploadBytes(audioRef, file)
+      .then((snapshot) => {
+        getDownloadURL(snapshot.ref).then(async (url) => {
+          // const trackId = uuidv4().split("-")[0];
+          await uploadFileInfo(
+            trackName,
+            type,
+            fileName,
+            newStartPoint,
+            url,
+            false,
+            false,
+            0,
+            0,
+            "",
+            new Date(),
+            trackId
+          );
         });
-    }
+        updateSelectedTrackIndex();
+      })
+      .catch((err) => {
+        console.log(err);
+      })
+      .finally(() => {
+        if (!recordFile) return;
+        setIsLoading(false);
+        setRecordFile(null);
+      });
   };
 
   const handleTempoChange = async (newTempo: number) => {
@@ -518,7 +507,6 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
   useEffect(() => {
     setBarWidth((120 / projectData.tempo) * 10);
     setTempo(projectData.tempo.toString());
-    console.log("useEffect");
   }, [projectData, setBarWidth]);
 
   const recordStartTimeRef = useRef({ bars: 0, quarters: 0, sixteenths: 0 });
@@ -528,8 +516,6 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
   const newRecordFileNameRef = useRef("");
 
   const handleRecord = () => {
-    console.log("handleRecord");
-    console.log("isRecording", isRecording);
     if (!isRecording && typeof startRecording === "function") {
       newRecordTrackIdRef.current = uuidv4().split("-")[0];
       recordStartTimeRef.current = {
@@ -565,50 +551,44 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
       startRecording();
       setPlayerStatus("recording");
     } else if (isRecording && typeof stopRecording === "function") {
-      console.log("stopRecording");
-      console.log("recordFile", recordFile);
-
       setRecordFile(null);
-
       stopRecording();
       setPlayerStatus("paused");
     }
   };
 
   useEffect(() => {
-    if (recordFile) {
-      handleUploadAudio(
-        recordFile,
-        "record",
-        recordStartTimeRef.current,
-        newRecordTrackIdRef.current,
-        newRecordTrackNameRef.current,
-        newRecordFileNameRef.current
-      );
-    }
+    if (!recordFile) return;
+    handleUploadAudio(
+      recordFile,
+      "record",
+      recordStartTimeRef.current,
+      newRecordTrackIdRef.current,
+      newRecordTrackNameRef.current,
+      newRecordFileNameRef.current
+    );
   }, [recordFile]); // useCallback來最佳化效能
 
   const cleanupSelectedBy = async () => {
-    if (tracksData && selectedTrackId !== null && selectedTrackIndex !== null) {
-      setSelectedTrackId(null);
-      setSelectedTrackIndex(null);
+    if (!tracksData || selectedTrackId === null || selectedTrackIndex === null)
+      return;
+    setSelectedTrackId(null);
+    setSelectedTrackIndex(null);
 
-      try {
-        const docRef = doc(
-          db,
-          "projects",
-          projectId,
-          "tracks",
-          selectedTrackId // previous selectedTrackId
-        );
-        const newData = {
-          selectedBy: "",
-        };
-        await updateDoc(docRef, newData);
-        console.log("upload cleanupSelectedBy");
-      } catch (err) {
-        console.log(err);
-      }
+    try {
+      const docRef = doc(
+        db,
+        "projects",
+        projectId,
+        "tracks",
+        selectedTrackId // previous selectedTrackId
+      );
+      const newData = {
+        selectedBy: "",
+      };
+      await updateDoc(docRef, newData);
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -616,9 +596,8 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
   const pianoRollRef = useRef(null);
 
   const handleClickOutside = () => {
-    if (selectedTrackId !== null && selectedTrackIndex !== null) {
-      cleanupSelectedBy();
-    }
+    if (selectedTrackId === null || selectedTrackIndex === null) return;
+    cleanupSelectedBy();
   };
   useOnClickOutside(tracksContainerRef, pianoRollRef, handleClickOutside);
 
@@ -847,7 +826,7 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
           </PlayerControls>
           <HeadBarPanelPart>
             <ExportControls>
-              <ProjectNameWrapper>{projectData.name}</ProjectNameWrapper>
+              <ProjectNameWrapper>{projectData?.name}</ProjectNameWrapper>
               <HeadBarDivider />
 
               {isLoading && (

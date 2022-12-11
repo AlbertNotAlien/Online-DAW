@@ -1,11 +1,3 @@
-import { db } from "../../config/firebase";
-import {
-  playingNoteState,
-  ProjectData,
-  projectDataState,
-  selectedTrackIndexState,
-  tracksDataState,
-} from "../../store/atoms";
 import { useRef } from "react";
 import styled from "styled-components";
 import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
@@ -13,6 +5,15 @@ import Draggable, { DraggableEvent } from "react-draggable";
 import produce from "immer";
 
 import { doc, updateDoc } from "firebase/firestore";
+import {
+  NoteData,
+  playingNoteState,
+  ProjectData,
+  projectDataState,
+  selectedTrackIndexState,
+  tracksDataState,
+} from "../../store/atoms";
+import { db } from "../../config/firebase";
 
 interface DraggableData {
   node: HTMLElement;
@@ -93,55 +94,54 @@ const Notes = (props: NotesProps) => {
     startQuarters: number,
     startSixteenths: number
   ) => {
-    if (tracksData && selectedTrackIndex !== null) {
-      const newTracksData = produce(tracksData, (draft) => {
-        draft[selectedTrackIndex].clips[0].notes = draft[
-          selectedTrackIndex
-        ].clips[0].notes.filter(
-          (note) =>
-            !(
-              note.notationIndex === notationIndex &&
-              note.octave === octave &&
-              note.start.bars === startBars &&
-              note.start.quarters === startQuarters &&
-              note.start.sixteenths === startSixteenths
-            )
-        );
-      });
-      setTracksData(newTracksData);
-
-      try {
-        const trackRef = doc(
-          db,
-          "projects",
-          projectData.id,
-          "tracks",
-          tracksData[selectedTrackIndex].id
-        );
-
-        const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
-
-        const selectedNoteIndex = prevNotes.findIndex(
-          (note) =>
+    if (!tracksData || selectedTrackIndex === null) return;
+    const newTracksData = produce(tracksData, (draft) => {
+      draft[selectedTrackIndex].clips[0].notes = draft[
+        selectedTrackIndex
+      ].clips[0].notes.filter(
+        (note) =>
+          !(
             note.notationIndex === notationIndex &&
             note.octave === octave &&
             note.start.bars === startBars &&
             note.start.quarters === startQuarters &&
             note.start.sixteenths === startSixteenths
-        );
+          )
+      );
+    });
+    setTracksData(newTracksData);
 
-        const newClips = produce(
-          tracksData[selectedTrackIndex].clips,
-          (draft) => {
-            draft[0].notes.splice(selectedNoteIndex, 1);
-          }
-        );
+    try {
+      const trackRef = doc(
+        db,
+        "projects",
+        projectData.id,
+        "tracks",
+        tracksData[selectedTrackIndex].id
+      );
 
-        await updateDoc(trackRef, { clips: newClips });
-        console.log("info uploaded");
-      } catch (err) {
-        console.log(err);
-      }
+      const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
+
+      const selectedNoteIndex = prevNotes.findIndex(
+        (note) =>
+          note.notationIndex === notationIndex &&
+          note.octave === octave &&
+          note.start.bars === startBars &&
+          note.start.quarters === startQuarters &&
+          note.start.sixteenths === startSixteenths
+      );
+
+      const newClips = produce(
+        tracksData[selectedTrackIndex].clips,
+        (draft) => {
+          draft[0].notes.splice(selectedNoteIndex, 1);
+        }
+      );
+
+      await updateDoc(trackRef, { clips: newClips });
+      console.log("info uploaded");
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -154,69 +154,68 @@ const Notes = (props: NotesProps) => {
     startQuarters: number,
     startSixteenths: number
   ) => {
-    if (tracksData && selectedTrackIndex !== null) {
-      const sixteenthsIndex = (dragElement.x - 25) / 25;
-      const pitchIndex = -dragElement.y / 10;
-      const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
+    if (!tracksData || selectedTrackIndex === null) return;
+    const sixteenthsIndex = (dragElement.x - 25) / 25;
+    const pitchIndex = -dragElement.y / 10;
+    const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
 
-      const selectedNoteIndex = prevNotes.findIndex(
-        (note) =>
-          note.notationIndex === notationIndex &&
-          note.octave === octave &&
-          note.start.bars === startBars &&
-          note.start.quarters === startQuarters &&
-          note.start.sixteenths === startSixteenths
+    const selectedNoteIndex = prevNotes.findIndex(
+      (note) =>
+        note.notationIndex === notationIndex &&
+        note.octave === octave &&
+        note.start.bars === startBars &&
+        note.start.quarters === startQuarters &&
+        note.start.sixteenths === startSixteenths
+    );
+
+    const newBars = Math.floor(sixteenthsIndex / 16);
+    const newQuarters = Math.floor((sixteenthsIndex % 16) / 4);
+    const newSixteenths = sixteenthsIndex % 4;
+
+    const newNotationIndex = pitchIndex % 12;
+    const newOctave = Math.floor(pitchIndex / 12) + 1;
+
+    const newTracksData = produce(tracksData, (draft) => {
+      const draftNote =
+        draft[selectedTrackIndex].clips[0].notes[selectedNoteIndex];
+
+      draftNote.start.bars = newBars;
+      draftNote.start.quarters = newQuarters;
+      draftNote.start.sixteenths = newSixteenths;
+
+      draftNote.octave = newOctave;
+      draftNote.notationIndex = newNotationIndex;
+      draftNote.notation = props.NOTATIONS[newNotationIndex];
+    });
+    setTracksData(newTracksData);
+
+    try {
+      const trackRef = doc(
+        db,
+        "projects",
+        projectData.id,
+        "tracks",
+        tracksData[selectedTrackIndex].id
       );
 
-      const newBars = Math.floor(sixteenthsIndex / 16);
-      const newQuarters = Math.floor((sixteenthsIndex % 16) / 4);
-      const newSixteenths = sixteenthsIndex % 4;
+      const newClips = produce(
+        tracksData[selectedTrackIndex].clips,
+        (draft) => {
+          draft[0].notes[selectedNoteIndex].start.sixteenths = newSixteenths;
+          draft[0].notes[selectedNoteIndex].start.quarters = newQuarters;
+          draft[0].notes[selectedNoteIndex].start.bars = newBars;
 
-      const newNotationIndex = pitchIndex % 12;
-      const newOctave = Math.floor(pitchIndex / 12) + 1;
+          draft[0].notes[selectedNoteIndex].octave = newOctave;
+          draft[0].notes[selectedNoteIndex].notationIndex = newNotationIndex;
+          draft[0].notes[selectedNoteIndex].notation =
+            props.NOTATIONS[newNotationIndex];
+        }
+      );
 
-      const newTracksData = produce(tracksData, (draft) => {
-        const draftNote =
-          draft[selectedTrackIndex].clips[0].notes[selectedNoteIndex];
-
-        draftNote.start.bars = newBars;
-        draftNote.start.quarters = newQuarters;
-        draftNote.start.sixteenths = newSixteenths;
-
-        draftNote.octave = newOctave;
-        draftNote.notationIndex = newNotationIndex;
-        draftNote.notation = props.NOTATIONS[newNotationIndex];
-      });
-      setTracksData(newTracksData);
-
-      try {
-        const trackRef = doc(
-          db,
-          "projects",
-          projectData.id,
-          "tracks",
-          tracksData[selectedTrackIndex].id
-        );
-
-        const newClips = produce(
-          tracksData[selectedTrackIndex].clips,
-          (draft) => {
-            draft[0].notes[selectedNoteIndex].start.sixteenths = newSixteenths;
-            draft[0].notes[selectedNoteIndex].start.quarters = newQuarters;
-            draft[0].notes[selectedNoteIndex].start.bars = newBars;
-
-            draft[0].notes[selectedNoteIndex].octave = newOctave;
-            draft[0].notes[selectedNoteIndex].notationIndex = newNotationIndex;
-            draft[0].notes[selectedNoteIndex].notation =
-              props.NOTATIONS[newNotationIndex];
-          }
-        );
-
-        await updateDoc(trackRef, { clips: newClips });
-        console.log("info uploaded");
-      } catch (err) {
-        console.log(err);
-      }
+      await updateDoc(trackRef, { clips: newClips });
+      console.log("info uploaded");
+    } catch (err) {
+      console.log(err);
     }
   };
 
@@ -229,35 +228,33 @@ const Notes = (props: NotesProps) => {
     startQuarters: number,
     startSixteenths: number
   ) => {
-    if (tracksData && selectedTrackIndex !== null) {
-      const pitchIndex = -dragElement.y / 10;
-      const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
+    if (!tracksData || selectedTrackIndex === null) return;
 
-      const selectedNoteIndex = prevNotes.findIndex(
-        (note) =>
-          note.notationIndex === notationIndex &&
-          note.octave === octave &&
-          note.start.bars === startBars &&
-          note.start.quarters === startQuarters &&
-          note.start.sixteenths === startSixteenths
-      );
+    const pitchIndex = -dragElement.y / 10;
+    const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
 
-      const newNotationIndex = pitchIndex % 12;
-      const newNotation = props.NOTATIONS[newNotationIndex];
-      const newOctave = Math.floor(pitchIndex / 12) + 1;
+    const selectedNoteIndex = prevNotes.findIndex(
+      (note: NoteData) =>
+        note.notationIndex === notationIndex &&
+        note.octave === octave &&
+        note.start.bars === startBars &&
+        note.start.quarters === startQuarters &&
+        note.start.sixteenths === startSixteenths
+    );
 
-      if (
-        newNotationIndex !== prevNotes[selectedNoteIndex].notationIndex ||
-        newOctave !== prevNotes[selectedNoteIndex].octave
-      ) {
-        const newPlayingNote = {
-          notation: newNotation,
-          octave: newOctave,
-        };
-        console.log("handleNotePreview");
+    const newNotationIndex = pitchIndex % 12;
+    const newNotation = props.NOTATIONS[newNotationIndex];
+    const newOctave = Math.floor(pitchIndex / 12) + 1;
 
-        setPlayingNote(newPlayingNote);
-      }
+    if (
+      newNotationIndex !== prevNotes[selectedNoteIndex].notationIndex ||
+      newOctave !== prevNotes[selectedNoteIndex].octave
+    ) {
+      const newPlayingNote = {
+        notation: newNotation,
+        octave: newOctave,
+      };
+      setPlayingNote(newPlayingNote);
     }
   };
 
@@ -270,27 +267,27 @@ const Notes = (props: NotesProps) => {
     startQuarters: number,
     startSixteenths: number
   ) => {
-    if (tracksData && selectedTrackIndex !== null) {
-      const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
-      const selectedNoteIndex = prevNotes.findIndex(
-        (note) =>
-          note.notationIndex === notationIndex &&
-          note.octave === octave &&
-          note.start.bars === startBars &&
-          note.start.quarters === startQuarters &&
-          note.start.sixteenths === startSixteenths
-      );
-      const prevNote = prevNotes[selectedNoteIndex];
+    if (!tracksData || selectedTrackIndex === null) return;
 
-      prevNoteLengthRef.current =
-        prevNote.length.bars * 16 +
-        prevNote.length.quarters * 4 +
-        prevNote.length.sixteenths;
-      prevNoteStartIndexRef.current =
-        prevNote.start.bars * 16 +
-        prevNote.start.quarters * 4 +
-        prevNote.start.sixteenths;
-    }
+    const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
+    const selectedNoteIndex = prevNotes.findIndex(
+      (note) =>
+        note.notationIndex === notationIndex &&
+        note.octave === octave &&
+        note.start.bars === startBars &&
+        note.start.quarters === startQuarters &&
+        note.start.sixteenths === startSixteenths
+    );
+    const prevNote = prevNotes[selectedNoteIndex];
+
+    prevNoteLengthRef.current =
+      prevNote.length.bars * 16 +
+      prevNote.length.quarters * 4 +
+      prevNote.length.sixteenths;
+    prevNoteStartIndexRef.current =
+      prevNote.start.bars * 16 +
+      prevNote.start.quarters * 4 +
+      prevNote.start.sixteenths;
   };
 
   const handleExtendNoteRight = async (
@@ -302,63 +299,62 @@ const Notes = (props: NotesProps) => {
     startQuarters: number,
     startSixteenths: number
   ) => {
-    if (tracksData && selectedTrackIndex !== null) {
-      const offsetSixteenths = dragElement.x / 25;
-      const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
+    if (!tracksData || selectedTrackIndex === null) return;
 
-      const selectedNoteIndex = prevNotes.findIndex(
-        (note) =>
-          note.notationIndex === notationIndex &&
-          note.octave === octave &&
-          note.start.bars === startBars &&
-          note.start.quarters === startQuarters &&
-          note.start.sixteenths === startSixteenths
+    const offsetSixteenths = dragElement.x / 25;
+    const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
+
+    const selectedNoteIndex = prevNotes.findIndex(
+      (note) =>
+        note.notationIndex === notationIndex &&
+        note.octave === octave &&
+        note.start.bars === startBars &&
+        note.start.quarters === startQuarters &&
+        note.start.sixteenths === startSixteenths
+    );
+
+    const sumLengthSixteenths =
+      prevNoteLengthRef.current + offsetSixteenths <= 0
+        ? 1
+        : prevNoteLengthRef.current + offsetSixteenths;
+
+    const newLengthBars = Math.floor(sumLengthSixteenths / 16);
+    const newLengthQuarters = Math.floor((sumLengthSixteenths % 16) / 4);
+    const newLengthSixteenths = sumLengthSixteenths % 4;
+
+    const newTracksData = produce(tracksData, (draft) => {
+      const draftNote =
+        draft[selectedTrackIndex].clips[0].notes[selectedNoteIndex];
+
+      draftNote.length.bars = newLengthBars;
+      draftNote.length.quarters = newLengthQuarters;
+      draftNote.length.sixteenths = newLengthSixteenths;
+    });
+    setTracksData(newTracksData);
+
+    try {
+      const trackRef = doc(
+        db,
+        "projects",
+        projectData.id,
+        "tracks",
+        tracksData[selectedTrackIndex].id
       );
 
-      const sumLengthSixteenths =
-        prevNoteLengthRef.current + offsetSixteenths <= 0
-          ? 1
-          : prevNoteLengthRef.current + offsetSixteenths;
+      const newClips = produce(
+        tracksData[selectedTrackIndex].clips,
+        (draft) => {
+          draft[0].notes[selectedNoteIndex].length.bars = newLengthBars;
+          draft[0].notes[selectedNoteIndex].length.quarters = newLengthQuarters;
+          draft[0].notes[selectedNoteIndex].length.sixteenths =
+            newLengthSixteenths;
+        }
+      );
 
-      const newLengthBars = Math.floor(sumLengthSixteenths / 16);
-      const newLengthQuarters = Math.floor((sumLengthSixteenths % 16) / 4);
-      const newLengthSixteenths = sumLengthSixteenths % 4;
-
-      const newTracksData = produce(tracksData, (draft) => {
-        const draftNote =
-          draft[selectedTrackIndex].clips[0].notes[selectedNoteIndex];
-
-        draftNote.length.bars = newLengthBars;
-        draftNote.length.quarters = newLengthQuarters;
-        draftNote.length.sixteenths = newLengthSixteenths;
-      });
-      setTracksData(newTracksData);
-
-      try {
-        const trackRef = doc(
-          db,
-          "projects",
-          projectData.id,
-          "tracks",
-          tracksData[selectedTrackIndex].id
-        );
-
-        const newClips = produce(
-          tracksData[selectedTrackIndex].clips,
-          (draft) => {
-            draft[0].notes[selectedNoteIndex].length.bars = newLengthBars;
-            draft[0].notes[selectedNoteIndex].length.quarters =
-              newLengthQuarters;
-            draft[0].notes[selectedNoteIndex].length.sixteenths =
-              newLengthSixteenths;
-          }
-        );
-
-        await updateDoc(trackRef, { clips: newClips });
-        console.log("info uploaded");
-      } catch (err) {
-        console.log(err);
-      }
+      await updateDoc(trackRef, { clips: newClips });
+      console.log("info uploaded");
+    } catch (err) {
+      console.log(err);
     }
   };
 

@@ -1,12 +1,12 @@
-import {
-  barWidthState,
-  progressState,
-  inputProgressState,
-} from "../../../store/atoms";
 import { memo } from "react";
 
 import styled from "styled-components";
 import { useRecoilValue, useSetRecoilState } from "recoil";
+import {
+  barWidthState,
+  progressState,
+  inputProgressState,
+} from "../../store/atoms";
 
 interface BarProps {
   barWidth: number;

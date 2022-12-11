@@ -1,6 +1,6 @@
-import { isRecordingState, playerStatusState } from "../../store/atoms";
 import { useEffect, useState, useRef } from "react";
 import { useRecoilState, useSetRecoilState } from "recoil";
+import { isRecordingState, playerStatusState } from "../store/atoms";
 
 const useRecorder = () => {
   const [recordURL, setRecordURL] = useState("");
@@ -8,8 +8,6 @@ const useRecorder = () => {
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
   const [isRecording, setIsRecording] = useRecoilState(isRecordingState);
   const setPlayerStatus = useSetRecoilState(playerStatusState);
-
-  console.log("recordFile", recordFile);
 
   const audioChunksRef = useRef<Blob[]>([]);
 

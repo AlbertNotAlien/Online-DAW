@@ -1,4 +1,3 @@
-import { db, auth, firebaseConfig } from "../config/firebase";
 import {
   createContext,
   ReactNode,
@@ -24,6 +23,7 @@ import {
   ref,
   onValue,
 } from "firebase/database";
+import { db, auth, firebaseConfig } from "../config/firebase";
 
 interface UserType {
   uid: string;

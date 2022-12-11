@@ -1,5 +1,5 @@
-import { hoverMidiInfo } from "../../store/atoms";
 import styled from "styled-components";
+import { hoverMidiInfo } from "../../store/atoms";
 
 const Container = styled.div`
   height: 720px;

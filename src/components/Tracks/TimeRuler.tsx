@@ -1,4 +1,10 @@
-import { db } from "../../../config/firebase";
+import Image from "next/image";
+import { useRef, SetStateAction, Dispatch } from "react";
+import styled from "styled-components";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
+
+import { doc, setDoc } from "firebase/firestore";
+import Modal from "../Modal";
 import {
   tracksDataState,
   projectDataState,
@@ -7,14 +13,8 @@ import {
   barWidthState,
   progressState,
   inputProgressState,
-} from "../../../store/atoms";
-import Modal from "../../Modal";
-import Image from "next/image";
-import { useRef, SetStateAction, Dispatch } from "react";
-import styled from "styled-components";
-import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
-
-import { doc, setDoc } from "firebase/firestore";
+} from "../../store/atoms";
+import { db } from "../../config/firebase";
 const { v4: uuidv4 } = require("uuid");
 
 const Container = styled.div`

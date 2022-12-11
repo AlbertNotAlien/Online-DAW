@@ -1,10 +1,10 @@
+import styled from "styled-components";
+import { useState, memo } from "react";
+import { TrackData, hoverMidiInfo, ProjectData } from "../../store/atoms";
 import NoteRuler from "./NoteRuler";
 import Notes from "./Notes";
 import NotesPanel from "./NotesPanel";
 
-import { TrackData, hoverMidiInfo, ProjectData } from "../../store/atoms";
-import styled from "styled-components";
-import { useState, memo } from "react";
 
 const Container = styled.div`
   display: flex;

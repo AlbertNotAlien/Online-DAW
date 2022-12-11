@@ -85,8 +85,8 @@ export const Life = styled(animated.div)`
 
 let id = 0;
 
-// export type AddFunction = (msg: string) => void;
-export type AddFunction = Function;
+// eslint-disable-next-line no-unused-vars
+export type AddFunction = (msg: string) => void;
 
 export interface MessageHubProps {
   config?: {
@@ -95,8 +95,8 @@ export interface MessageHubProps {
     precision: number;
   };
   timeout?: number;
-  // notificationChildren: (add: AddFunction) => void;
-  notificationChildren: Function;
+  // eslint-disable-next-line no-unused-vars
+  notificationChildren: (add: AddFunction) => void;
 }
 
 interface Item {

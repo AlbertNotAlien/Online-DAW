@@ -1,6 +1,3 @@
-import { useAuth } from "../../src/context/AuthContext";
-import { db } from "../../src/config/firebase";
-import Header from "../../src/components/Header";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import styled from "styled-components";
@@ -15,6 +12,9 @@ import {
 import Avatar from "boring-avatars";
 import Link from "next/link";
 import Head from "next/head";
+import Header from "../../src/components/Header";
+import { db } from "../../src/config/firebase";
+import { useAuth } from "../../src/context/AuthContext";
 
 const BackGround = styled.div`
   display: flex;

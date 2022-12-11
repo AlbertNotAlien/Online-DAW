@@ -1,8 +1,8 @@
-import Footer from "../src/components/Footer";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import styled from "styled-components";
+import Footer from "../src/components/Footer";
 
 const Window = styled.div`
   width: 100vw;

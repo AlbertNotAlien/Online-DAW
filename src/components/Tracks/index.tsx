@@ -1,27 +1,3 @@
-import Measures from "./Measures";
-import WaveSurfer from "./WaveSurfer";
-import MidiBar from "./MidiBar";
-import TrackControls from "./TrackControls";
-import TimeRuler from "./TimeRuler";
-import { db } from "../../config/firebase";
-import { useAuth } from "../../context/AuthContext";
-import {
-  tracksDataState,
-  projectDataState,
-  playingNoteState,
-  selectedTrackIdState,
-  selectedTrackIndexState,
-  barWidthState,
-  progressState,
-  isPlayingState,
-  isMetronomeState,
-  isLoadingState,
-  playerStatusState,
-  ClipData,
-  inputProgressState,
-  isRecordingState,
-} from "../../store/atoms";
-import useRecorder from "../../utils/useRecorder";
 import Image from "next/image";
 import {
   useState,
@@ -40,6 +16,30 @@ import * as Tone from "tone";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
 
 import { Channel } from "tone";
+import useRecorder from "../../utils/useRecorder";
+import {
+  tracksDataState,
+  projectDataState,
+  playingNoteState,
+  selectedTrackIdState,
+  selectedTrackIndexState,
+  barWidthState,
+  progressState,
+  isPlayingState,
+  isMetronomeState,
+  isLoadingState,
+  playerStatusState,
+  ClipData,
+  inputProgressState,
+  isRecordingState,
+} from "../../store/atoms";
+import { useAuth } from "../../context/AuthContext";
+import { db } from "../../config/firebase";
+import TimeRuler from "./TimeRuler";
+import TrackControls from "./TrackControls";
+import MidiBar from "./MidiBar";
+import WaveSurfer from "./WaveSurfer";
+import Measures from "./Measures";
 
 interface TrackProps {
   trackHeight: number;
@@ -229,7 +229,7 @@ const Tracks = (props: TracksProps) => {
       !Array.isArray(channelsRef.current) ||
       channelsRef.current.length === 0 ||
       channelsRef.current.length !== tracksData.length ||
-      recordFile //////////////////////////////////////////////////////////////////
+      recordFile
     ) {
       tracksRef.current = tracksData?.map((track) => {
         if (track.type === "midi" && channelsRef.current) {
@@ -473,16 +473,10 @@ const Tracks = (props: TracksProps) => {
   };
 
   useEffect(() => {
-    if (
-      playingNote &&
-      Array.isArray(tracksRef.current) &&
-      typeof selectedTrackIndex === "number" &&
-      tracksRef.current[selectedTrackIndex] instanceof Tone.Synth
-    ) {
-      const synthRef = tracksRef.current[selectedTrackIndex];
-      if (synthRef instanceof Tone.Synth) {
-        playNote(synthRef, playingNote.notation, playingNote.octave);
-      }
+    if (typeof selectedTrackIndex !== "number") return;
+    const synthRef = tracksRef.current?.[selectedTrackIndex];
+    if (playingNote && synthRef instanceof Tone.Synth) {
+      playNote(synthRef, playingNote.notation, playingNote.octave);
     }
   }, [playingNote, selectedTrackIndex]);
 
@@ -504,16 +498,37 @@ const Tracks = (props: TracksProps) => {
     }
   });
 
+  const metronomeRef = useRef<Tone.Synth | null>(null);
+  const metronomeTrackRef = useRef<Tone.Channel | null>(null);
+
   useEffect(() => {
+    metronomeRef.current = new Tone.Synth();
+    metronomeTrackRef.current = new Tone.Channel().toDestination();
+
+    metronomeRef.current.connect(metronomeTrackRef.current);
+  }, []);
+
+  useEffect(() => {
+    ///
     if (
-      (playerStatus === "playing" || playerStatus === "recording") &&
-      isMetronome
-    ) {
-      const synth = new Tone.Synth().toDestination();
-      Tone.Transport.scheduleRepeat(() => {
-        synth.triggerAttackRelease("C6", 0.01);
-      }, "4n");
-    }
+      !metronomeTrackRef.current ||
+      !(playerStatus === "playing" || playerStatus === "recording")
+    )
+      return;
+    metronomeTrackRef.current.mute = !isMetronome;
+
+    Tone.Transport.scheduleRepeat(() => {
+      if (!metronomeRef.current || !metronomeTrackRef.current) return;
+      metronomeRef.current.triggerAttackRelease("C6", 0.01);
+      console.log(
+        "metronomeTrackRef.current.mute",
+        metronomeTrackRef.current.mute
+      );
+    }, "4n");
+
+    return () => {
+      Tone.stop;
+    };
   }, [playerStatus, isMetronome]);
 
   const tracksContainerRef = useRef(null);

@@ -1,11 +1,11 @@
+import styled from "styled-components";
+import { useRecoilValue } from "recoil";
 import {
   barWidthState,
   NoteData,
   ProjectData,
   TrackData,
-} from "../../../store/atoms";
-import styled from "styled-components";
-import { useRecoilValue } from "recoil";
+} from "../../store/atoms";
 
 interface MidiRegionProps {
   barWidth: number;

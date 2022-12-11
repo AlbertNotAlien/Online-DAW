@@ -1,8 +1,3 @@
-import { useAuth } from "../../src/context/AuthContext";
-import { db } from "../../src/config/firebase";
-import Header from "../../src/components/Header";
-import Footer from "../../src/components/Footer";
-import Modal from "../../src/components/Modal";
 import {
   doc,
   collection,
@@ -21,6 +16,11 @@ import Head from "next/head";
 import styled from "styled-components";
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/router";
+import Modal from "../../src/components/Modal";
+import Footer from "../../src/components/Footer";
+import Header from "../../src/components/Header";
+import { db } from "../../src/config/firebase";
+import { useAuth } from "../../src/context/AuthContext";
 const { CopyToClipboard } = require("react-copy-to-clipboard");
 const { v4: uuidv4 } = require("uuid");
 
@@ -323,9 +323,8 @@ const Dashboard = () => {
   }, [user?.uid]);
 
   useEffect(() => {
-    if (userProjectList) {
-      setIsProjectModalOpen(userProjectList.map(() => false));
-    }
+    if (!userProjectList) return;
+    setIsProjectModalOpen(userProjectList.map(() => false));
   }, [userProjectList]);
 
   const addDefaultMidiTrack = async (projectId: string) => {

@@ -3,8 +3,9 @@ import { useEffect, RefObject } from "react";
 export const useOnClickOutside = <T extends HTMLElement = HTMLElement>(
   firstRef: RefObject<T>,
   secondRef: RefObject<T>,
-  // handler: (event: MouseEvent) => void
-  handler: Function
+  // eslint-disable-next-line no-unused-vars
+  handler: (event: MouseEvent) => void
+  // handler: Function
 ) => {
   useEffect(() => {
     const listener = (event: MouseEvent) => {
