@@ -1,8 +1,0 @@
-{
-  "projects": {
-    "default": "online-daw-backup2",
-    "staging": "online-daw"
-  },
-  "targets": {},
-  "etags": {}
-}
