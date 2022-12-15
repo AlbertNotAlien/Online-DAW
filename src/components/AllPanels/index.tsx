@@ -39,7 +39,7 @@ import useRecorder from "../../utils/useRecorder";
 import Modal from "../Modal";
 import Tracks from "../Tracks";
 import PianoRoll from "../PianoRoll";
-import Library from "../Library";
+// import Library from "../Library";
 import Export from "../Export";
 import Loader from "../Loader";
 import { useOnClickOutside } from "../../utils/useOnClickOutside";
@@ -871,7 +871,7 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
           tracksData?.[selectedTrackIndex].type === "midi"
         }
       >
-        <Library />
+        {/* <Library /> */}
         <TracksPanelScroll ref={tracksContainerRef}>
           <TracksPanel>
             <Tracks

@@ -46,25 +46,6 @@ const Container = styled.div`
   padding-top: 30px;
 `;
 
-const SidebarWrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  row-gap: 25px;
-  width: 200px;
-  height: 100%;
-  margin-top: 80px;
-  padding-left: 20px;
-`;
-
-const SidebarTitle = styled.h2`
-  font-size: 24px;
-  font-weight: bold;
-`;
-
-const SidebarOption = styled.div`
-  cursor: pointer;
-`;
-
 const ProjectsWrapper = styled.div`
   width: 100%;
   padding: 0px 20px;
@@ -157,7 +138,6 @@ const ProjectMenuIcon = styled.button`
   background-color: #6e6e6e;
   border: none;
   cursor: default;
-  /* z-index: 1; */
   &:hover {
     filter: brightness(110%);
   }
@@ -257,7 +237,6 @@ const PrivateRoute = ({ children }: { children: React.ReactElement }) => {
 const Dashboard = () => {
   const [userProjectList, setUserProjectList] = useState<ProjectInfo[]>([]);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState<boolean[]>([]);
-  // const [copied, setCopied] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const newProjectNameRef = useRef<HTMLInputElement | null>(null);
   const newProjectBpmRef = useRef<HTMLInputElement | null>(null);
@@ -510,14 +489,8 @@ const Dashboard = () => {
             </ProjectModalWrapper>
           </Modal>
         )}
-        <SidebarWrapper>
-          <SidebarTitle>Sort By</SidebarTitle>
-          <SidebarOption>Recent</SidebarOption>
-          <SidebarOption>Project Name</SidebarOption>
-          <SidebarOption>Owner</SidebarOption>
-        </SidebarWrapper>
         <ProjectsWrapper>
-          <Title>Recent</Title>
+          <Title>Recent Projects</Title>
           <Projects>
             <NewProject
               onClick={() => {

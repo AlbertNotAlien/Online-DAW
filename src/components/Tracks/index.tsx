@@ -103,6 +103,9 @@ const Track = styled.div<TrackProps>`
 
 const Timeline = styled.div`
   position: relative;
+  /* width: 100%;
+  height: 100%;
+  overflow: none; */
 `;
 
 interface ClipProps {
@@ -210,9 +213,8 @@ const Tracks = (props: TracksProps) => {
   const [recordFile, , , ,] = useRecorder();
 
   const channelsRef = useRef<Channel[]>([]);
-  const tracksRef = useRef<
-    (Tone.Synth | Tone.Player | undefined)[] | undefined
-  >();
+  const tracksRef =
+    useRef<(Tone.Synth | Tone.Player | undefined)[] | undefined>();
 
   const playingNote = useRecoilValue(playingNoteState);
 
@@ -506,29 +508,28 @@ const Tracks = (props: TracksProps) => {
     metronomeTrackRef.current = new Tone.Channel().toDestination();
 
     metronomeRef.current.connect(metronomeTrackRef.current);
-  }, []);
+    metronomeTrackRef.current.mute = !isMetronome;
+
+    if (playerStatus === "playing" || playerStatus === "recording") {
+      Tone.Transport.scheduleRepeat(() => {
+        if (!metronomeRef.current || !metronomeTrackRef.current) return;
+        metronomeRef.current.triggerAttackRelease("C6", 0.01);
+        console.log(
+          "metronomeTrackRef.current.mute",
+          metronomeTrackRef.current.mute
+        );
+      }, "4n");
+    }
+  }, [playerStatus]);
 
   useEffect(() => {
-    ///
     if (
       !metronomeTrackRef.current ||
       !(playerStatus === "playing" || playerStatus === "recording")
     )
       return;
+
     metronomeTrackRef.current.mute = !isMetronome;
-
-    Tone.Transport.scheduleRepeat(() => {
-      if (!metronomeRef.current || !metronomeTrackRef.current) return;
-      metronomeRef.current.triggerAttackRelease("C6", 0.01);
-      console.log(
-        "metronomeTrackRef.current.mute",
-        metronomeTrackRef.current.mute
-      );
-    }, "4n");
-
-    return () => {
-      Tone.stop;
-    };
   }, [playerStatus, isMetronome]);
 
   const tracksContainerRef = useRef(null);
@@ -564,17 +565,11 @@ const Tracks = (props: TracksProps) => {
                   track.selectedBy.length > 0 && track.selectedBy !== user?.uid
                 }
               >
-                {track.selectedBy.length > 0 &&
-                  track.selectedBy !== user?.uid && (
-                    <TrackLock>
-                      <Image
-                        src="/lock.svg"
-                        alt="lock"
-                        width={25}
-                        height={25}
-                      />
-                    </TrackLock>
-                  )}
+                {track.selectedBy.length > 0 && track.selectedBy !== user?.uid && (
+                  <TrackLock>
+                    <Image src="/lock.svg" alt="lock" width={25} height={25} />
+                  </TrackLock>
+                )}
                 <TrackControls
                   channelsRef={channelsRef}
                   projectId={props.projectId}

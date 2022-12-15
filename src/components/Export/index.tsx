@@ -112,12 +112,6 @@ const checkIsNotEqualOne = (value: string) => {
   }
 };
 
-interface ExportEndPointType {
-  bars: number | null;
-  quarters: number | null;
-  sixteenths: number | null;
-}
-
 const Export = () => {
   const projectData = useRecoilValue(projectDataState);
   const tracksData = useRecoilValue(tracksDataState);
@@ -128,11 +122,6 @@ const Export = () => {
   const setIsLoading = useSetRecoilState(isLoadingState);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [instrument, setInstrument] = useState<Tone.Synth>();
-  const exportEndPointRef = useRef<ExportEndPointType>({
-    bars: 2,
-    quarters: 1,
-    sixteenths: 1,
-  });
   const endBarsRef = useRef<HTMLInputElement | null>(null);
   const endQuartersRef = useRef<HTMLInputElement | null>(null);
   const endSixteenthsRef = useRef<HTMLInputElement | null>(null);

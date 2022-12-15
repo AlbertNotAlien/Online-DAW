@@ -15,6 +15,7 @@ interface BarProps {
 
 const Container = styled.div`
   height: 130px;
+  /* width: 10000px; */
   transform: translateY(20px);
   mix-blend-mode: screen;
   display: flex;
@@ -24,6 +25,8 @@ const Container = styled.div`
   z-index: 10;
   bottom: 0;
   left: 0;
+  /* left: 200px; */
+  /* margin-left: 200px; */
 `;
 
 const Bar = styled.div<BarProps>`
@@ -61,7 +64,7 @@ const Measures = () => {
 
   return (
     <Container>
-      {new Array(500).fill(0).map((_, quartersIndex) => {
+      {new Array(600).fill(0).map((_, quartersIndex) => {
         return (
           <div key={quartersIndex}>
             <Bar
