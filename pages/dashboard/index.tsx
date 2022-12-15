@@ -423,10 +423,6 @@ const Dashboard = () => {
     );
   };
 
-  const handleProjectRename = (newProjectName: string) => {
-    console.log("newProjectName", newProjectName);
-  };
-
   return (
     <Window>
       <Head>
@@ -508,15 +504,7 @@ const Dashboard = () => {
                       handleProjectMenuIcon(projectIndex);
                     }}
                   >
-                    <ProjectOption
-                      onClick={() => {
-                        handleProjectRename("123");
-                      }}
-                    >
-                      rename
-                    </ProjectOption>
                     <CopyToClipboard
-                      // onCopy={onCopy}
                       text={`${window.location.protocol}//${window.location.host}/project/${project.id}`}
                     >
                       <ProjectOption>copy link</ProjectOption>
