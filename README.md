@@ -1,4 +1,4 @@
-# ![logo]() Online DAW
+# ![logo-pattern](https://user-images.githubusercontent.com/101801880/208061380-6d3ae7be-8344-44bb-b7dd-12aab72af393.svg) Online DAW
 
 An online co-editing **digital audio workstation (DAW)** to create music programs that run in a browser.`
 
@@ -79,7 +79,8 @@ Export mp3 file by recording all mixed tracks.
 
 ## Function Map
 
-![Function Map]()
+<img width="1215" alt="Online DAW" src="https://user-images.githubusercontent.com/101801880/208061476-4191d580-5873-486f-84f1-5ff4f01627a0.png">
+
 
 ## Demo Video
 
