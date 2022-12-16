@@ -2,28 +2,28 @@
 
 An online co-editing digital audio workstation (DAW) to create music programs that run in a browser.
 
-See the [demo](https://online-daw.vercel.app/) here.
+See the **[demo](https://online-daw.vercel.app/)** here.
 
-> Test Account:
+> Demo Account:
 > | email | password |
 > | -------------- | -------- |
 > | demo@gmail.com | demo123 |
 
 ## Packages
 
-- next.js
-- react.js
-- styled-components
-- immer
-- recoil
-- uuid
-- react-draggable
-- react-copy-to-clipboard
-- react-tooltip
-- tone
-- wavesurfer.js
-- firebase
-- eslint
+- [next.js][next.js]
+- [react.js][react.js]
+- [styled-components][styled-components]
+- [immer][immer]
+- [recoil][recoil]
+- [uuid][uuid]
+- [react-draggable][react-draggable]
+- [react-copy-to-clipboard][react-copy-to-clipboard]
+- [react-tooltip][react-tooltip]
+- [tone.js][tone.js]
+- [wavesurfer.js][wavesurfer.js]
+- [eslint][eslint]
+- [firebase][firebase]
 
 ## Features
 
@@ -76,4 +76,24 @@ Export mp3 file by recording all mixed tracks.
 - Used `Firebase Firestore` database to manage data and get real-time updates for collaborative editing.
 - Linted code by `ESLint` plugin (eslint-plugin-import).
 
-[Demo Video](https://drive.google.com/file/d/1hET26_-dKTYHH8to3_Te5nCQP39h2OMR/view?usp=share_link)
+## Function Map
+
+![Function Map]()
+
+## Demo Video
+
+See the **[demo video](https://drive.google.com/file/d/1hET26_-dKTYHH8to3_Te5nCQP39h2OMR/view?usp=share_link)** here.
+
+[next.js]: https://github.com/vercel/next.js/
+[react.js]: https://github.com/facebook/react
+[styled-components]: https://github.com/styled-components/styled-components
+[immer]: https://github.com/immerjs/immer
+[recoil]: https://github.com/facebookexperimental/Recoil
+[uuid]: https://github.com/uuidjs/uuid
+[react-draggable]: https://github.com/react-grid-layout/react-draggable
+[react-copy-to-clipboard]: https://github.com/nkbt/react-copy-to-clipboard
+[react-tooltip]: https://github.com/ReactTooltip/react-tooltip
+[tone.js]: https://github.com/Tonejs/Tone.js
+[wavesurfer.js]: https://github.com/katspaugh/wavesurfer.js
+[eslint]: https://github.com/eslint/eslint
+[firebase]: https://firebase.google.com/
