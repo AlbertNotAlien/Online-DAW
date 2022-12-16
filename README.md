@@ -1,4 +1,4 @@
- # <img width="26" alt="Online DAW" src="https://user-images.githubusercontent.com/101801880/208061380-6d3ae7be-8344-44bb-b7dd-12aab72af393.svg"> Online DAW
+# <img width="26" alt="Online DAW" src="https://user-images.githubusercontent.com/101801880/208061380-6d3ae7be-8344-44bb-b7dd-12aab72af393.svg"> Online DAW
 
 An online co-editing **digital audio workstation (DAW)** to create music programs that run in a browser.`
 
@@ -32,25 +32,13 @@ See the **[demo](https://online-daw.vercel.app/)** here.
 
 Input the project name and bpm of the project to create a new project.
 
-### Playback control
+### Control playback and Record audio
 
-Play/pause synchronized for all audio and midi tracks by clicking on the play/pause buttons.
-
-### Record audio
-
-Record the audio on a new track by clicking the record button.
-
-### BPM and metronome
-
-Edit the project bpm and the active/inactive metronome.
+Play/pause synchronized for all audio and midi tracks by clicking on the play/pause buttons. Record the audio on a new track by clicking the record button.
 
 ### Track controls
 
-Modify the mute, volume and pan for individual tracks.
-
-### Edit clip's start-time
-
-Drag and drop the clip position to change the clip start time.
+Modify the mute, volume and pan for individual tracks. Drag and drop the clip position to change the clip start time.
 
 ### Edit notes
 
@@ -80,7 +68,6 @@ Export mp3 file by recording all mixed tracks.
 ## Function Map
 
 <img width="1215" alt="Online DAW" src="https://user-images.githubusercontent.com/101801880/208061476-4191d580-5873-486f-84f1-5ff4f01627a0.png">
-
 
 ## Demo Video
 
