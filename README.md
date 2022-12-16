@@ -32,6 +32,8 @@ See the **[demo](https://online-daw.vercel.app/)** here.
 
 Input the project name and bpm of the project to create a new project.
 
+![Create new project](https://imgur.com/hqM2inm)
+
 ### Control playback and Record audio
 
 Play/pause synchronized for all audio and midi tracks by clicking on the play/pause buttons. Record the audio on a new track by clicking the record button.
