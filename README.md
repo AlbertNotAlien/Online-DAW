@@ -1,4 +1,5 @@
 # ![logo-pattern](https://user-images.githubusercontent.com/101801880/208061380-6d3ae7be-8344-44bb-b7dd-12aab72af393.svg) Online DAW
+<img width="50" alt="Online DAW" src="https://user-images.githubusercontent.com/101801880/208061380-6d3ae7be-8344-44bb-b7dd-12aab72af393.svg">
 
 An online co-editing **digital audio workstation (DAW)** to create music programs that run in a browser.`
 
