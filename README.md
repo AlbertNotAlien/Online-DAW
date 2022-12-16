@@ -2,8 +2,8 @@
 
 An online co-editing digital audio workstation (DAW) to create music programs that run in a browser.
 
-> See the [demo](https://online-daw.vercel.app/) here.
->
+See the [demo](https://online-daw.vercel.app/) here.
+
 > Test Account:
 > | email | password |
 > | -------------- | -------- |
