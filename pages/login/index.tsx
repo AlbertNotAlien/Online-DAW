@@ -4,6 +4,7 @@ import styled from "styled-components";
 import React, { useState } from "react";
 
 import Head from "next/head";
+import produce from "immer";
 import Header from "../../src/components/Header";
 import { useAuth } from "../../src/context/AuthContext";
 
@@ -65,8 +66,8 @@ export default function Login() {
   const { login } = useAuth();
 
   const [data, setData] = useState({
-    email: "",
-    password: "",
+    email: "demo@gmail.com",
+    password: "demo123",
   });
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -93,12 +94,12 @@ export default function Login() {
         <Form onSubmit={handleLogin}>
           <Input
             id="email-address"
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setData({
-                ...data,
-                email: e.target.value,
-              })
-            }
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const newData = produce(data, (draft) => {
+                draft.email = e.target.value;
+              });
+              setData(newData);
+            }}
             value={data.email}
             name="email"
             type="email"
@@ -108,12 +109,12 @@ export default function Login() {
           />
           <Input
             id="password"
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setData({
-                ...data,
-                password: e.target.value,
-              })
-            }
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const newData = produce(data, (draft) => {
+                draft.password = e.target.value;
+              });
+              setData(newData);
+            }}
             value={data.password}
             name="password"
             type="password"

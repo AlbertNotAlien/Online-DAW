@@ -296,8 +296,11 @@ const Export = () => {
 
       const tempLink = document.createElement("a");
       tempLink.href = blobUrl;
-      // tempLink.setAttribute("download", "請用Chrome開啟.wav");
-      tempLink.setAttribute("download", `${projectData.name}.mp3`);
+      tempLink.setAttribute(
+        "download",
+        `${projectData.name}-請用Chrome開啟.mp3`
+      );
+      // tempLink.setAttribute("download", `${projectData.name}.mp3`);
       tempLink.click();
     };
   };
