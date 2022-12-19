@@ -32,7 +32,7 @@ See the **[demo](https://online-daw.vercel.app/)** here.
 
 Input the project name and bpm of the project to create a new project.
 
-![Create new project](https://imgur.com/hqM2inm)
+![Create new project](https://imgur.com/D4A4iE1)
 
 ### Control playback and Record audio
 
