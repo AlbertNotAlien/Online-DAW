@@ -88,9 +88,6 @@ const ModalButton = styled.button`
 
 const checkIsPositiveInteger = (value: string) => {
   const regex = /^[0-9\s]*$/;
-  console.log("regex.test(value)", regex.test(value));
-  console.log("Number.isInteger(value)", Number.isInteger(Number(value)));
-  console.log("Number(value) > 0", Number(value) > 0);
 
   if (
     regex.test(value) &&
@@ -104,7 +101,6 @@ const checkIsPositiveInteger = (value: string) => {
 };
 
 const checkIsNotEqualOne = (value: string) => {
-  console.log("Number(value)", Number(value));
   if (Number(value) !== 1) {
     return true;
   } else {
@@ -134,72 +130,12 @@ const Export = () => {
     Tone.Transport.bpm.value = projectData.tempo;
   }, []);
 
-  // const getAudioEnd = (track: TrackData) => {
-  //   return new Promise((resolve, reject) => {
-  //     if (track.type === "audio" || track.type === "record") {
-  //       const startPoint = track.clips[0].startPoint;
-  //       const startTime =
-  //         startPoint.bars * 16 +
-  //         startPoint.quarters * 4 +
-  //         startPoint.sixteenths;
-
-  //       const getBuffer = (url: string, fn: Function) => {
-  //         const buffer = new Tone.Buffer(url, function () {
-  //           const buff = buffer.get();
-  //           fn(buff);
-  //         });
-  //       };
-
-  //       Tone.loaded().then(() => {
-  //         getBuffer(track.clips[0].url, function (buff: Tone.ToneAudioBuffer) {
-  //           const duration = Tone.Time(buff.duration).toBarsBeatsSixteenths();
-  //           resolve(duration);
-  //         });
-  //       });
-
-  //       // getBuffer.then((data) => console.log(data));
-  //     }
-  //   });
-  // };
-
-  // const getMidiEnd = (track: TrackData) => {
-  //   console.log(track.type);
-  //   if (track.type === "midi") {
-  //     const startPoint = track.clips[0].startPoint;
-  //     console.log("startPoint", startPoint);
-  //     console.log("notes", track.clips[0].notes);
-  //     const startPoiSixteenths =
-  //       startPoint.bars * 16 + startPoint.quarters * 4 + startPoint.sixteenths;
-  //     // const durationTime =
-  //     const sixteenthsArr = track.clips[0].notes.map((note, index) => {
-  //       console.log(note);
-  //       const sumSixteenths =
-  //         (note.start.bars + note.length.bars) * 16 +
-  //         (note.start.quarters + note.length.quarters) * 4 +
-  //         (note.start.sixteenths + note.length.sixteenths) * 1;
-  //       // console.log(sumSixteenths);
-  //       return sumSixteenths;
-  //     });
-  //     const maxLengthSixteenths = Math.max(...sixteenthsArr);
-  //     console.log(maxLengthSixteenths);
-  //     const EndPointSixteenths = startPoiSixteenths + maxLengthSixteenths;
-  //     const EndPoint = {
-  //       bars: Math.floor(EndPointSixteenths / 16),
-  //       quarters: Math.floor(EndPointSixteenths / 4),
-  //       sixteenths: EndPointSixteenths % 4,
-  //     };
-  //     console.log("EndPoint", EndPoint);
-  //   }
-  // };
-
   const handlePlayMidi = (
     note: NoteData,
     dest: MediaStreamAudioDestinationNode
   ) => {
     if (!instrument) return;
     instrument.connect(dest);
-    console.log(note.start);
-    console.log(Tone.Transport.position);
     Tone.Transport.schedule(function () {
       instrument.triggerAttackRelease(
         `${note.notation}${note.octave}`,
@@ -212,7 +148,6 @@ const Export = () => {
     clip: AudioData,
     dest: MediaStreamAudioDestinationNode
   ) => {
-    console.log("handlePlayAudio");
     const player = new Tone.Player(clip.url).toDestination();
     player.connect(dest);
     Tone.loaded().then(() => {
@@ -256,7 +191,6 @@ const Export = () => {
 
       Tone.loaded()
         .then(() => {
-          console.log("start Exporting");
           recorder.start();
           Tone.Transport.start();
         })
@@ -280,7 +214,6 @@ const Export = () => {
 
     Tone.Transport.schedule(function () {
       if (recorder.state !== "recording") return;
-      console.log("stop exporting");
       recorder.stop();
       Tone.Transport.stop();
       setPlayerStatus("paused");
@@ -292,7 +225,6 @@ const Export = () => {
     recorder.onstop = () => {
       let blob = new Blob(chunks, { type: "audio/mp3" });
       const blobUrl = window.URL.createObjectURL(blob);
-      console.log(blob);
 
       const tempLink = document.createElement("a");
       tempLink.href = blobUrl;
@@ -300,7 +232,6 @@ const Export = () => {
         "download",
         `${projectData.name}-請用Chrome開啟.mp3`
       );
-      // tempLink.setAttribute("download", `${projectData.name}.mp3`);
       tempLink.click();
     };
   };
@@ -351,19 +282,11 @@ const Export = () => {
         endSixteenthsRef.current.value,
       ];
 
-      console.log(
-        validInput.some((value) => {
-          checkIsPositiveInteger(value);
-        })
-      );
-
       const isValidInput =
         validInput.every(checkIsPositiveInteger) &&
         validInput.some((value) => {
           return checkIsNotEqualOne(value);
         });
-
-      console.log("isValidInput", isValidInput);
 
       if (!isValidInput) return;
 
@@ -374,7 +297,7 @@ const Export = () => {
       );
       setIsModalOpen(false);
     } catch (err: unknown) {
-      console.log("err", err);
+      console.log(err);
       if (err instanceof Error) {
         handleConfirmError(err.message);
       }
@@ -442,7 +365,6 @@ const Export = () => {
       <ExportButton
         onClick={() => {
           setIsModalOpen(true);
-          // exportAudio();
         }}
       >
         <Image src="/export-button.svg" alt="export" width={24} height={24} />

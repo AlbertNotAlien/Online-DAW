@@ -139,7 +139,6 @@ const Notes = (props: NotesProps) => {
       );
 
       await updateDoc(trackRef, { clips: newClips });
-      console.log("info uploaded");
     } catch (err) {
       console.log(err);
     }
@@ -213,7 +212,6 @@ const Notes = (props: NotesProps) => {
       );
 
       await updateDoc(trackRef, { clips: newClips });
-      console.log("info uploaded");
     } catch (err) {
       console.log(err);
     }
@@ -352,64 +350,10 @@ const Notes = (props: NotesProps) => {
       );
 
       await updateDoc(trackRef, { clips: newClips });
-      console.log("info uploaded");
     } catch (err) {
       console.log(err);
     }
   };
-
-  // const handleExtendNoteLeft = (
-  //   event: DraggableEvent,
-  //   dragElement: { x: number },
-  //   notationIndex: number,
-  //   octave: number,
-  //   startBars: number,
-  //   startQuarters: number,
-  //   startSixteenths: number
-  // ) => {
-  //   if (tracksData && selectedTrackIndex) {
-  //     console.log("-dragElement.x", -dragElement.x);
-  //     const offsetSixteenths = -dragElement.x / 25;
-  //     const prevNotes = tracksData[selectedTrackIndex].clips[0].notes;
-
-  //     const selectedNoteIndex = prevNotes.findIndex(
-  //       (note) =>
-  //         note.notationIndex === notationIndex &&
-  //         note.octave === octave &&
-  //         note.start.bars === startBars &&
-  //         note.start.quarters === startQuarters &&
-  //         note.start.sixteenths === startSixteenths
-  //     );
-
-  //     const newTracksData = produce(tracksData, (draft) => {
-  //       const draftNote =
-  //         draft[selectedTrackIndex].clips[0].notes[selectedNoteIndex];
-
-  //       const newLengthSixteenths =
-  //         prevNoteLengthRef.current + offsetSixteenths <= 0
-  //           ? 1
-  //           : prevNoteLengthRef.current + offsetSixteenths;
-
-  //       draftNote.length.bars = Math.floor(newLengthSixteenths / 16);
-  //       draftNote.length.quarters = Math.floor((newLengthSixteenths % 16) / 4);
-  //       draftNote.length.sixteenths = newLengthSixteenths % 4;
-
-  //       const newStartSixteenthsIndex =
-  //         prevNoteStartIndexRef.current - offsetSixteenths <= 0
-  //           ? 0
-  //           : prevNoteStartIndexRef.current - offsetSixteenths;
-
-  //       const newStartSixteenths = newStartSixteenthsIndex % 4;
-  //       const newStartQuarters = Math.floor((newStartSixteenthsIndex % 16) / 4);
-  //       const newStartBars = Math.floor(newStartSixteenthsIndex / 16);
-
-  //       draftNote.start.bars = newStartBars;
-  //       draftNote.start.quarters = newStartQuarters;
-  //       draftNote.start.sixteenths = newStartSixteenths;
-  //     });
-  //     setTracksData(newTracksData);
-  //   }
-  // };
 
   return (
     <Container>
@@ -436,7 +380,6 @@ const Notes = (props: NotesProps) => {
               <Draggable
                 axis="both"
                 onStop={(event: DraggableEvent, dragElement: DraggableData) => {
-                  console.log("onStop-NoteBar");
                   handleSetNote(
                     event,
                     dragElement,
@@ -448,7 +391,6 @@ const Notes = (props: NotesProps) => {
                   );
                 }}
                 onDrag={(event: DraggableEvent, dragElement: DraggableData) => {
-                  console.log("onDrag-NoteBar");
                   handleNotePreview(
                     event,
                     dragElement,
@@ -482,7 +424,6 @@ const Notes = (props: NotesProps) => {
                   lengthBars={note.length.bars}
                   lengthQuarters={note.length.quarters}
                   lengthSixteenths={note.length.sixteenths}
-                  // className="handle-NoteBar"
                 >
                   <NoteBarCenter
                     onDoubleClick={() => {
@@ -503,7 +444,6 @@ const Notes = (props: NotesProps) => {
                       event: DraggableEvent,
                       dragElement: DraggableData
                     ) => {
-                      console.log("onStart-side");
                       handlePrevNoteData(
                         event,
                         dragElement,
@@ -518,7 +458,6 @@ const Notes = (props: NotesProps) => {
                       event: DraggableEvent,
                       dragElement: DraggableData
                     ) => {
-                      console.log("onDrag-side");
                       handleExtendNoteRight(
                         event,
                         dragElement,

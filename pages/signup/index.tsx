@@ -65,7 +65,6 @@ const Switch = styled.div`
 `;
 
 export default function Signup() {
-  //   const router = useRouter();
   const { signup } = useAuth();
   const [data, setData] = useState({
     email: "",
@@ -76,7 +75,6 @@ export default function Signup() {
   const handleSignup = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     try {
-      console.log("data.displayName", data.displayName);
       await signup(data.email, data.password, data.displayName);
     } catch (err) {
       alert("註冊資訊有誤");

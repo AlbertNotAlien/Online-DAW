@@ -31,7 +31,6 @@ const useRecorder = () => {
     // Obtain the audio when ready.
     const handleData = (e: BlobEvent) => {
       audioChunksRef.current = [];
-      console.log("handleData");
       setRecordURL(window.URL.createObjectURL(e.data));
       audioChunksRef.current.push(e.data);
       let blob = new Blob(audioChunksRef.current, { type: "audio/mp3" });
@@ -71,7 +70,6 @@ async function requestRecorder() {
   });
   const options = {
     mimeType: "audio/webm;codec=pcm",
-    // audioBitsPerSecond: 44100 * 16,
   };
   return new MediaRecorder(stream, options);
 }

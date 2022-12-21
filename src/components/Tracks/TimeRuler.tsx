@@ -157,7 +157,6 @@ const TimeRuler = (props: TimeRulerProps) => {
           (track) => track.id === selectedTrackId
         );
         setSelectedTrackIndex(newSelectedTrackIndex);
-        console.log("newSelectedTrackIndex", newSelectedTrackIndex);
       }
     }
   };

@@ -39,7 +39,6 @@ import useRecorder from "../../utils/useRecorder";
 import Modal from "../Modal";
 import Tracks from "../Tracks";
 import PianoRoll from "../PianoRoll";
-// import Library from "../Library";
 import Export from "../Export";
 import Loader from "../Loader";
 import { useOnClickOutside } from "../../utils/useOnClickOutside";
@@ -406,7 +405,6 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
     createdTime: Date,
     trackId: string
   ) => {
-    console.log("uploadFileInfo");
     try {
       const docRef = doc(db, "projects", projectId, "tracks", trackId);
       const newData = {
@@ -462,7 +460,6 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
     uploadBytes(audioRef, file)
       .then((snapshot) => {
         getDownloadURL(snapshot.ref).then(async (url) => {
-          // const trackId = uuidv4().split("-")[0];
           await uploadFileInfo(
             trackName,
             type,
@@ -742,10 +739,6 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
                       quarters: Number(event.currentTarget.value) - 1,
                     }));
                   } else if (event.currentTarget.value === "") {
-                    console.log(
-                      "inputProgress.quarters",
-                      inputProgress.quarters
-                    );
                     setInputProgress((prev) => ({
                       ...prev,
                       quarters: inputProgress.quarters,

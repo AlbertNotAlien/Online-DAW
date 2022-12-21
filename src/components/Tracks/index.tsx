@@ -218,14 +218,6 @@ const Tracks = (props: TracksProps) => {
 
   const playingNote = useRecoilValue(playingNoteState);
 
-  // if (selectedTrackId !== null || selectedTrackIndex !== null) {
-  //   window.addEventListener("beforeunload", function (e) {
-  //     e.preventDefault();
-  //     e.returnValue = "";
-  //     props.cleanupSelectedBy();
-  //   });
-  // }
-
   useEffect(() => {
     if (
       !Array.isArray(channelsRef.current) ||
@@ -305,7 +297,6 @@ const Tracks = (props: TracksProps) => {
 
   const startPlaying = () => {
     if (Tone.Transport.state === "started") return;
-    console.log(`${progress.bars}:${progress.quarters}:${progress.sixteenths}`);
     Tone.Transport.position = `${progress.bars}:${progress.quarters}:${progress.sixteenths}`;
     Tone.Transport.start();
     playAllTracks();
@@ -422,7 +413,6 @@ const Tracks = (props: TracksProps) => {
     dragElement: { x: number; y: number },
     trackIndex: number
   ) => {
-    console.log("dragElement.x", dragElement.x);
     const newClipsPosition = produce(dragX, (draft) => {
       draft[trackIndex] = dragElement.x;
     });
@@ -470,7 +460,6 @@ const Tracks = (props: TracksProps) => {
     const now = Tone.now();
     if (trackRef) {
       trackRef.triggerAttackRelease(`${notation}${octave}`, "8n", now);
-      console.log("playNote");
     }
   };
 
@@ -514,10 +503,6 @@ const Tracks = (props: TracksProps) => {
       Tone.Transport.scheduleRepeat(() => {
         if (!metronomeRef.current || !metronomeTrackRef.current) return;
         metronomeRef.current.triggerAttackRelease("C6", 0.01);
-        console.log(
-          "metronomeTrackRef.current.mute",
-          metronomeTrackRef.current.mute
-        );
       }, "4n");
     }
   }, [playerStatus]);
@@ -614,12 +599,7 @@ const Tracks = (props: TracksProps) => {
                       }}
                       isHoverClipContent={isHoverClipContent}
                     >
-                      <ClipTitle
-                        className="handle"
-                        onClick={() => {
-                          console.log("click");
-                        }}
-                      >
+                      <ClipTitle className="handle">
                         {track.clips[0].clipName}
                       </ClipTitle>
                       <ClipContent>
