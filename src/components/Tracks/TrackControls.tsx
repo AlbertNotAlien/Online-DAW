@@ -117,11 +117,6 @@ const TrackControls = (props: TrackControlsProps) => {
 
     props.channelsRef.current[trackIndex].mute = !isMuted;
 
-    props.channelsRef.current.forEach((channel: Channel, index: number) => {
-      console.log(`mute-${index}`, channel.mute);
-    });
-    console.log("-----");
-
     try {
       const trackRef = doc(db, "projects", projectId, "tracks", trackId);
       const newData = {
@@ -138,9 +133,6 @@ const TrackControls = (props: TrackControlsProps) => {
     trackId: string,
     trackIndex: number
   ) => {
-    console.log("projectId", projectId);
-    console.log("trackId", trackId);
-
     setTracksData(
       produce(tracksData, (draft) => {
         draft[trackIndex].volume = volume;
@@ -165,9 +157,6 @@ const TrackControls = (props: TrackControlsProps) => {
     trackId: string,
     trackIndex: number
   ) => {
-    console.log("projectId", projectId);
-    console.log("trackId", trackId);
-
     setTracksData(
       produce(tracksData, (draft) => {
         draft[props.trackIndex].pan = pan;
@@ -223,7 +212,6 @@ const TrackControls = (props: TrackControlsProps) => {
               min={-70}
               max={10}
               onChange={(event) => {
-                console.log(event.target.value);
                 const value =
                   event.target.value === null
                     ? 0
@@ -247,7 +235,6 @@ const TrackControls = (props: TrackControlsProps) => {
               step={0.1}
               onChange={(event) => {
                 const value = Number(event.target.value) / 100;
-                console.log(value);
                 setPan(value);
                 handleTrackPan(value, props.track.id, props.trackIndex);
               }}

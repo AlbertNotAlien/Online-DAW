@@ -38,12 +38,7 @@ const Header = () => {
         <Link href="/profile">
           <Profile>
             {user ? (
-              <Avatar
-                size={30}
-                name="Willa Cather"
-                variant="beam"
-                // colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
-              />
+              <Avatar size={30} name="Willa Cather" variant="beam" />
             ) : (
               <Image src="/profile.svg" alt="profile" width={30} height={30} />
             )}

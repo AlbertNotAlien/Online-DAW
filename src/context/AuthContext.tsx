@@ -70,7 +70,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     displayName: string
   ) => {
     const res = await createUserWithEmailAndPassword(auth, email, password);
-    console.log("displayName", displayName);
     if (auth.currentUser) {
       await updateProfile(auth.currentUser, {
         displayName: displayName,

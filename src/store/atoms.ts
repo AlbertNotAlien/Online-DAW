@@ -50,7 +50,6 @@ export interface ClipData extends MidiData, AudioData {}
 
 export interface TrackData {
   clips: ClipData[];
-  // clips: AudioData[] | MidiData[];
   id: string;
   isMuted: boolean;
   isSolo: boolean;

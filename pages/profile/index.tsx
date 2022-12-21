@@ -82,35 +82,6 @@ const Button = styled.button`
   background-color: #535353;
 `;
 
-// const MembersWrapper = styled.div`
-//   display: flex;
-//   flex-direction: column;
-//   align-items: center;
-//   width: 100%;
-//   row-gap: 20px;
-// `;
-
-// const Member = styled.div`
-//   width: 100%;
-//   height: 80px;
-//   background-color: #585858;
-//   border-radius: 20px;
-//   display: flex;
-//   align-items: center;
-//   column-gap: 20px;
-//   padding-left: 20px;
-// `;
-
-// const MemberName = styled.p`
-//   width: 80px;
-// `;
-// const MemberEmail = styled.p`
-//   width: 200px;
-// `;
-// const MemberState = styled.p`
-//   width: 80px;
-// `;
-
 export default function Profile() {
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -126,14 +97,6 @@ export default function Profile() {
     }
   }, []);
 
-  // const [members, setMembers] = useState<
-  //   {
-  //     email: string;
-  //     displayName: string;
-  //     state: string;
-  //   }[]
-  // >([]);
-
   useEffect(() => {
     const q = query(
       collection(db, "users"),
@@ -144,14 +107,11 @@ export default function Profile() {
       let newMembers: { email: string; displayName: string; state: string }[] =
         [];
       querySnapshot.forEach((doc) => {
-        console.log(doc.data());
         const email = doc.data().email;
         const displayName = doc.data().displayName;
         const state = doc.data().state;
         newMembers.push({ email, displayName, state });
-        // setMembers(newMembers);
       });
-      // newMembers = newMembers.filter((member) => member.email !== user.email);
     });
     return () => {
       unsubscribe();

@@ -5,11 +5,9 @@ import NoteRuler from "./NoteRuler";
 import Notes from "./Notes";
 import NotesPanel from "./NotesPanel";
 
-
 const Container = styled.div`
   display: flex;
   height: 100%;
-  /* width: 500px; */
   width: 100%;
   position: relative;
   overflow: auto;

@@ -1,8 +1,5 @@
 import React, { Dispatch, ReactNode, SetStateAction } from "react";
-// import classes from "./Modal.module.css";
 import styled from "styled-components";
-
-// Imported ReactDom
 import ReactDom from "react-dom";
 
 const BackdropWrapper = styled.div`

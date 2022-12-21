@@ -267,10 +267,6 @@ const Dashboard = () => {
     return `${MONTHS[dateArray[1] - 1]} ${dateArray[2]}, ${dateArray[0]}`;
   };
 
-  // const onCopy = useCallback(() => {
-  //   setCopied(true);
-  // }, []);
-
   const convertTimeStampToNumber = (timestamp: Timestamp) => {
     const timeArray = timestamp
       ?.toDate()
@@ -346,7 +342,6 @@ const Dashboard = () => {
     // add new project
     try {
       const docRef = doc(collection(db, "projects"));
-      console.log("docRef.id", docRef.id);
       const newData = {
         id: docRef.id,
         name: projectName,
@@ -356,7 +351,6 @@ const Dashboard = () => {
         createdTime: createdTime,
       };
       await setDoc(docRef, newData);
-      console.log("info uploaded");
 
       projectId = docRef.id;
     } catch (err) {
