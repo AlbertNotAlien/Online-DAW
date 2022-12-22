@@ -370,6 +370,7 @@ const Tracks = (props: TracksProps) => {
 
       try {
         const docRef = doc(db, "projects", projectId, "tracks", trackId);
+        console.log(user?.uid);
         const newData = {
           selectedBy: user?.uid,
         };

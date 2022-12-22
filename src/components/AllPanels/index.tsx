@@ -481,8 +481,8 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
         console.log(err);
       })
       .finally(() => {
-        if (!recordFile) return;
         setIsLoading(false);
+        if (!recordFile) return;
         setRecordFile(null);
       });
   };
