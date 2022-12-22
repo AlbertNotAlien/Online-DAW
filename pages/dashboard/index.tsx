@@ -283,6 +283,8 @@ const Dashboard = () => {
 
     if (!docSnap.exists()) return;
     const projects = docSnap.data().projects as ProjectInfo[];
+    console.log("projects", projects);
+    if (!projects) return;
     const newProjects = produce(projects, (draft) => {
       draft.sort(
         (projectA: ProjectInfo, projectB: ProjectInfo) =>
@@ -490,7 +492,7 @@ const Dashboard = () => {
               +
             </NewProject>
             {userProjectList?.length > 0 &&
-              userProjectList.map((project, projectIndex) => (
+              userProjectList?.map((project, projectIndex) => (
                 <Project key={project.id}>
                   <ProjectOptions
                     isProjectModalOpen={isProjectModalOpen[projectIndex]}
