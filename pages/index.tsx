@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import styled from "styled-components";
 import Footer from "../src/components/Footer";
+import { useAuth } from "../src/context/AuthContext";
 
 const Window = styled.div`
   width: 100vw;
@@ -116,6 +117,8 @@ const Titles = styled.div`
 `;
 
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <>
       <Head>
@@ -130,12 +133,20 @@ export default function Home() {
             <Link href={`/dashboard`}>
               <LinkText>dashboard</LinkText>
             </Link>
-            <LinkText>
-              <Link href={`/login`}>login</Link>
-            </LinkText>
-            <LinkText>
-              <Link href={`/signup`}>signup</Link>
-            </LinkText>
+            {!user ? (
+              <>
+                <LinkText>
+                  <Link href={`/login`}>login</Link>
+                </LinkText>
+                <LinkText>
+                  <Link href={`/signup`}>signup</Link>
+                </LinkText>
+              </>
+            ) : (
+              <LinkText>
+                <Link href={`/profile`}>profile</Link>
+              </LinkText>
+            )}
           </Links>
           <Titles>
             <TitleWrapper>
