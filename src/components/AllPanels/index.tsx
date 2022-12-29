@@ -870,7 +870,6 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
           tracksData?.[selectedTrackIndex].type === "midi"
         }
       >
-        {/* <Library /> */}
         <TracksPanelScroll ref={tracksContainerRef}>
           <TracksPanel>
             <Tracks

@@ -71,7 +71,6 @@ const QuartersWrapper = styled.div`
 const MidiBlock = styled.div`
   width: 25px;
   height: 10px;
-  /* border-right: 1px solid gray; */
   background-color: darkcyan;
   &:hover {
     filter: brightness(120%);

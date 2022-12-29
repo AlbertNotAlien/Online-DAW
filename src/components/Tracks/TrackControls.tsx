@@ -16,7 +16,6 @@ const Container = styled.div`
   align-items: left;
   padding: 0px 15px;
   row-gap: 10px;
-  /* position: fixed; */
   top: 0px;
   left: 0px;
   background-color: #676767;
@@ -45,11 +44,9 @@ const RangePanel = styled.div`
   height: 20px;
   width: 50%;
   border-radius: 5px;
-  /* margin-left: 20px; */
   position: relative;
   display: flex;
   align-items: center;
-  /* justify-content: center; */
   column-gap: 10px;
 `;
 
@@ -57,7 +54,6 @@ const RangeInput = styled.input`
   text-align: center;
   color: white;
   font-size: 10px;
-  /* position: absolute; */
   height: 100%;
   border: none;
   &:focus {

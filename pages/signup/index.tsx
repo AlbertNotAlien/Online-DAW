@@ -42,7 +42,6 @@ const Input = styled.input`
   border: none;
   padding: 0 12px;
   border-radius: 10px;
-  /* background-color: #535353; */
   &:focus {
     outline: none;
   }

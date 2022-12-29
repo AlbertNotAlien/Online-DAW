@@ -283,7 +283,6 @@ const Dashboard = () => {
 
     if (!docSnap.exists()) return;
     const projects = docSnap.data().projects as ProjectInfo[];
-    console.log("projects", projects);
     if (!projects) return;
     const newProjects = produce(projects, (draft) => {
       draft.sort(

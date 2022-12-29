@@ -103,9 +103,6 @@ const Track = styled.div<TrackProps>`
 
 const Timeline = styled.div`
   position: relative;
-  /* width: 100%;
-  height: 100%;
-  overflow: none; */
 `;
 
 interface ClipProps {
@@ -141,7 +138,6 @@ const ClipTitle = styled.div`
 
 const ClipContent = styled.div`
   pointer-events: none;
-  /* background-color: #00000099; */
 `;
 
 const TrackLock = styled.div`
@@ -372,7 +368,6 @@ const Tracks = (props: TracksProps) => {
 
       try {
         const docRef = doc(db, "projects", projectId, "tracks", trackId);
-        console.log(user?.uid);
         const newData = {
           selectedBy: user?.uid,
         };
