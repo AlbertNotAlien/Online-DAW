@@ -11,17 +11,14 @@ const Window = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* align-items: center; */
   background-image: url("/demo-background.png");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
-  /* opacity: 50%; */
 `;
 
 const Container = styled.div`
   max-width: 1000px;
-  /* min-height: 100%; */
   padding: 20px 0px;
   display: flex;
   flex-direction: column;
@@ -32,7 +29,6 @@ const Title = styled.h1`
   font-size: 120px;
   font-weight: 700;
   color: #f6ddcd;
-  /* margin-top: 100px; */
   transform: translateX(-20px);
   margin: 80px 0px;
 `;
@@ -54,16 +50,13 @@ const Description = styled.p`
 
 const Links = styled.div`
   display: flex;
-  /* margin-top: 100px; */
   bottom: 0px;
   column-gap: 200px;
 `;
 
 const LinkText = styled.p`
   font-size: 18px;
-  /* font-weight: 700; */
   color: #f6ddcd;
-  /* margin-top: 50px; */
   &:hover {
     text-decoration: underline;
     text-underline-offset: 5px;
@@ -74,7 +67,6 @@ const DemoBlocks = styled.div`
   display: flex;
   column-gap: 50px;
   width: 100%;
-  /* justify-content: space-between; */
 `;
 
 const DemoBlock = styled.div`
@@ -101,7 +93,6 @@ const DemoContentTitle = styled.p`
 
 const DemoContentDescription = styled.p`
   font-size: 10px;
-  /* font-weight: bold; */
 `;
 
 const TitleWrapper = styled.div`
@@ -113,7 +104,6 @@ const TitleWrapper = styled.div`
 const Titles = styled.div`
   display: flex;
   flex-direction: column;
-  /* row-gap: 50px; */
 `;
 
 export default function Home() {
@@ -127,7 +117,6 @@ export default function Home() {
         <link rel="icon" href="/logo-pattern.svg" />
       </Head>
       <Window>
-        {/* <Header /> */}
         <Container>
           <Links>
             <Link href={`/dashboard`}>
