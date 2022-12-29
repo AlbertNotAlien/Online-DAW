@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { useRecoilValue } from "recoil";
+import { RecoilRoot, useRecoilValue } from "recoil";
 import { projectDataState } from "../../src/store/atoms";
 import { useAuth } from "../../src/context/AuthContext";
 import AllPanels from "../../src/components/AllPanels";
@@ -30,4 +30,12 @@ const ProjectDetail = () => {
   );
 };
 
-export default ProjectDetail;
+function Project() {
+  return (
+    <RecoilRoot>
+      <ProjectDetail />
+    </RecoilRoot>
+  );
+}
+
+export default Project;

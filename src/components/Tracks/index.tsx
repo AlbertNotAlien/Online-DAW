@@ -337,6 +337,8 @@ const Tracks = (props: TracksProps) => {
 
       return () => {
         clearInterval(timer);
+        Tone.Transport.stop();
+        Tone.Transport.cancel(0);
       };
     } else if (playerStatus === "paused") {
       stopPlaying();

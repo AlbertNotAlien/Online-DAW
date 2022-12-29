@@ -137,7 +137,11 @@ const ExportControls = styled.div`
   border-radius: 10px;
 `;
 
-const TempoInput = styled.input`
+interface TempoInputProps {
+  playerStatus: string;
+}
+
+const TempoInput = styled.input<TempoInputProps>`
   width: 40px;
   text-align: center;
   border: none;
@@ -153,11 +157,12 @@ const TempoInput = styled.input`
     -webkit-appearance: none;
     margin: 0;
   }
+  pointer-events: ${(props) =>
+    props.playerStatus === "paused" ? "inherit" : "none"};
 `;
 
 const ProgressInputs = styled.div`
   display: flex;
-  /* column-gap: 10px; */
   height: 100%;
   background-color: #323232;
   border-radius: 10px;
@@ -618,6 +623,7 @@ const AllPanels = ({ projectId }: { projectId: string }) => {
                 type="text"
                 value={tempo}
                 required
+                playerStatus={playerStatus}
                 onChange={(event) => {
                   const regex = /^[0-9\s]*$/;
                   if (regex.test(event.currentTarget.value)) {
