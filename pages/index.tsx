@@ -20,7 +20,7 @@ const Window = styled.div`
 `;
 
 const Container = styled.div`
-  max-width: 1280px;
+  max-width: 1000px;
   /* min-height: 100%; */
   padding: 20px 0px;
   display: flex;
