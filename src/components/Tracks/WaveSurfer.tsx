@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
-import { ProjectData, TrackData } from "../../store/atoms";
+import { useSetRecoilState } from "recoil";
+import { isLoadingState, ProjectData, TrackData } from "../../store/atoms";
 
 import type WaveSurferType from "wavesurfer.js";
 
@@ -50,18 +51,26 @@ interface WaveSurferCompProps {
 const WaveSurferComp = (props: WaveSurferCompProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wavesurferRef = useRef<WaveSurferType>();
+  const setIsLoading = useSetRecoilState(isLoadingState);
+
   const url = props.trackData.clips[0].url;
 
   useEffect(() => {
     const create = async () => {
       if (!containerRef.current) return;
 
+      setIsLoading(true);
       const WaveSurfer = (await import("wavesurfer.js")).default;
       const options: Options = formWaveSurferOptions(containerRef.current);
       wavesurferRef.current = WaveSurfer.create(options);
 
       if (url) {
         wavesurferRef.current.load(url);
+        wavesurferRef.current.on("loading", (event) => {
+          if (event === 100) {
+            setIsLoading(false);
+          }
+        });
       }
     };
 
@@ -72,7 +81,7 @@ const WaveSurferComp = (props: WaveSurferCompProps) => {
         wavesurferRef.current.destroy();
       }
     };
-  }, [url]);
+  }, [setIsLoading, url]);
 
   return <Clip id="waveform" ref={containerRef} />;
 };
