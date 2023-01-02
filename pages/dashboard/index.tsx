@@ -41,7 +41,6 @@ const Window = styled.div`
 `;
 
 const Container = styled.div`
-  min-height: 80%;
   display: flex;
   padding-top: 30px;
 `;
@@ -434,14 +433,14 @@ const Dashboard = () => {
               <ProjectModalInput
                 type="text"
                 name="newProjectName"
-                placeholder="project name"
-                maxLength={20}
+                placeholder="project name (required)"
+                maxLength={18}
                 ref={newProjectNameRef}
               ></ProjectModalInput>
               <ProjectModalInput
                 type="text"
                 name="bpm"
-                placeholder="project bpm"
+                placeholder="project bpm (required)"
                 maxLength={3}
                 ref={newProjectBpmRef}
               ></ProjectModalInput>

@@ -42,7 +42,7 @@ const RangePanels = styled.div``;
 
 const RangePanel = styled.div`
   height: 20px;
-  width: 50%;
+  width: 100%;
   border-radius: 5px;
   position: relative;
   display: flex;
@@ -53,6 +53,7 @@ const RangePanel = styled.div`
 const RangeInput = styled.input`
   text-align: center;
   color: white;
+  background-color: red;
   font-size: 10px;
   height: 100%;
   border: none;
@@ -79,6 +80,7 @@ const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
   color: white;
   background-color: ${(props) =>
     props.isMuted === true ? "#383838" : "#7c7c7c"};
+  cursor: pointer;
 `;
 
 interface TrackControlsProps {
@@ -105,13 +107,29 @@ const TrackControls = (props: TrackControlsProps) => {
     trackId: string,
     trackIndex: number
   ) => {
+    // console.log("tracksData", tracksData);
     setTracksData(
       produce(tracksData, (draft) => {
         draft[props.trackIndex].isMuted = !isMuted;
       })
     );
-
+    // console.log("trackIndex", trackIndex, isMuted);
     props.channelsRef.current[trackIndex].mute = !isMuted;
+
+    props.channelsRef.current[trackIndex].mute =
+      !props.channelsRef.current[trackIndex].mute;
+    console.log(
+      "props.channelsRef.current[trackIndex].mute",
+      props.channelsRef.current[trackIndex].mute
+    );
+
+    console.log(
+      "props.channelsRef.current[trackIndex].muted",
+      props.channelsRef.current[trackIndex].muted
+    );
+
+    console.log("tttttt", props.channelsRef.current[trackIndex].mute);
+    console.log("tttttt", props.channelsRef.current[trackIndex]);
 
     try {
       const trackRef = doc(db, "projects", projectId, "tracks", trackId);

@@ -102,7 +102,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    alert("已登出");
     await signOut(auth);
 
     const app = initializeApp(firebaseConfig);

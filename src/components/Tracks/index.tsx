@@ -221,7 +221,7 @@ const Tracks = (props: TracksProps) => {
       channelsRef.current.length !== tracksData.length ||
       recordFile
     ) {
-      tracksRef.current = tracksData?.map((track) => {
+      tracksRef.current = tracksData?.map((track, index) => {
         if (track.type === "midi" && channelsRef.current) {
           const newSynth = new Tone.Synth();
           return newSynth;
@@ -236,31 +236,50 @@ const Tracks = (props: TracksProps) => {
         }
       });
 
-      channelsRef.current = tracksData?.map((track) => {
+      channelsRef.current = tracksData?.map((track, index) => {
         const channel = new Tone.Channel().toDestination();
-        channel.mute = track.isMuted;
+        // channel.mute = track.isMuted;
+        // console.log(index, "channel", channel);
+        // console.log(index, "muted", channel.muted);
         return channel;
       });
 
       tracksRef.current?.forEach((trackRef, index) => {
-        if (trackRef && channelsRef.current) {
-          trackRef.connect(channelsRef.current[index]);
+        if (
+          trackRef &&
+          channelsRef.current &&
+          tracksRef.current &&
+          tracksRef.current[index]
+        ) {
+          tracksRef.current[index]?.connect(channelsRef.current[index]);
         }
       });
     }
 
     channelsRef.current.forEach((channel, index) => {
-      if (channel.mute !== tracksData[index].isMuted) {
-        channel.mute = tracksData[index].isMuted;
+      if (channel.muted !== tracksData[index].isMuted) {
+        channelsRef.current[index].mute = tracksData[index].isMuted;
+        channelsRef.current[index].solo = true;
       }
       if (channel.volume.value !== tracksData[index].volume) {
-        channel.volume.value = tracksData[index].volume;
+        channelsRef.current[index].volume.value = tracksData[index].volume;
       }
       if (channel.pan.value !== tracksData[index].pan) {
-        channel.pan.value = tracksData[index].pan;
+        channelsRef.current[index].pan.value = tracksData[index].pan;
       }
+
+      // console.log(
+      //   "channelsRef.current[index]",
+      //   index,
+      //   channelsRef.current[index]
+      // );
+      // console.log(
+      //   index,
+      //   "channelsRef.current[index].mute",
+      //   channelsRef.current[index].mute
+      // );
     });
-  }, [tracksData]);
+  }, [recordFile, tracksData]);
 
   const playAllTracks = () => {
     if (tracksRef.current) {
@@ -513,6 +532,12 @@ const Tracks = (props: TracksProps) => {
       return;
 
     metronomeTrackRef.current.mute = !isMetronome;
+
+    // console.log("metronomeTrackRef.current", metronomeTrackRef.current);
+    // console.log(
+    //   "metronomeTrackRef.current.mute",
+    //   metronomeTrackRef.current.mute
+    // );
   }, [playerStatus, isMetronome]);
 
   const tracksContainerRef = useRef(null);
