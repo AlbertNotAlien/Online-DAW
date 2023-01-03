@@ -186,7 +186,7 @@ const TrackControls = (props: TrackControlsProps) => {
         <TitleAndMute>
           <TrackTitle>{props.track.name}</TrackTitle>
           <TrackButtons>
-            <IsMutedButton
+            {/* <IsMutedButton
               onClick={() => {
                 handleTrackMute(
                   props.isMuted,
@@ -197,7 +197,7 @@ const TrackControls = (props: TrackControlsProps) => {
               isMuted={props.isMuted}
             >
               Mute
-            </IsMutedButton>
+            </IsMutedButton> */}
           </TrackButtons>
         </TitleAndMute>
 
