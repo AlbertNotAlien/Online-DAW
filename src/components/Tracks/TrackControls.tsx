@@ -33,11 +33,11 @@ const TrackButtons = styled.div`
   column-gap: 10px;
 `;
 
-const TrackButton = styled.button`
-  height: 20px;
-  border: none;
-  border-radius: 5px;
-`;
+// const TrackButton = styled.button`
+//   height: 20px;
+//   border: none;
+//   border-radius: 5px;
+// `;
 
 const RangePanels = styled.div``;
 
@@ -68,20 +68,20 @@ const RangeInput = styled.input`
   }
 `;
 
-interface IsMutedButtonProps {
-  isMuted: boolean;
-}
+// interface IsMutedButtonProps {
+//   isMuted: boolean;
+// }
 
 const RangeValue = styled.p`
   font-size: 10px;
   min-width: 30px;
 `;
 
-const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
-  color: white;
-  background-color: ${(props) => (props.isMuted ? "#383838" : "#7c7c7c")};
-  cursor: pointer;
-`;
+// const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
+//   color: white;
+//   background-color: ${(props) => (props.isMuted ? "#383838" : "#7c7c7c")};
+//   cursor: pointer;
+// `;
 
 interface TrackControlsProps {
   channelsRef: MutableRefObject<Channel[]>;
@@ -102,29 +102,29 @@ const TrackControls = (props: TrackControlsProps) => {
     setPan(tracksData[props.trackIndex].pan);
   }, [tracksData]);
 
-  const handleTrackMute = async (
-    isMuted: boolean,
-    trackId: string,
-    trackIndex: number
-  ) => {
-    props.channelsRef.current[trackIndex].mute = !isMuted;
+  // const handleTrackMute = async (
+  //   isMuted: boolean,
+  //   trackId: string,
+  //   trackIndex: number
+  // ) => {
+  //   props.channelsRef.current[trackIndex].mute = !isMuted;
 
-    setTracksData(
-      produce(tracksData, (draft) => {
-        draft[props.trackIndex].isMuted = !isMuted;
-      })
-    );
+  //   setTracksData(
+  //     produce(tracksData, (draft) => {
+  //       draft[props.trackIndex].isMuted = !isMuted;
+  //     })
+  //   );
 
-    try {
-      const trackRef = doc(db, "projects", projectId, "tracks", trackId);
-      const newData = {
-        isMuted: !isMuted,
-      };
-      await updateDoc(trackRef, newData);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  //   try {
+  //     const trackRef = doc(db, "projects", projectId, "tracks", trackId);
+  //     const newData = {
+  //       isMuted: !isMuted,
+  //     };
+  //     await updateDoc(trackRef, newData);
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // };
 
   const handleTrackVolume = async (
     volume: number,
