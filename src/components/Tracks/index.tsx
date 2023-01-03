@@ -221,7 +221,7 @@ const Tracks = (props: TracksProps) => {
       channelsRef.current.length !== tracksData.length ||
       recordFile
     ) {
-      tracksRef.current = tracksData?.map((track, index) => {
+      tracksRef.current = tracksData?.map((track) => {
         if (track.type === "midi" && channelsRef.current) {
           const newSynth = new Tone.Synth();
           return newSynth;
@@ -236,7 +236,7 @@ const Tracks = (props: TracksProps) => {
         }
       });
 
-      channelsRef.current = tracksData?.map((track, index) => {
+      channelsRef.current = tracksData?.map(() => {
         const channel = new Tone.Channel().toDestination();
         // channel.mute = track.isMuted;
         return channel;

@@ -108,11 +108,6 @@ const TrackControls = (props: TrackControlsProps) => {
     trackIndex: number
   ) => {
     props.channelsRef.current[trackIndex].mute = !isMuted;
-    console.log("isMuted", isMuted);
-
-    tracksData.forEach((track, index) => {
-      console.log("track.isMuted", index, track.isMuted);
-    });
 
     setTracksData(
       produce(tracksData, (draft) => {
@@ -129,20 +124,7 @@ const TrackControls = (props: TrackControlsProps) => {
     } catch (err) {
       console.log(err);
     }
-
-    console.log(
-      "props.channelsRef.current[trackIndex]",
-      props.trackIndex,
-      props.channelsRef.current[trackIndex]
-    );
-    console.log(
-      "props.channelsRef.current[trackIndex].muted",
-      props.trackIndex,
-      props.channelsRef.current[trackIndex].muted
-    );
   };
-
-  // console.log("props.isMuted", props.trackIndex, props.isMuted);
 
   const handleTrackVolume = async (
     volume: number,
