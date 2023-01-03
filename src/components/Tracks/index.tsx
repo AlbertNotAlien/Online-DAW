@@ -103,9 +103,6 @@ const Track = styled.div<TrackProps>`
 
 const Timeline = styled.div`
   position: relative;
-  /* width: 100%;
-  height: 100%;
-  overflow: none; */
 `;
 
 interface ClipProps {
@@ -141,7 +138,6 @@ const ClipTitle = styled.div`
 
 const ClipContent = styled.div`
   pointer-events: none;
-  /* background-color: #00000099; */
 `;
 
 const TrackLock = styled.div`
@@ -240,31 +236,33 @@ const Tracks = (props: TracksProps) => {
         }
       });
 
-      channelsRef.current = tracksData?.map((track) => {
+      channelsRef.current = tracksData?.map(() => {
         const channel = new Tone.Channel().toDestination();
-        channel.mute = track.isMuted;
+        // channel.mute = track.isMuted;
         return channel;
       });
 
       tracksRef.current?.forEach((trackRef, index) => {
-        if (trackRef && channelsRef.current) {
-          trackRef.connect(channelsRef.current[index]);
+        if (
+          trackRef &&
+          channelsRef.current &&
+          tracksRef.current &&
+          tracksRef.current[index]
+        ) {
+          tracksRef.current[index]?.connect(channelsRef.current[index]);
         }
       });
     }
 
     channelsRef.current.forEach((channel, index) => {
-      if (channel.mute !== tracksData[index].isMuted) {
-        channel.mute = tracksData[index].isMuted;
-      }
       if (channel.volume.value !== tracksData[index].volume) {
-        channel.volume.value = tracksData[index].volume;
+        channelsRef.current[index].volume.value = tracksData[index].volume;
       }
       if (channel.pan.value !== tracksData[index].pan) {
-        channel.pan.value = tracksData[index].pan;
+        channelsRef.current[index].pan.value = tracksData[index].pan;
       }
     });
-  }, [tracksData]);
+  }, [recordFile, tracksData]);
 
   const playAllTracks = () => {
     if (tracksRef.current) {
@@ -337,6 +335,8 @@ const Tracks = (props: TracksProps) => {
 
       return () => {
         clearInterval(timer);
+        Tone.Transport.stop();
+        Tone.Transport.cancel(0);
       };
     } else if (playerStatus === "paused") {
       stopPlaying();
@@ -353,6 +353,8 @@ const Tracks = (props: TracksProps) => {
           (progress.sixteenths - recordStartTime.sixteenths) * 0.25) *
           barWidth
       );
+    } else {
+      setRecordingClipLength(0);
     }
   }, [progress, props.recordStartTimeRef.current, isRecording]);
 

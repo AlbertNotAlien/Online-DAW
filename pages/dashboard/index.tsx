@@ -41,7 +41,6 @@ const Window = styled.div`
 `;
 
 const Container = styled.div`
-  min-height: 80%;
   display: flex;
   padding-top: 30px;
 `;
@@ -283,6 +282,7 @@ const Dashboard = () => {
 
     if (!docSnap.exists()) return;
     const projects = docSnap.data().projects as ProjectInfo[];
+    if (!projects) return;
     const newProjects = produce(projects, (draft) => {
       draft.sort(
         (projectA: ProjectInfo, projectB: ProjectInfo) =>
@@ -433,14 +433,14 @@ const Dashboard = () => {
               <ProjectModalInput
                 type="text"
                 name="newProjectName"
-                placeholder="project name"
-                maxLength={20}
+                placeholder="project name (required)"
+                maxLength={18}
                 ref={newProjectNameRef}
               ></ProjectModalInput>
               <ProjectModalInput
                 type="text"
                 name="bpm"
-                placeholder="project bpm"
+                placeholder="project bpm (required)"
                 maxLength={3}
                 ref={newProjectBpmRef}
               ></ProjectModalInput>
@@ -490,7 +490,7 @@ const Dashboard = () => {
               +
             </NewProject>
             {userProjectList?.length > 0 &&
-              userProjectList.map((project, projectIndex) => (
+              userProjectList?.map((project, projectIndex) => (
                 <Project key={project.id}>
                   <ProjectOptions
                     isProjectModalOpen={isProjectModalOpen[projectIndex]}

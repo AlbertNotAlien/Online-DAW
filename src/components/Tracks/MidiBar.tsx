@@ -43,7 +43,6 @@ const MidiNote = styled.div<MidiNoteProps>`
       props.length.sixteenths) *
     props.barWidth *
     0.25}px;
-  /* width: 10px; */
   height: ${(150 - 30) / 72}px;
   background-color: #ffffff;
   border: 1px solid #ffffff;
@@ -56,7 +55,6 @@ const MidiNote = styled.div<MidiNoteProps>`
       props.start.sixteenths) *
     props.barWidth *
     0.25}px;
-  /* left: 0px; */
 `;
 
 interface MidiBarProps {

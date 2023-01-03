@@ -9,14 +9,14 @@ import { tracksDataState, TrackData } from "../../store/atoms";
 import { db } from "../../config/firebase";
 
 const Container = styled.div`
-  max-width: 200px;
+  min-width: 200px;
+  width: 200px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: left;
   padding: 0px 15px;
   row-gap: 10px;
-  /* position: fixed; */
   top: 0px;
   left: 0px;
   background-color: #676767;
@@ -43,21 +43,19 @@ const RangePanels = styled.div``;
 
 const RangePanel = styled.div`
   height: 20px;
-  width: 50%;
+  width: 100%;
   border-radius: 5px;
-  /* margin-left: 20px; */
   position: relative;
   display: flex;
   align-items: center;
-  /* justify-content: center; */
   column-gap: 10px;
 `;
 
 const RangeInput = styled.input`
   text-align: center;
   color: white;
+  background-color: red;
   font-size: 10px;
-  /* position: absolute; */
   height: 100%;
   border: none;
   &:focus {
@@ -81,8 +79,8 @@ const RangeValue = styled.p`
 
 const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
   color: white;
-  background-color: ${(props) =>
-    props.isMuted === true ? "#383838" : "#7c7c7c"};
+  background-color: ${(props) => (props.isMuted ? "#383838" : "#7c7c7c")};
+  cursor: pointer;
 `;
 
 interface TrackControlsProps {
@@ -109,13 +107,13 @@ const TrackControls = (props: TrackControlsProps) => {
     trackId: string,
     trackIndex: number
   ) => {
+    props.channelsRef.current[trackIndex].mute = !isMuted;
+
     setTracksData(
       produce(tracksData, (draft) => {
         draft[props.trackIndex].isMuted = !isMuted;
       })
     );
-
-    props.channelsRef.current[trackIndex].mute = !isMuted;
 
     try {
       const trackRef = doc(db, "projects", projectId, "tracks", trackId);

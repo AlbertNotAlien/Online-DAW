@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import styled from "styled-components";
 import Link from "next/link";
 
 import Head from "next/head";
+import router from "next/router";
 import Header from "../../src/components/Header";
 import { useAuth } from "../../src/context/AuthContext";
 
@@ -41,7 +42,6 @@ const Input = styled.input`
   border: none;
   padding: 0 12px;
   border-radius: 10px;
-  /* background-color: #535353; */
   &:focus {
     outline: none;
   }
@@ -65,7 +65,14 @@ const Switch = styled.div`
 `;
 
 export default function Signup() {
-  const { signup } = useAuth();
+  const { user, signup } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.push("/profile");
+    }
+  }, []);
+
   const [data, setData] = useState({
     email: "",
     password: "",

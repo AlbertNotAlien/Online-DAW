@@ -5,11 +5,6 @@ const Container = styled.div`
   height: 100%;
   background-color: gray;
   border-radius: 10px;
-  /* transition: box-shadow 0.2s ease-in-out;
-  &:hover {
-    box-shadow: 0 0 10px #00000050;
-    transition: box-shadow 0.2s ease-in-out;
-  } */
   display: flex;
   padding: 20px;
 `;

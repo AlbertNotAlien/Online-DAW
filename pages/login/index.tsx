@@ -1,10 +1,11 @@
 import Link from "next/link";
 
 import styled from "styled-components";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import Head from "next/head";
 import produce from "immer";
+import router from "next/router";
 import Header from "../../src/components/Header";
 import { useAuth } from "../../src/context/AuthContext";
 
@@ -42,7 +43,6 @@ const Input = styled.input`
   border: none;
   padding: 0 12px;
   border-radius: 10px;
-  /* background-color: #535353; */
 `;
 
 const Button = styled.button`
@@ -63,7 +63,13 @@ const Switch = styled.div`
 `;
 
 export default function Login() {
-  const { login } = useAuth();
+  const { user, login } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      router.push("/profile");
+    }
+  }, []);
 
   const [data, setData] = useState({
     email: "demo@gmail.com",

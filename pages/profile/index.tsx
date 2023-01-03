@@ -147,29 +147,6 @@ export default function Profile() {
               <Button onClick={handleLogout}>logout</Button>
             </Buttons>
           </UserWrapper>
-
-          {/* <MembersWrapper>
-            <div>Members</div>
-            {members.map((member, index) => (
-              <Member key={`${member}-${index}`}>
-                <Avatar
-                  size={40}
-                  name="Maria Mitchell"
-                  variant="beam"
-                  colors={[
-                    "#92A1C6",
-                    "#146A7C",
-                    "#F0AB3D",
-                    "#C271B4",
-                    "#C20D90",
-                  ]}
-                />
-                <MemberName>{member.displayName}</MemberName>
-                <MemberEmail>{member.email}</MemberEmail>
-                <MemberState>{member.state}</MemberState>
-              </Member>
-            ))}
-          </MembersWrapper> */}
         </Container>
       </BackGround>
     </>
