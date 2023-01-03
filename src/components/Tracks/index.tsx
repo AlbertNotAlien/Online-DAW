@@ -239,8 +239,6 @@ const Tracks = (props: TracksProps) => {
       channelsRef.current = tracksData?.map((track, index) => {
         const channel = new Tone.Channel().toDestination();
         // channel.mute = track.isMuted;
-        // console.log(index, "channel", channel);
-        // console.log(index, "muted", channel.muted);
         return channel;
       });
 
@@ -257,27 +255,12 @@ const Tracks = (props: TracksProps) => {
     }
 
     channelsRef.current.forEach((channel, index) => {
-      if (channel.muted !== tracksData[index].isMuted) {
-        channelsRef.current[index].mute = tracksData[index].isMuted;
-        channelsRef.current[index].solo = true;
-      }
       if (channel.volume.value !== tracksData[index].volume) {
         channelsRef.current[index].volume.value = tracksData[index].volume;
       }
       if (channel.pan.value !== tracksData[index].pan) {
         channelsRef.current[index].pan.value = tracksData[index].pan;
       }
-
-      // console.log(
-      //   "channelsRef.current[index]",
-      //   index,
-      //   channelsRef.current[index]
-      // );
-      // console.log(
-      //   index,
-      //   "channelsRef.current[index].mute",
-      //   channelsRef.current[index].mute
-      // );
     });
   }, [recordFile, tracksData]);
 
@@ -370,6 +353,8 @@ const Tracks = (props: TracksProps) => {
           (progress.sixteenths - recordStartTime.sixteenths) * 0.25) *
           barWidth
       );
+    } else {
+      setRecordingClipLength(0);
     }
   }, [progress, props.recordStartTimeRef.current, isRecording]);
 
@@ -532,12 +517,6 @@ const Tracks = (props: TracksProps) => {
       return;
 
     metronomeTrackRef.current.mute = !isMetronome;
-
-    // console.log("metronomeTrackRef.current", metronomeTrackRef.current);
-    // console.log(
-    //   "metronomeTrackRef.current.mute",
-    //   metronomeTrackRef.current.mute
-    // );
   }, [playerStatus, isMetronome]);
 
   const tracksContainerRef = useRef(null);

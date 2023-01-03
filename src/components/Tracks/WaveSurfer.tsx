@@ -1,7 +1,12 @@
 import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
-import { useSetRecoilState } from "recoil";
-import { isLoadingState, ProjectData, TrackData } from "../../store/atoms";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import {
+  isLoadingState,
+  playerStatusState,
+  ProjectData,
+  TrackData,
+} from "../../store/atoms";
 
 import type WaveSurferType from "wavesurfer.js";
 
@@ -52,18 +57,20 @@ const WaveSurferComp = (props: WaveSurferCompProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const wavesurferRef = useRef<WaveSurferType>();
   const setIsLoading = useSetRecoilState(isLoadingState);
+  const playerStatus = useRecoilValue(playerStatusState);
 
   const url = props.trackData.clips[0].url;
 
   useEffect(() => {
     const create = async () => {
       if (!containerRef.current) return;
-
-      setIsLoading(true);
       const WaveSurfer = (await import("wavesurfer.js")).default;
       const options: Options = formWaveSurferOptions(containerRef.current);
       wavesurferRef.current = WaveSurfer.create(options);
 
+      if (playerStatus === "playing" || playerStatus === "recording") return;
+
+      setIsLoading(true);
       if (url) {
         wavesurferRef.current.load(url);
         wavesurferRef.current.on("loading", (event) => {

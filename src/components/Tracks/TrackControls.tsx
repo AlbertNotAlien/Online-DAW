@@ -9,7 +9,8 @@ import { tracksDataState, TrackData } from "../../store/atoms";
 import { db } from "../../config/firebase";
 
 const Container = styled.div`
-  max-width: 200px;
+  min-width: 200px;
+  width: 200px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -78,8 +79,7 @@ const RangeValue = styled.p`
 
 const IsMutedButton = styled(TrackButton)<IsMutedButtonProps>`
   color: white;
-  background-color: ${(props) =>
-    props.isMuted === true ? "#383838" : "#7c7c7c"};
+  background-color: ${(props) => (props.isMuted ? "#383838" : "#7c7c7c")};
   cursor: pointer;
 `;
 
@@ -107,29 +107,18 @@ const TrackControls = (props: TrackControlsProps) => {
     trackId: string,
     trackIndex: number
   ) => {
-    // console.log("tracksData", tracksData);
+    props.channelsRef.current[trackIndex].mute = !isMuted;
+    console.log("isMuted", isMuted);
+
+    tracksData.forEach((track, index) => {
+      console.log("track.isMuted", index, track.isMuted);
+    });
+
     setTracksData(
       produce(tracksData, (draft) => {
         draft[props.trackIndex].isMuted = !isMuted;
       })
     );
-    // console.log("trackIndex", trackIndex, isMuted);
-    props.channelsRef.current[trackIndex].mute = !isMuted;
-
-    props.channelsRef.current[trackIndex].mute =
-      !props.channelsRef.current[trackIndex].mute;
-    console.log(
-      "props.channelsRef.current[trackIndex].mute",
-      props.channelsRef.current[trackIndex].mute
-    );
-
-    console.log(
-      "props.channelsRef.current[trackIndex].muted",
-      props.channelsRef.current[trackIndex].muted
-    );
-
-    console.log("tttttt", props.channelsRef.current[trackIndex].mute);
-    console.log("tttttt", props.channelsRef.current[trackIndex]);
 
     try {
       const trackRef = doc(db, "projects", projectId, "tracks", trackId);
@@ -140,7 +129,20 @@ const TrackControls = (props: TrackControlsProps) => {
     } catch (err) {
       console.log(err);
     }
+
+    console.log(
+      "props.channelsRef.current[trackIndex]",
+      props.trackIndex,
+      props.channelsRef.current[trackIndex]
+    );
+    console.log(
+      "props.channelsRef.current[trackIndex].muted",
+      props.trackIndex,
+      props.channelsRef.current[trackIndex].muted
+    );
   };
+
+  // console.log("props.isMuted", props.trackIndex, props.isMuted);
 
   const handleTrackVolume = async (
     volume: number,
