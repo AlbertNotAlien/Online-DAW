@@ -438,11 +438,12 @@ const Dashboard = () => {
                 ref={newProjectNameRef}
               ></ProjectModalInput>
               <ProjectModalInput
-                type="text"
+                type="number"
                 name="bpm"
                 placeholder="project bpm (required)"
                 maxLength={3}
                 ref={newProjectBpmRef}
+                defaultValue={60}
               ></ProjectModalInput>
               <ProjectModalButtons>
                 <ProjectModalButton

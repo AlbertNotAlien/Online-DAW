@@ -255,6 +255,9 @@ const Tracks = (props: TracksProps) => {
     }
 
     channelsRef.current.forEach((channel, index) => {
+      if (channel.mute !== tracksData[index].isMuted) {
+        channelsRef.current[index].mute = tracksData[index].isMuted;
+      }
       if (channel.volume.value !== tracksData[index].volume) {
         channelsRef.current[index].volume.value = tracksData[index].volume;
       }
@@ -520,6 +523,8 @@ const Tracks = (props: TracksProps) => {
   }, [playerStatus, isMetronome]);
 
   const tracksContainerRef = useRef(null);
+
+  console.log("tracksData", tracksData);
 
   return (
     <Container ref={tracksContainerRef}>
